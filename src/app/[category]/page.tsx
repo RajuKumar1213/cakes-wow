@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import ProductGrid from '@/components/ProductGrid';
 import { Breadcrumb } from '@/components';
+import axios from 'axios';
 
 interface Product {
   _id: string;
@@ -51,14 +52,12 @@ const CategoryPage = () => {
         limit: '12',
         sortBy,
         sortOrder,
-      });
-
-      // Add search params from URL
+      });      // Add search params from URL
       const search = searchParams.get('search');
       if (search) params.append('search', search);
 
-      const response = await fetch(`/api/products?${params}`);
-      const data = await response.json();
+      const response = await axios.get(`/api/products?${params}`);
+      const data = response.data;
 
       if (data.success) {
         setProducts(data.data.products);
@@ -75,8 +74,8 @@ const CategoryPage = () => {
 
   const fetchCategory = useCallback(async () => {
     try {
-      const response = await fetch(`/api/categories?slug=${categorySlug}`);
-      const data = await response.json();
+      const response = await axios.get(`/api/categories?slug=${categorySlug}`);
+      const data = response.data;
 
       if (data.success && data.data.length > 0) {
         setCategory(data.data[0]);

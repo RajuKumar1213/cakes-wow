@@ -2,6 +2,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Header, Footer, ProductGrid, Breadcrumb, Loading } from '@/components';
+import axios from 'axios';
 
 interface Product {
   _id: string;
@@ -58,7 +59,6 @@ function SearchPageContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
-
   const fetchSearchResults = async () => {
     try {
       setLoading(true);
@@ -71,8 +71,8 @@ function SearchPageContent() {
       searchUrl.searchParams.set('sortBy', sortBy);
       searchUrl.searchParams.set('sortOrder', sortOrder);
 
-      const response = await fetch(searchUrl.toString());
-      const data: SearchResponse = await response.json();
+      const response = await axios.get(searchUrl.toString());
+      const data: SearchResponse = response.data;
 
       if (data.success) {
         setProducts(data.data.products);

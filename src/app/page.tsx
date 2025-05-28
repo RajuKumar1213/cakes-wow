@@ -1,6 +1,8 @@
 "use client"
 import { Header, HeroCarousel, ProductSection, CategorySection, Footer } from '@/components';
 import { useState, useEffect } from 'react';
+import Loading from '@/components/Loading';
+import axios from 'axios';
 
 interface Product {
   _id: string;
@@ -33,16 +35,16 @@ export default function Home() {
     const fetchProducts = async () => {
       try {
         // Fetch bestsellers
-        const bestSellersResponse = await fetch('/api/products?isBestseller=true&limit=6');
-        const bestSellersData = await bestSellersResponse.json();
+        const bestSellersResponse = await axios.get('/api/products?isBestseller=true&limit=6');
+        const bestSellersData = bestSellersResponse.data;
         
         // Fetch featured cakes
-        const featuredResponse = await fetch('/api/products?isFeatured=true&limit=6');
-        const featuredData = await featuredResponse.json();
+        const featuredResponse = await axios.get('/api/products?isFeatured=true&limit=6');
+        const featuredData = featuredResponse.data;
         
         // Fetch eggless cakes
-        const egglessResponse = await fetch('/api/products?isEggless=true&limit=6');
-        const egglessData = await egglessResponse.json();
+        const egglessResponse = await axios.get('/api/products?isEggless=true&limit=6');
+        const egglessData = egglessResponse.data;
 
         if (bestSellersData.success) {
           setBestSellers(bestSellersData.data.products);
@@ -147,7 +149,7 @@ export default function Home() {
       <main className="min-h-screen bg-white mx-auto">
         <Header />
         <div className="flex justify-center items-center h-96">
-          <div className="text-xl text-gray-600">Loading amazing cakes...</div>
+            <Loading size="lg" text="Baking..." className="text-pink-400" />
         </div>
         <Footer />
       </main>
