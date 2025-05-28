@@ -107,10 +107,9 @@ const HeroCarousel = () => {
 
   const goToSlide = (index: number) => {
     setCurrentSlide(index);
-  };
-  return (
-    <div className="relative w-full py-8 md:max-w-7xl mx-auto  overflow-hidden">
-      <div className="container mx-auto px-2 md:px-4 lg:px-8">
+  };  return (
+    <div className="relative w-full py-4 sm:py-8 md:max-w-7xl mx-auto overflow-hidden">
+      <div className="container mx-auto px-1 sm:px-2 md:px-4 lg:px-8">
         {/* Carousel Container */}
         <div className="relative overflow-hidden">          {/* Sliding Container */}
           <div 
@@ -118,9 +117,9 @@ const HeroCarousel = () => {
             style={{ transform: `translateX(-${currentSlide * (isMobile ? 100 : 100 / 3)}%)` }}
           >
             {banners.map((banner) => (
-              <div key={banner.id} className={`${isMobile ? 'w-full' : 'w-1/3'} flex-shrink-0 px-3`}>
+              <div key={banner.id} className={`${isMobile ? 'w-full' : 'w-1/3'} flex-shrink-0 px-1 sm:px-3`}>
                 <div 
-                  className={`relative h-64 md:h-80 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group ${banner.bgColor}`}
+                  className={`relative h-64 sm:h-48 md:h-64 lg:h-80 rounded-lg sm:rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group ${banner.bgColor}`}
                   onClick={() => alert('This function is coming soon!')}
                 >
                   {/* Background Image */}
@@ -138,16 +137,16 @@ const HeroCarousel = () => {
                   <div className="absolute inset-0 bg-opacity-40 group-hover:bg-opacity-30 transition-all duration-300"></div>
                   
                   {/* Content */}
-                  <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-6">
-                    <h3 className="text-2xl md:text-3xl font-bold mb-2 transform group-hover:scale-105 transition-transform duration-300">
+                  <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-2 sm:p-4 md:p-6">
+                    <h3 className="text-sm sm:text-lg md:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2 transform group-hover:scale-105 transition-transform duration-300">
                       {banner.title}
                     </h3>
-                    <p className="text-lg opacity-90 transform group-hover:translate-y-1 transition-transform duration-300">
+                    <p className="text-xs sm:text-sm md:text-base lg:text-lg opacity-90 transform group-hover:translate-y-1 transition-transform duration-300">
                       {banner.subtitle}
                     </p>
                     
                     {/* Shop Now Button */}
-                    <button className="mt-4 bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-full font-medium transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                    <button className="mt-2 sm:mt-4 bg-red-500 hover:bg-red-600 text-white px-3 py-1 sm:px-4 sm:py-1.5 md:px-6 md:py-2 rounded-full text-xs sm:text-sm font-medium transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
                       Shop Now
                     </button>
                   </div>
@@ -155,27 +154,25 @@ const HeroCarousel = () => {
               </div>
             ))}
           </div>
-        </div>
-
-        {/* Navigation */}
-        <div className="flex items-center justify-center mt-8 space-x-4">
+        </div>        {/* Navigation */}
+        <div className="flex items-center justify-center mt-4 sm:mt-6 md:mt-8 space-x-2 sm:space-x-4">
           {/* Previous Button */}
           <button
             onClick={prevSlide}
-            className="p-3 rounded-full bg-white shadow-lg hover:shadow-xl border border-gray-200 hover:bg-gray-50 transition-all duration-300"
+            className="p-1.5 sm:p-2 md:p-3 rounded-full bg-white shadow-lg hover:shadow-xl border border-gray-200 hover:bg-gray-50 transition-all duration-300"
           >
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
 
           {/* Dots */}
-          <div className="flex space-x-2">
+          <div className="flex space-x-1 sm:space-x-2">
             {Array.from({ length: maxSlides + 1 }).map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentSlide(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${
                   index === currentSlide 
                     ? 'bg-red-500 scale-125' 
                     : 'bg-gray-300 hover:bg-gray-400'
@@ -187,9 +184,9 @@ const HeroCarousel = () => {
           {/* Next Button */}
           <button
             onClick={nextSlide}
-            className="p-3 rounded-full bg-white shadow-lg hover:shadow-xl border border-gray-200 hover:bg-gray-50 transition-all duration-300"
+            className="p-1.5 sm:p-2 md:p-3 rounded-full bg-white shadow-lg hover:shadow-xl border border-gray-200 hover:bg-gray-50 transition-all duration-300"
           >
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
