@@ -79,24 +79,21 @@ const ProductGrid = ({
 
     // Previous button
     if (currentPage > 1) {
-      pages.push(
-        <button
+      pages.push(        <button
           key="prev"
           onClick={() => onPageChange?.(currentPage - 1)}
-          className="px-3 py-2 text-gray-500 hover:text-pink-600 border border-gray-300 rounded-l-md hover:bg-gray-50"
+          className="px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm text-gray-500 hover:text-pink-600 border border-gray-300 rounded-l-md hover:bg-gray-50 whitespace-nowrap"
         >
-          Previous
+          Prev
         </button>
       );
-    }
-
-    // Page numbers
+    }    // Page numbers
     for (let i = startPage; i <= endPage; i++) {
       pages.push(
         <button
           key={i}
           onClick={() => onPageChange?.(i)}
-          className={`px-3 py-2 border-t border-b border-r border-gray-300 ${
+          className={`px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm border-t border-b border-r border-gray-300 ${
             i === currentPage
               ? "bg-pink-600 text-white border-pink-600"
               : "text-gray-500 hover:text-pink-600 hover:bg-gray-50"
@@ -109,37 +106,35 @@ const ProductGrid = ({
 
     // Next button
     if (currentPage < totalPages) {
-      pages.push(
-        <button
+      pages.push(        <button
           key="next"
           onClick={() => onPageChange?.(currentPage + 1)}
-          className="px-3 py-2 text-gray-500 hover:text-pink-600 border border-gray-300 rounded-r-md hover:bg-gray-50"
+          className="px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm text-gray-500 hover:text-pink-600 border border-gray-300 rounded-r-md hover:bg-gray-50 whitespace-nowrap"
         >
           Next
         </button>
       );
-    }
-
-    return (
-      <div className="flex justify-center items-center mt-8 space-x-1">
-        {pages}
+    }    return (
+      <div className="flex justify-center items-center mt-6 sm:mt-8">
+        <div className="flex space-x-1 overflow-x-auto max-w-full">
+          {pages}
+        </div>
       </div>
     );
   };
-
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
         {Array.from({ length: 8 }).map((_, index) => (
           <div
             key={index}
             className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse"
           >
-            <div className="h-44 bg-gray-300"></div>
-            <div className="p-3">
-              <div className="h-4 bg-gray-300 rounded mb-2"></div>
-              <div className="h-4 bg-gray-300 rounded w-2/3 mb-2"></div>
-              <div className="h-4 bg-gray-300 rounded w-1/3"></div>
+            <div className="h-32 sm:h-44 bg-gray-300"></div>
+            <div className="p-2 sm:p-3">
+              <div className="h-3 sm:h-4 bg-gray-300 rounded mb-1 sm:mb-2"></div>
+              <div className="h-3 sm:h-4 bg-gray-300 rounded w-2/3 mb-1 sm:mb-2"></div>
+              <div className="h-3 sm:h-4 bg-gray-300 rounded w-1/3"></div>
             </div>
           </div>
         ))}
@@ -148,22 +143,19 @@ const ProductGrid = ({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header with sorting and view options */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center space-x-4">
-          <h2 className="text-lg font-semibold text-gray-900">
-            {totalCount} Products Found
+    <div className="space-y-6">      {/* Header with sorting and view options */}
+      <div className="flex flex-col gap-3 sm:gap-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+            {totalCount} Products
           </h2>
-        </div>
-
-        <div className="flex items-center space-x-4">
-          {/* Sort Dropdown */}
+          
+          {/* Sort Dropdown - Mobile optimized */}
           <div className="relative">
             <select
               value={`${sortBy}:${sortOrder}`}
               onChange={(e) => handleSortChange(e.target.value)}
-              className="appearance-none bg-white border border-gray-300 rounded-md px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+              className="appearance-none bg-white border border-gray-300 rounded-md px-2 py-1 sm:px-4 sm:py-2 pr-6 sm:pr-8 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
             >
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -171,9 +163,12 @@ const ProductGrid = ({
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <ChevronDown className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
           </div>
+        </div>
 
+        {/* View Mode and Filter - Hidden on mobile for cleaner look */}
+        <div className="hidden sm:flex items-center justify-end space-x-4">
           {/* View Mode Toggle */}
           <div className="flex border border-gray-300 rounded-md">
             <button
@@ -217,11 +212,10 @@ const ProductGrid = ({
             <p>Try adjusting your filters or search terms.</p>
           </div>
         </div>
-      ) : (
-        <div
-          className={`grid gap-6 ${
+      ) : (        <div
+          className={`grid gap-3 sm:gap-6 ${
             viewMode === "grid"
-              ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+              ? "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
               : "grid-cols-1"
           }`}
         >

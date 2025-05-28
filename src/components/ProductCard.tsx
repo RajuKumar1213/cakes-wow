@@ -115,11 +115,10 @@ const ProductCard = ({
         "heart"
       );
     }
-  };
-  return (
+  };  return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 group">
       <Link href={`/products/${slug}`}>
-        <div className="relative h-44 overflow-hidden rounded-t-lg">
+        <div className="relative h-32 sm:h-44 overflow-hidden rounded-t-lg">
           <Image
             src={imageUrls[0] || "/placeholder-cake.jpg"}
             alt={name}
@@ -127,49 +126,49 @@ const ProductCard = ({
             className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
           {discountPercentage > 0 && (
-            <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-sm font-medium">
+            <div className="absolute top-1 left-1 sm:top-2 sm:left-2 bg-red-500 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs font-medium">
               {discountPercentage}% OFF
             </div>
           )}
           {isBestseller && (
-            <div className="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium">
+            <div className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-yellow-500 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs font-medium">
               Bestseller
             </div>
           )}
           {isEggless && (
-            <div className="absolute bottom-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium">
+            <div className="absolute bottom-1 left-1 sm:bottom-2 sm:left-2 bg-green-500 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs font-medium">
               Eggless
             </div>
           )}
         </div>
       </Link>
 
-      <div className="p-3">
+      <div className="p-2 sm:p-3">
         <Link href={`/products/${slug}`}>
-          <h3 className="font-medium text-gray-800 mb-2 line-clamp-2 min-h-[2.5rem] hover:text-pink-600 cursor-pointer">
+          <h3 className="font-medium text-gray-800 mb-1 sm:mb-2 line-clamp-2 text-sm sm:text-base min-h-[2rem] sm:min-h-[2.5rem] hover:text-pink-600 cursor-pointer">
             {name}
           </h3>
         </Link>
 
-        <div className="flex items-center mb-2">
+        <div className="flex items-center mb-1 sm:mb-2">
           <div className="flex items-center text-yellow-400">
-            <Star className="w-4 h-4 fill-current" />
-            <span className="ml-1 text-sm font-medium text-gray-700">
+            <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-current" />
+            <span className="ml-1 text-xs sm:text-sm font-medium text-gray-700">
               {rating}
             </span>
           </div>
-          <span className="text-sm text-gray-500 ml-1">
-            ({reviewCount} reviews)
+          <span className="text-xs sm:text-sm text-gray-500 ml-1">
+            ({reviewCount})
           </span>
         </div>
 
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-2">
-            <span className="text-lg font-bold text-gray-900">
+        <div className="flex items-center justify-between mb-2 sm:mb-3">
+          <div className="flex items-center space-x-1 sm:space-x-2">
+            <span className="text-base sm:text-lg font-bold text-gray-900">
               ₹{discountedPrice || price}
             </span>
             {discountedPrice && (
-              <span className="text-sm text-gray-500 line-through">
+              <span className="text-xs sm:text-sm text-gray-500 line-through">
                 ₹{price}
               </span>
             )}
@@ -177,38 +176,38 @@ const ProductCard = ({
         </div>
 
         {categories.length > 0 && (
-          <div className="mb-3">
-            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+          <div className="mb-2 sm:mb-3">
+            <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded">
               {categories[0].name}
             </span>
           </div>
         )}
 
         {/* Action Buttons */}
-        <div className="flex space-x-2">
+        <div className="flex space-x-1 sm:space-x-2">
           <button
             onClick={handleAddToCart}
             disabled={addingToCart}
-            className="flex-1 bg-pink-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-1"
+            className="flex-1 bg-pink-600 text-white px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-1"
           >
             {addingToCart ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-white"></div>
             ) : isInCart(_id) ? (
               <>
-                <ShoppingCart className="h-4 w-4" />
-                <span>Added</span>
+                <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Added</span>
               </>
             ) : (
               <>
-                <Plus className="h-4 w-4" />
-                <span>Add</span>
+                <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Add</span>
               </>
             )}
           </button>
 
           <button
             onClick={handleWishlistToggle}
-            className={`p-2 rounded-lg transition-colors ${
+            className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
               isInWishlist(_id)
                 ? "bg-pink-100 text-pink-600"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -218,7 +217,7 @@ const ProductCard = ({
             }
           >
             <Heart
-              className={`h-4 w-4 ${isInWishlist(_id) ? "fill-current" : ""}`}
+              className={`h-3 w-3 sm:h-4 sm:w-4 ${isInWishlist(_id) ? "fill-current" : ""}`}
             />
           </button>
         </div>
