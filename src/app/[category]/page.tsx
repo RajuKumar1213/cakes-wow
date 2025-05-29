@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
-import ProductGrid from '@/components/ProductGrid';
-import { Breadcrumb } from '@/components';
-import axios from 'axios';
+import { useState, useEffect, useCallback } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import ProductGrid from "@/components/ProductGrid";
+import { Breadcrumb, Header } from "@/components";
+import axios from "axios";
 
 interface Product {
   _id: string;
@@ -43,34 +43,39 @@ const CategoryPage = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const fetchProducts = useCallback(async (page = 1, sortBy = 'createdAt', sortOrder = 'desc') => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams({
-        category: categorySlug,
-        page: page.toString(),
-        limit: '12',
-        sortBy,
-        sortOrder,
-      });      // Add search params from URL
-      const search = searchParams.get('search');
-      if (search) params.append('search', search);
 
-      const response = await axios.get(`/api/products?${params}`);
-      const data = response.data;
+  const fetchProducts = useCallback(
+    async (page = 1, sortBy = "createdAt", sortOrder = "desc") => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams({
+          category: categorySlug,
+          page: page.toString(),
+          limit: "12",
+          sortBy,
+          sortOrder,
+        }); 
+        // Add search params from URL
+        const search = searchParams.get("search");
+        if (search) params.append("search", search);
 
-      if (data.success) {
-        setProducts(data.data.products);
-        setTotalCount(data.data.totalCount);
-        setCurrentPage(data.data.currentPage);
-        setTotalPages(data.data.totalPages);
+        const response = await axios.get(`/api/products?${params}`);
+        const data = response.data;
+
+        if (data.success) {
+          setProducts(data.data.products);
+          setTotalCount(data.data.totalCount);
+          setCurrentPage(data.data.currentPage);
+          setTotalPages(data.data.totalPages);
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [categorySlug, searchParams]);
+    },
+    [categorySlug, searchParams]
+  );
 
   const fetchCategory = useCallback(async () => {
     try {
@@ -81,23 +86,25 @@ const CategoryPage = () => {
         setCategory(data.data[0]);
       }
     } catch (error) {
-      console.error('Error fetching category:', error);
+      console.error("Error fetching category:", error);
     }
-  }, [categorySlug]);  useEffect(() => {
+  }, [categorySlug]);
+  
+  useEffect(() => {
     const fetchData = async () => {
       if (categorySlug) {
         await fetchCategory();
         await fetchProducts();
       }
     };
-    
+
     fetchData();
   }, [categorySlug, searchParams, fetchCategory, fetchProducts]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     fetchProducts(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSortChange = (sortBy: string, sortOrder: string) => {
@@ -105,13 +112,14 @@ const CategoryPage = () => {
   };
 
   const breadcrumbItems = [
-    { label: 'Home', href: '/' },
-    { label: category?.group || 'Products', href: '#' },
+    { label: "Home", href: "/" },
+    { label: category?.group || "Products", href: "#" },
     { label: category?.name || categorySlug, href: `/${categorySlug}` },
   ];
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Header />
       <div className="max-w-7xl mx-auto px-4 sm:px-2 lg:px-8 py-8">
         {/* Breadcrumb */}
         <Breadcrumb items={breadcrumbItems} />
@@ -123,9 +131,7 @@ const CategoryPage = () => {
               {category.name}
             </h1>
             {category.description && (
-              <p className="text-gray-600 max-w-2xl">
-                {category.description}
-              </p>
+              <p className="text-gray-600 max-w-2xl">{category.description}</p>
             )}
             <div className="mt-4 flex items-center space-x-4">
               <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-pink-100 text-pink-800">

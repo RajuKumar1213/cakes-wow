@@ -22,6 +22,7 @@ import {
   LogOut,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -165,18 +166,25 @@ const Header = () => {
           </div>
           {/* Right side - Icons */}
           <div className="flex items-center space-x-1">
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <Search className="w-5 h-5 text-gray-700" />
-            </button>
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <Heart className="w-5 h-5 text-gray-700" />
-            </button>
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
-              <ShoppingCart className="w-5 h-5 text-gray-700" />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                0
-              </span>
-            </button>
+            <Link href="/m-search">
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <Search className="w-5 h-5 text-gray-700" />
+              </button>
+            </Link>
+            <Link href="/wishlist">
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <Heart className="w-5 h-5 text-gray-700" />
+              </button>
+            </Link>
+
+            <Link href="/cart">
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
+                <ShoppingCart className="w-5 h-5 text-gray-700" />
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  0
+                </span>
+              </button>
+            </Link>
             <button
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors right-sidebar-trigger"
               onClick={() => setIsRightSidebarOpen(true)}
@@ -192,12 +200,7 @@ const Header = () => {
           {/* Main header */}
           <div className="container bg-white lg:px-10 md:px-10 shadow-md min-w-screen mx-auto py-6 fixed top-0 left-0 right-0 z-50 ">
             <div className="flex items-center justify-between">
-              {/* Logo */}
               <div className="flex items-center">
-                {/* <h1 className="text-3xl font-bold" style={{ color: "#ff0000" }}>
-                  Cake-Wow
-                </h1> */}
-
                 <Image
                   src="/logoo.webp"
                   alt="Bakingo Logo"

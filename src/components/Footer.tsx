@@ -111,7 +111,7 @@ const Footer = () => {
         <div className="container mx-auto px-2 sm:px-4">
           <div className="flex flex-col md:flex-row justify-between items-center text-center md:text-left">
             <p className="text-gray-500 text-xs sm:text-sm">
-              © 2025 Bakingo. All rights reserved.
+              © 2025 Cakes wow. All rights reserved.
             </p>
             <div className="flex items-center space-x-2 sm:space-x-4 mt-2 md:mt-0">
               <span className="text-gray-500 text-xs sm:text-sm">Show us some love ❤ & connect with us!</span>

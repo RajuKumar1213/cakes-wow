@@ -56,8 +56,10 @@ const ProductGrid = ({
     { value: "price:desc", label: "Price: High to Low" },
     { value: "rating:desc", label: "Highest Rated" },
     { value: "name:asc", label: "Name: A to Z" },
+    { value: "weight:asc", label: "Weight: Low to High" },
+    { value: "weight:desc", label: "Weight: High to Low" },
   ];
-
+  // Handle sort change
   const handleSortChange = (sortValue: string) => {
     const [newSortBy, newSortOrder] = sortValue.split(":");
     setSortBy(newSortBy);
@@ -79,7 +81,8 @@ const ProductGrid = ({
 
     // Previous button
     if (currentPage > 1) {
-      pages.push(        <button
+      pages.push(
+        <button
           key="prev"
           onClick={() => onPageChange?.(currentPage - 1)}
           className="px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm text-gray-500 hover:text-pink-600 border border-gray-300 rounded-l-md hover:bg-gray-50 whitespace-nowrap"
@@ -87,7 +90,7 @@ const ProductGrid = ({
           Prev
         </button>
       );
-    }    // Page numbers
+    } // Page numbers
     for (let i = startPage; i <= endPage; i++) {
       pages.push(
         <button
@@ -106,7 +109,8 @@ const ProductGrid = ({
 
     // Next button
     if (currentPage < totalPages) {
-      pages.push(        <button
+      pages.push(
+        <button
           key="next"
           onClick={() => onPageChange?.(currentPage + 1)}
           className="px-2 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm text-gray-500 hover:text-pink-600 border border-gray-300 rounded-r-md hover:bg-gray-50 whitespace-nowrap"
@@ -114,11 +118,10 @@ const ProductGrid = ({
           Next
         </button>
       );
-    }    return (
+    }
+    return (
       <div className="flex justify-center items-center mt-6 sm:mt-8">
-        <div className="flex space-x-1 overflow-x-auto max-w-full">
-          {pages}
-        </div>
+        <div className="flex space-x-1 overflow-x-auto max-w-full">{pages}</div>
       </div>
     );
   };
@@ -143,13 +146,15 @@ const ProductGrid = ({
   }
 
   return (
-    <div className="space-y-6">      {/* Header with sorting and view options */}
+    <div className="space-y-6">
+      {" "}
+      {/* Header with sorting and view options */}
       <div className="flex flex-col gap-3 sm:gap-4">
         <div className="flex items-center justify-between">
           <h2 className="text-base sm:text-lg font-semibold text-gray-900">
             {totalCount} Products
           </h2>
-          
+
           {/* Sort Dropdown - Mobile optimized */}
           <div className="relative">
             <select
@@ -203,7 +208,6 @@ const ProductGrid = ({
           </button>
         </div>
       </div>
-
       {/* Products Grid */}
       {products.length === 0 ? (
         <div className="text-center py-12">
@@ -212,7 +216,8 @@ const ProductGrid = ({
             <p>Try adjusting your filters or search terms.</p>
           </div>
         </div>
-      ) : (        <div
+      ) : (
+        <div
           className={`grid gap-3 sm:gap-6 ${
             viewMode === "grid"
               ? "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
@@ -224,7 +229,6 @@ const ProductGrid = ({
           ))}
         </div>
       )}
-
       {/* Pagination */}
       {renderPagination()}
     </div>
