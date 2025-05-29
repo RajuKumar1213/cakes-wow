@@ -2,7 +2,7 @@
 
 import { Search, ArrowLeft, Sparkles, Heart, Star, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function MobileSearchPage() {
   const router = useRouter();
