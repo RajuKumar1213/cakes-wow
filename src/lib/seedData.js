@@ -19,6 +19,34 @@ const sampleCategories = [
     imageUrl: "https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=400&h=300&fit=crop"
   },
   {
+    name: "Red Velvet Cakes",
+    group: "By Flavours",
+    type: "Category",
+    description: "Luxurious red velvet cakes with cream cheese frosting.",
+    imageUrl: "https://images.unsplash.com/photo-1586985289688-ca3cf47d3e6e?w=400&h=300&fit=crop"
+  },
+  {
+    name: "Black Forest Cakes",
+    group: "By Flavours",
+    type: "Category",
+    description: "Classic German cakes with chocolate, cherries, and whipped cream.",
+    imageUrl: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=300&fit=crop"
+  },
+  {
+    name: "Strawberry Cakes",
+    group: "By Flavours",
+    type: "Category",
+    description: "Fresh and fruity strawberry cakes perfect for summer celebrations.",
+    imageUrl: "https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=400&h=300&fit=crop"
+  },
+  {
+    name: "Butterscotch Cakes",
+    group: "By Flavours",
+    type: "Category",
+    description: "Rich butterscotch flavored cakes with caramel goodness.",
+    imageUrl: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=300&fit=crop"
+  },
+  {
     name: "Birthday Cakes",
     group: "Trending Cakes",
     type: "Occasion",
@@ -33,10 +61,17 @@ const sampleCategories = [
     imageUrl: "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=400&h=300&fit=crop"
   },
   {
-    name: "Red Velvet Cakes",
-    group: "By Flavours",
-    type: "Category",
-    description: "Luxurious red velvet cakes with cream cheese frosting.",
+    name: "Wedding Cakes",
+    group: "Trending Cakes",
+    type: "Occasion", 
+    description: "Elegant multi-tier cakes perfect for your special day.",
+    imageUrl: "https://images.unsplash.com/photo-1535254973040-607b474cb50d?w=400&h=300&fit=crop"
+  },
+  {
+    name: "Heart Shaped Cakes",
+    group: "By Relationship",
+    type: "Relationship",
+    description: "Express your love with our beautiful heart-shaped cakes.",
     imageUrl: "https://images.unsplash.com/photo-1586985289688-ca3cf47d3e6e?w=400&h=300&fit=crop"
   },
   {
@@ -45,6 +80,34 @@ const sampleCategories = [
     type: "Dessert",
     description: "Individual sized treats perfect for parties and personal indulgence.",
     imageUrl: "https://images.unsplash.com/photo-1426869981800-95ebf51ce900?w=400&h=300&fit=crop"
+  },
+  {
+    name: "Pastries",
+    group: "Desserts", 
+    type: "Dessert",
+    description: "Flaky, buttery pastries with various fillings and toppings.",
+    imageUrl: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=300&fit=crop"
+  },
+  {
+    name: "Brownies",
+    group: "Desserts", 
+    type: "Dessert",
+    description: "Rich, fudgy chocolate brownies for the ultimate indulgence.",
+    imageUrl: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400&h=300&fit=crop"
+  },
+  {
+    name: "Kids Theme Cakes",
+    group: "Theme Cakes",
+    type: "Theme",
+    description: "Fun and colorful themed cakes perfect for children's parties.",
+    imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop"
+  },
+  {
+    name: "Photo Cakes",
+    group: "Theme Cakes",
+    type: "Special",
+    description: "Personalized cakes with edible photo prints for memorable celebrations.",
+    imageUrl: "https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=400&h=300&fit=crop"
   }
 ];
 

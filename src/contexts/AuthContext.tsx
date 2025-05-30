@@ -6,6 +6,7 @@ interface User {
   id: string;
   phoneNumber: string;
   isVerified: boolean;
+  role?: string;
   createdAt: string;
   updatedAt: string;
 }

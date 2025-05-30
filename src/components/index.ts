@@ -7,4 +7,6 @@ export { default as Footer } from './Footer';
 export {default as Breadcrumb } from "./Breadcrumb"
 export {default as ProductGrid } from "./ProductGrid"
 export { default as Loading, Spinner, PageLoading } from './Loading';
+export {default as CategoryForm} from "./CategoryForm"
+export {default as ProductForm} from "./ProductForm"
 export { useToast } from './Toast';

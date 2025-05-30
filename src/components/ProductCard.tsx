@@ -115,42 +115,45 @@ const ProductCard = ({
         "heart"
       );
     }
-  };  return (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 group">
+  };
+  return (
+    <div className="bg-white rounded-md shadow-md hover:shadow-lg transition-all duration-300 group">
       <Link href={`/products/${slug}`}>
-        <div className="relative h-32 sm:h-44 overflow-hidden rounded-t-lg">
+        <div className="relative h-36 sm:h-48 overflow-hidden rounded-t-lg">
           <Image
             src={imageUrls[0] || "/placeholder-cake.jpg"}
             alt={name}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
+            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            priority
           />
           {discountPercentage > 0 && (
-            <div className="absolute top-1 left-1 sm:top-2 sm:left-2 bg-red-500 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs font-medium">
+            <div className="absolute bg-red-500 text-white px-2 py-0.5 sm:px-3 sm:py-1 rounded-br-3xl text-xs font-medium">
               {discountPercentage}% OFF
             </div>
           )}
-          {isBestseller && (
-            <div className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-yellow-500 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs font-medium">
+          {/* {isBestseller && (
+            <div className="absolute top-0 right-0 sm:top-0 sm:right-0 bg-yellow-500 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-bl-3xl text-xs font-medium">
               Bestseller
             </div>
-          )}
+          )} */}
           {isEggless && (
-            <div className="absolute bottom-1 left-1 sm:bottom-2 sm:left-2 bg-green-500 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-xs font-medium">
+            <div className="absolute bottom-0 right-0 bg-green-500 text-white px-1.5 py-0.5 sm:px-3 sm:py-0.5 rounded-tl-3xl text-xs font-medium">
               Eggless
             </div>
           )}
         </div>
       </Link>
 
-      <div className="p-2 sm:p-3">
+      <div className="p-2">
         <Link href={`/products/${slug}`}>
-          <h3 className="font-medium text-gray-800 mb-1 sm:mb-2 line-clamp-2 text-sm sm:text-base min-h-[2rem] sm:min-h-[2.5rem] hover:text-pink-600 cursor-pointer">
+          <h3 className="font-medium text-gray-800 line-clamp-2 text-sm pb-1 hover:text-pink-600 cursor-pointer">
             {name}
           </h3>
         </Link>
 
-        <div className="flex items-center mb-1 sm:mb-2">
+        <div className="flex items-center ">
           <div className="flex items-center text-yellow-400">
             <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-current" />
             <span className="ml-1 text-xs sm:text-sm font-medium text-gray-700">
@@ -158,18 +161,18 @@ const ProductCard = ({
             </span>
           </div>
           <span className="text-xs sm:text-sm text-gray-500 ml-1">
-            ({reviewCount})
+            ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
           </span>
         </div>
 
-        <div className="flex items-center justify-between mb-2 sm:mb-3">
+        <div className="flex items-center justify-between mb-2 sm:my-1">
           <div className="flex items-center space-x-1 sm:space-x-2">
             <span className="text-base sm:text-lg font-bold text-gray-900">
               ₹{discountedPrice || price}
             </span>
             {discountedPrice && (
               <span className="text-xs sm:text-sm text-gray-500 line-through">
-                ₹{price}
+              ₹{price}
               </span>
             )}
           </div>
@@ -217,7 +220,9 @@ const ProductCard = ({
             }
           >
             <Heart
-              className={`h-3 w-3 sm:h-4 sm:w-4 ${isInWishlist(_id) ? "fill-current" : ""}`}
+              className={`h-3 w-3 sm:h-4 sm:w-4 ${
+                isInWishlist(_id) ? "fill-current" : ""
+              }`}
             />
           </button>
         </div>

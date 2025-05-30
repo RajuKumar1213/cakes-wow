@@ -32,6 +32,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    window.scrollTo(0, 0); // Scroll to top on page load
     const fetchProducts = async () => {
       try {
         // Fetch bestsellers

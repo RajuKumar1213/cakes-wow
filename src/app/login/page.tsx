@@ -9,12 +9,22 @@ import axios from 'axios';
 export default function LoginPage() {
   const { login } = useAuth();
   const [step, setStep] = useState(1); // 1: phone, 2: otp
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('+91 ');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const router = useRouter();
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Ensure +91 prefix is always present
+    if (value.startsWith('+91 ')) {
+      setPhoneNumber(value);
+    } else if (value.length < 4) {
+      setPhoneNumber('+91 ');
+    }
+  };
+
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -58,9 +68,7 @@ export default function LoginPage() {
         // Update auth context with user data
         login(response.data.user);
         // Redirect to dashboard or home page
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 1500);
+       router.push("/")
       } else {
         setError(response.data.error || 'Invalid OTP');
       }
@@ -101,7 +109,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-black/50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Header */}
@@ -149,25 +157,21 @@ export default function LoginPage() {
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Phone className="w-5 h-5 text-gray-400" />
-                  </div>
-                  <input
+                  </div>                  <input
                     id="phone"
                     type="tel"
                     value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="+1234567890"
+                    onChange={handlePhoneChange}
+                    placeholder="+91 98765 43210"
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
                     required
                   />
-                </div>
-                <p className="mt-2 text-xs text-gray-500">
-                  Enter your phone number with country code
+                </div>                <p className="mt-2 text-xs text-gray-500">
+                  Enter your phone number (e.g., +91 98765 43210)
                 </p>
-              </div>
-
-              <button
+              </div>              <button
                 type="submit"
-                disabled={loading || !phoneNumber.trim()}
+                disabled={loading || phoneNumber.length < 8}
                 className="w-full bg-orange-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-orange-700 focus:ring-4 focus:ring-orange-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
               >
                 {loading ? (
