@@ -1,18 +1,18 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "../contexts/ToastContext";
 import axios from "axios";
 
-// Form validation schema
-const productSchema = z.object({
+// Base schema without images
+const baseProductSchema = z.object({
   name: z.string().min(1, "Product name is required").max(100, "Name too long"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   shortDescription: z.string().optional(),
-  price: z.number().min(0.01, "Price must be greater than 0"),
+  price: z.number().min(0, "Price must be greater than 0").optional(),
   discountedPrice: z.number().min(0).optional(),
   categories: z.array(z.string()).min(1, "Please select at least one category"),
   tags: z.array(z.string()).optional(),
@@ -49,10 +49,19 @@ const productSchema = z.object({
   metaTitle: z.string().optional(),
   metaDescription: z.string().optional(),
   sortOrder: z.number().min(0).optional(),
-  images: z.array(z.any()).min(1, "At least one image is required"),
+  images: z.array(z.any()).optional(),
 });
 
-type ProductFormData = z.infer<typeof productSchema>;
+// Form validation schema with conditional image validation
+const createProductSchema = (isEditing: boolean, hasExistingImages: boolean) => {
+  return baseProductSchema.extend({
+    images: isEditing && hasExistingImages 
+      ? z.array(z.any()).optional() 
+      : z.array(z.any()).min(1, "At least one image is required").optional(),
+  });
+};
+
+type ProductFormData = z.infer<typeof baseProductSchema>;
 
 interface ProductFormProps {
   product?: any;
@@ -80,17 +89,25 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const [allergens, setAllergens] = useState<string[]>([]);
   const [newAllergen, setNewAllergen] = useState("");
   const [tags, setTags] = useState<string[]>([]);
-  const [newTag, setNewTag] = useState("");
-  const {
+  const [newTag, setNewTag] = useState("");  // Determine if editing and has existing images
+  const isEditing = !!product;
+  const hasExistingImages = !!(product?.imageUrls && product.imageUrls.length > 0);
+  
+  // Create schema dynamically but use a base schema for form initialization
+  const productSchema = useMemo(() => {
+    return createProductSchema(isEditing, hasExistingImages);
+  }, [isEditing, hasExistingImages]);  const {
     register,
     handleSubmit,
     control,
     watch,
     setValue,
-    formState: { errors },
-    reset,
-  } = useForm<ProductFormData>({
-    resolver: zodResolver(productSchema),
+    trigger,
+    getValues,
+    formState: { errors, isValid },
+    reset,  } = useForm<ProductFormData>({
+    resolver: zodResolver(baseProductSchema),
+    mode: "onChange",
     defaultValues: {
       isEggless: false,
       isAvailable: true,
@@ -112,7 +129,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       },
       images: [],
     },
-  }); // Load existing product data when editing
+  });
   useEffect(() => {
     if (product) {
       // Set form values
@@ -121,7 +138,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
       setValue("shortDescription", product.shortDescription || "");
       setValue("price", product.price || 0);
       setValue("discountedPrice", product.discountedPrice || 0);
-      setValue("categories", product.categories || []);
+
+      // Handle categories - extract _id if they are objects, otherwise use as is
+      const categoryIds = (product.categories || []).map((cat: { _id: any }) =>
+        typeof cat === "object" && cat._id ? cat._id : cat
+      );
+      setValue("categories", categoryIds);
       setValue("tags", product.tags || []);
       setValue(
         "weightOptions",
@@ -167,30 +189,68 @@ const ProductForm: React.FC<ProductFormProps> = ({
         // so we'll handle this case differently in form submission
       }
     }
-  }, [product, setValue]);
-
-  console.log(categories);
-
-  const onSubmit = async (data: ProductFormData) => {
+  }, [product, setValue]);  const onSubmit = async (data: ProductFormData) => {
+    console.log("=== ONSUBMIT FUNCTION CALLED ===");
+    console.log("Form submitted with data:", data);
+    console.log("Form validation errors:", errors);
+    console.log("Is editing:", isEditing);
+    console.log("Has existing images:", hasExistingImages);
+    console.log("Image files:", imageFiles);
+    console.log("Image previews:", imagePreviews);
+    
+    // Manual validation for images
+    const currentSchema = createProductSchema(isEditing, hasExistingImages);
+    try {
+      await currentSchema.parseAsync(data);
+      console.log("Schema validation passed!");
+    } catch (error) {
+      console.log("Schema validation failed:", error);
+      setIsSubmitting(false);
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
-      const formData = new FormData();
-
-      // Add basic fields
+      const formData = new FormData(); // Add basic fields
       formData.append("name", data.name);
       formData.append("description", data.description);
       if (data.shortDescription)
         formData.append("shortDescription", data.shortDescription);
-      formData.append("price", data.price.toString());
+      if (data.price) formData.append("price", data.price.toString());
       if (data.discountedPrice)
         formData.append("discountedPrice", data.discountedPrice.toString());
 
-      // Add array fields as JSON strings
-      formData.append("categories", JSON.stringify(data.categories));
-      formData.append("tags", JSON.stringify(data.tags || []));
-      formData.append("weightOptions", JSON.stringify(data.weightOptions));
-      formData.append("ingredients", JSON.stringify(data.ingredients));
-      formData.append("allergens", JSON.stringify(data.allergens || []));
+      // Add array fields - send each item separately for backend to use getAll()
+      data.categories.forEach((categoryId) => {
+        formData.append("categories", categoryId);
+      });
+
+      (data.tags || []).forEach((tag) => {
+        formData.append("tags", tag);
+      });
+
+      // Send weight options as indexed fields
+      data.weightOptions.forEach((option, index) => {
+        formData.append(`weightOptions[${index}][weight]`, option.weight);
+        formData.append(
+          `weightOptions[${index}][price]`,
+          option.price.toString()
+        );
+        if (option.discountedPrice && option.discountedPrice > 0) {
+          formData.append(
+            `weightOptions[${index}][discountedPrice]`,
+            option.discountedPrice.toString()
+          );
+        }
+      });
+
+      data.ingredients.forEach((ingredient) => {
+        formData.append("ingredients", ingredient);
+      });
+
+      (data.allergens || []).forEach((allergen) => {
+        formData.append("allergens", allergen);
+      });
 
       // Add boolean fields
       formData.append("isEggless", data.isEggless.toString());
@@ -219,73 +279,57 @@ const ProductForm: React.FC<ProductFormProps> = ({
       // Add SEO fields
       if (data.metaTitle) formData.append("metaTitle", data.metaTitle);
       if (data.metaDescription)
-        formData.append("metaDescription", data.metaDescription);
-
-      // Handle images - both new uploads and existing URLs
+        formData.append("metaDescription", data.metaDescription); // Handle images - both new uploads and existing URLs
       if (imageFiles.length > 0) {
-        imageFiles.forEach((file, index) => {
-          formData.append(`images${index}`, file);
+        imageFiles.forEach((file) => {
+          formData.append("images", file);
         });
       }
 
-      // For existing products, include existing image URLs if no new images uploaded
-      if (product && product.imageUrls && imageFiles.length === 0) {
-        formData.append("existingImageUrls", JSON.stringify(product.imageUrls));
+      // For existing products, always include existing image URLs
+      if (product && product.imageUrls && product.imageUrls.length > 0) {
+        product.imageUrls.forEach((url: string | Blob) => {
+          formData.append("imageUrls", url);
+        });
       }
 
       // if product add id
       if (product) {
         formData.append("_id", product._id);
       }
-
       if (product) {
-        const response = await axios.patch("/api/products");
+        const response = await axios.patch("/api/products", formData);
 
         if (response.data.success) {
           showSuccess("Success!", "Product updated successfully!");
-          reset();
+          // Don't reset form for updates, just close the form
+          if (onSuccess) {
+            onSuccess();
+          }
         }
       } else {
         const response = await axios.post("/api/products", formData);
         if (response.data.success) {
           showSuccess("Success!", "Product created successfully!");
+          // Reset form for new products
           reset();
+          setImageFiles([]);
+          setImagePreviews([]);
+          setWeightOptions([{ weight: "", price: 0, discountedPrice: 0 }]);
+          setIngredients([]);
+          setAllergens([]);
+          setTags([]);
+          setNewIngredient("");
+          setNewAllergen("");
+          setNewTag("");
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+          if (onSuccess) {
+            onSuccess();
+          }
         }
       }
-
-      // if (response.ok) {
-      //   const successMessage = product
-      //     ? "Product updated successfully!"
-      //     : "Product created successfully!";
-      //   showSuccess("Success!", successMessage);
-
-      //   // Only reset form for new products, not updates
-      //   if (!product) {
-      //     reset();
-      //     setImageFiles([]);
-      //     setImagePreviews([]);
-      //     setWeightOptions([{ weight: "", price: 0, discountedPrice: 0 }]);
-      //     setIngredients([]);
-      //     setAllergens([]);
-      //     setTags([]);
-      //     setNewIngredient("");
-      //     setNewAllergen("");
-      //     setNewTag("");
-      //     if (fileInputRef.current) {
-      //       fileInputRef.current.value = "";
-      //     }
-      //   }
-
-      //   if (onSuccess) {
-      //     onSuccess();
-      //   }
-      // } else {
-      //   const errorData = await response.json();
-      //   const errorMessage = product
-      //     ? "Failed to update product"
-      //     : "Failed to create product";
-      //   throw new Error(errorData.message || errorMessage);
-      // }
     } catch (error) {
       console.error("Error submitting product:", error);
 
@@ -573,17 +617,25 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
+                      {" "}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Regular Price (₹)
-                        </label>
-                        <input
-                          {...register("price", { valueAsNumber: true })}
+                        </label>                        <input
+                          {...register("price", {
+                            setValueAs: (value) => {
+                              if (value === "" || value === null || value === undefined) {
+                                return undefined;
+                              }
+                              const num = Number(value);
+                              return isNaN(num) ? undefined : num;
+                            },
+                          })}
                           type="number"
                           step="0.01"
                           min="0"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                          placeholder="0.00"
+                          placeholder="0.00 (optional)"
                         />
                         {errors.price && (
                           <p className="text-red-500 text-sm mt-1">
@@ -591,14 +643,18 @@ const ProductForm: React.FC<ProductFormProps> = ({
                           </p>
                         )}
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Discounted Price (₹)
-                        </label>
-                        <input
+                        </label>{" "}                        <input
                           {...register("discountedPrice", {
-                            valueAsNumber: true,
+                            setValueAs: (value) => {
+                              if (value === "" || value === null || value === undefined) {
+                                return undefined;
+                              }
+                              const num = Number(value);
+                              return isNaN(num) ? undefined : num;
+                            },
                           })}
                           type="number"
                           step="0.01"
@@ -744,31 +800,43 @@ const ProductForm: React.FC<ProductFormProps> = ({
                         Categories
                       </label>
                       <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                        {" "}
                         {categories.map((cat) => (
                           <Controller
                             key={cat._id || cat}
                             name="categories"
                             control={control}
-                            render={({ field }) => (
-                              <label className="flex items-center space-x-2 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={field.value?.includes(cat._id || cat)}
-                                  onChange={(e) => {
-                                    const current = field.value || [];
-                                    if (e.target.checked) {
-                                      field.onChange([...current, cat._id || cat]);
-                                    } else {
-                                      field.onChange(current.filter((c) => c !== (cat._id || cat)));
-                                    }
-                                  }}
-                                  className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
-                                />
-                                <span className="text-sm text-gray-700">
-                                  {cat.name || cat}
-                                </span>
-                              </label>
-                            )}
+                            render={({ field }) => {
+                              return (
+                                <label className="flex items-center space-x-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={field.value?.includes(
+                                      cat._id || cat
+                                    )}
+                                    onChange={(e) => {
+                                      const current = field.value || [];
+                                      if (e.target.checked) {
+                                        field.onChange([
+                                          ...current,
+                                          cat._id || cat,
+                                        ]);
+                                      } else {
+                                        field.onChange(
+                                          current.filter(
+                                            (c) => c !== (cat._id || cat)
+                                          )
+                                        );
+                                      }
+                                    }}
+                                    className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                                  />
+                                  <span className="text-sm text-gray-700">
+                                    {cat.name || cat}
+                                  </span>
+                                </label>
+                              );
+                            }}
                           />
                         ))}
                       </div>
@@ -980,7 +1048,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
                         )}
                       </div>
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Preparation Time
@@ -996,14 +1063,20 @@ const ProductForm: React.FC<ProductFormProps> = ({
                           {errors.preparationTime.message}
                         </p>
                       )}
-                    </div>
-
+                    </div>{" "}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Sort Order
                       </label>
                       <input
-                        {...register("sortOrder", { valueAsNumber: true })}
+                        {...register("sortOrder", {
+                          valueAsNumber: true,
+                          setValueAs: (value) => {
+                            return isNaN(value) || value === ""
+                              ? undefined
+                              : value;
+                          },
+                        })}
                         type="number"
                         min="0"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
@@ -1015,7 +1088,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
                         </p>
                       )}
                     </div>
-
                     {/* Boolean toggles */}
                     <div className="space-y-3">
                       <Controller
@@ -1339,6 +1411,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
+                      {" "}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Calories
@@ -1346,6 +1419,11 @@ const ProductForm: React.FC<ProductFormProps> = ({
                         <input
                           {...register("nutritionalInfo.calories", {
                             valueAsNumber: true,
+                            setValueAs: (value) => {
+                              return isNaN(value) || value === ""
+                                ? undefined
+                                : value;
+                            },
                           })}
                           type="number"
                           min="0"
@@ -1412,7 +1490,35 @@ const ProductForm: React.FC<ProductFormProps> = ({
                   </div>
                 </div>
               </div>
+            </div>            {/* Debug Section */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+              <h3 className="text-sm font-medium text-yellow-800 mb-2">Debug Info</h3>
+              <div className="text-xs text-yellow-700 space-y-1">
+                <p>Form Valid: {isValid ? 'Yes' : 'No'}</p>
+                <p>Has Errors: {Object.keys(errors).length > 0 ? 'Yes' : 'No'}</p>
+                <p>Errors: {JSON.stringify(errors, null, 2)}</p>
+                <p>Is Editing: {isEditing ? 'Yes' : 'No'}</p>
+                <p>Has Existing Images: {hasExistingImages ? 'Yes' : 'No'}</p>
+                <p>Image Files Count: {imageFiles.length}</p>
+                <p>Image Previews Count: {imagePreviews.length}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  console.log("Manual debug trigger:");
+                  console.log("Form data:", getValues());
+                  console.log("Form errors:", errors);
+                  console.log("Is valid:", isValid);
+                  console.log("Is editing:", isEditing);
+                  console.log("Has existing images:", hasExistingImages);
+                  trigger(); // Manually trigger validation
+                }}
+                className="mt-2 px-4 py-2 bg-yellow-600 text-white rounded text-xs"
+              >
+                Debug Form
+              </button>
             </div>
+
             {/* Submit Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6 border-t border-gray-200">
               <button
@@ -1436,10 +1542,30 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 className="px-8 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
               >
                 Cancel
-              </button>
-              <button
+              </button>              <button
                 type="submit"
                 disabled={isSubmitting}
+                onClick={async (e) => {
+                  console.log("=== SUBMIT BUTTON CLICKED ===");
+                  console.log("Form errors:", errors);
+                  console.log("Is valid:", isValid);
+                  console.log("Form data:", getValues());
+                  console.log("Is editing:", isEditing);
+                  console.log("Has existing images:", hasExistingImages);
+                  console.log("Image files count:", imageFiles.length);
+                  console.log("Image previews count:", imagePreviews.length);
+                  
+                  // Force validation
+                  const isFormValid = await trigger();
+                  console.log("Manual validation result:", isFormValid);
+                  console.log("Errors after validation:", errors);
+                  
+                  if (!isFormValid) {
+                    console.log("Form is invalid, preventing submission");
+                    e.preventDefault();
+                    return;
+                  }
+                }}
                 className="px-8 py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-lg hover:from-orange-600 hover:to-pink-600 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
               >
                 {isSubmitting ? (

@@ -144,7 +144,8 @@ export async function POST(request) {
     const name = formData.get("name");
     const description = formData.get("description");
     const shortDescription = formData.get("shortDescription");
-    const price = parseFloat(formData.get("price"));
+    const price = parseFloat(formData.get("price")) || 0;
+    
     const discountedPrice = formData.get("discountedPrice")
       ? parseFloat(formData.get("discountedPrice"))
       : null;
@@ -153,10 +154,32 @@ export async function POST(request) {
     const isEggless = formData.get("isEggless") === "true";
     const isBestseller = formData.get("isBestseller") === "true";
     const isFeatured = formData.get("isFeatured") === "true";
+    const isAvailable = formData.get("isAvailable") !== "false"; // Default to true
+    const minimumOrderQuantity =
+      parseInt(formData.get("minimumOrderQuantity")) || 1;
+    const sortOrder = formData.get("sortOrder")
+      ? parseInt(formData.get("sortOrder"))
+      : 0;
+    const metaTitle = formData.get("metaTitle");
+    const metaDescription = formData.get("metaDescription");
+
+    // Parse nutritional info if provided
+    let nutritionalInfo = {};
+    const nutritionalInfoStr = formData.get("nutritionalInfo");
+    if (nutritionalInfoStr) {
+      try {
+        nutritionalInfo = JSON.parse(nutritionalInfoStr);
+      } catch (e) {
+        // If parsing fails, use empty object
+        nutritionalInfo = {};
+      }
+    }
 
     // Get arrays
     const categories = formData.getAll("categories");
     const tags = formData.getAll("tags");
+    const ingredients = formData.getAll("ingredients");
+    const allergens = formData.getAll("allergens");
     const existingImageUrls = formData.getAll("imageUrls");
 
     // Process weight options
@@ -171,29 +194,29 @@ export async function POST(request) {
     }
 
     // Validate required fields
-    if (!name || !description || !price || !categories.length) {
+    if (!name || !categories.length || weightOptions.length === 0) {
       return NextResponse.json(
-        { error: "Name, description, price, and categories are required" },
+        { error: "Name, categories, and weight options are required" },
         { status: 400 }
       );
     }
 
     // Validate price
-    const validatedPrice = validatePrice(price);
-    const validatedDiscountedPrice = discountedPrice
-      ? validatePrice(discountedPrice)
-      : null;
+    // const validatedPrice = validatePrice(price);
+    // const validatedDiscountedPrice = discountedPrice
+    //   ? validatePrice(discountedPrice)
+    //   : null;
 
     // Validate discount price
-    if (
-      validatedDiscountedPrice &&
-      validatedDiscountedPrice >= validatedPrice
-    ) {
-      return NextResponse.json(
-        { error: "Discounted price must be less than regular price" },
-        { status: 400 }
-      );
-    }
+    // if (
+    //   validatedDiscountedPrice &&
+    //   validatedDiscountedPrice >= validatedPrice
+    // ) {
+    //   return NextResponse.json(
+    //     { error: "Discounted price must be less than regular price" },
+    //     { status: 400 }
+    //   );
+    // }
 
     // Process image uploads
     const imageUrls = [...existingImageUrls];
@@ -296,16 +319,14 @@ export async function POST(request) {
     // }
 
     // Validate weight options
-    const validatedWeightOptions = validateWeightOptions(weightOptions);
-
-    // Create product
+    const validatedWeightOptions = validateWeightOptions(weightOptions); // Create product
     const product = new Product({
       name,
       slug,
       description,
       shortDescription: shortDescription || "",
-      price: validatedPrice,
-      discountedPrice: validatedDiscountedPrice,
+      price,
+      discountedPrice,
       imageUrls: imageUrls,
       categories,
       tags: tags || [],
@@ -313,11 +334,16 @@ export async function POST(request) {
       isEggless: Boolean(isEggless),
       isBestseller: Boolean(isBestseller),
       isFeatured: Boolean(isFeatured),
+      isAvailable: Boolean(isAvailable),
       stockQuantity: stockQuantity,
+      minimumOrderQuantity: minimumOrderQuantity,
       preparationTime: preparationTime,
-      ingredients: [],
-      allergens: [],
-      nutritionalInfo: {},
+      ingredients: ingredients || [],
+      allergens: allergens || [],
+      nutritionalInfo: nutritionalInfo,
+      metaTitle: metaTitle || "",
+      metaDescription: metaDescription || "",
+      sortOrder: sortOrder,
     });
 
     await product.save();
@@ -383,10 +409,30 @@ export async function PATCH(request) {
     const isEggless = formData.get("isEggless") === "true";
     const isBestseller = formData.get("isBestseller") === "true";
     const isFeatured = formData.get("isFeatured") === "true";
+    const isAvailable = formData.get("isAvailable") !== "false"; // Default to true
+    const minimumOrderQuantity =
+      parseInt(formData.get("minimumOrderQuantity")) || 1;
+    const sortOrder = formData.get("sortOrder")
+      ? parseInt(formData.get("sortOrder"))
+      : 0;
+    const metaTitle = formData.get("metaTitle");
+    const metaDescription = formData.get("metaDescription");
 
-    // Get arrays
+    // Parse nutritional info if provided
+    let nutritionalInfo = {};
+    const nutritionalInfoStr = formData.get("nutritionalInfo");
+    if (nutritionalInfoStr) {
+      try {
+        nutritionalInfo = JSON.parse(nutritionalInfoStr);
+      } catch (e) {
+        // If parsing fails, use empty object
+        nutritionalInfo = {};
+      }
+    } // Get arrays
     const categories = formData.getAll("categories");
     const tags = formData.getAll("tags");
+    const ingredients = formData.getAll("ingredients");
+    const allergens = formData.getAll("allergens");
     const existingImageUrls = formData.getAll("imageUrls");
 
     // Process weight options
@@ -530,9 +576,7 @@ export async function PATCH(request) {
     }
 
     // Validate weight options
-    const validatedWeightOptions = validateWeightOptions(weightOptions);
-
-    // Update product
+    const validatedWeightOptions = validateWeightOptions(weightOptions); // Update product
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
       {
@@ -549,8 +593,16 @@ export async function PATCH(request) {
         isEggless: Boolean(isEggless),
         isBestseller: Boolean(isBestseller),
         isFeatured: Boolean(isFeatured),
+        isAvailable: Boolean(isAvailable),
         stockQuantity: stockQuantity,
+        minimumOrderQuantity: minimumOrderQuantity,
         preparationTime: preparationTime,
+        ingredients: ingredients || [],
+        allergens: allergens || [],
+        nutritionalInfo: nutritionalInfo,
+        metaTitle: metaTitle || "",
+        metaDescription: metaDescription || "",
+        sortOrder: sortOrder,
         updatedAt: new Date(),
       },
       { new: true, runValidators: true }
