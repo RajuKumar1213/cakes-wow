@@ -2,10 +2,30 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useRouter } from 'next/navigation';
 
-const HeroCarousel = () => {
+interface Category {
+  _id: string;
+  name: string;
+  slug: string;
+  group: string;
+  type: string;
+  description?: string;
+  imageUrl?: string;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface HeroCarouselProps {
+  categories?: Category[];
+}
+
+const HeroCarousel = ({ categories = [] }: HeroCarouselProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const router = useRouter();
 
   // Check if we're on mobile
   useEffect(() => {
@@ -19,63 +39,40 @@ const HeroCarousel = () => {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  // Bakingo-style banner boxes with working images
-  const banners = [
+  // Fallback banners if no categories provided
+  const fallbackBanners = [
     {
-      id: 1,
-      image:
-        "https://cdn.pixabay.com/photo/2017/01/11/11/33/cake-1971552_1280.jpg",
+      id: "1",
+      image: "https://cdn.pixabay.com/photo/2017/01/11/11/33/cake-1971552_1280.jpg",
       alt: "Designer Cakes",
       title: "Designer Cakes",
       subtitle: "Celebrate in Style",
       bgColor: "bg-gradient-to-r from-pink-400 to-purple-500",
+      href: "/products"
     },
     {
-      id: 2,
-      image:
-        "https://plus.unsplash.com/premium_photo-1713447395823-2e0b40b75a89?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8Y2FrZXxlbnwwfHwwfHx8MA%3D%3D",
+      id: "2",
+      image: "https://plus.unsplash.com/premium_photo-1713447395823-2e0b40b75a89?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8Y2FrZXxlbnwwfHwwfHx8MA%3D%3D",
       alt: "Chocolate Cakes",
       title: "Chocolate Cakes",
       subtitle: "Rich & Delicious",
       bgColor: "bg-gradient-to-r from-orange-400 to-yellow-500",
-    },
-    {
-      id: 3,
-      image:
-        "https://images.unsplash.com/photo-1508737804141-4c3b688e2546?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8Y2FrZXxlbnwwfHwwfHx8MA%3D%3D",
-      alt: "Anniversary Cakes",
-      title: "Anniversary Cakes",
-      subtitle: "Make Memories Sweet",
-      bgColor: "bg-gradient-to-r from-red-400 to-pink-500",
-    },
-    {
-      id: 4,
-      image:
-        "https://cdn.pixabay.com/photo/2017/05/01/05/18/pastry-2274750_1280.jpg",
-      alt: "Birthday Cakes",
-      title: "Birthday Cakes",
-      subtitle: "Celebrate Every Moment",
-      bgColor: "bg-gradient-to-r from-blue-400 to-indigo-500",
-    },
-    {
-      id: 5,
-      image:
-        "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fGNha2V8ZW58MHx8MHx8fDA%3D",
-      alt: "Photo Cakes",
-      title: "Photo Cakes",
-      subtitle: "Personalized Just for You",
-      bgColor: "bg-gradient-to-r from-green-400 to-blue-500",
-    },
-    {
-      id: 6,
-      image:
-        "https://cdn.pixabay.com/photo/2016/03/27/22/38/cake-1284548_1280.jpg",
-      alt: "Gourmet Cakes",
-      title: "Gourmet Cakes",
-      subtitle: "Premium Quality",
-      bgColor: "bg-gradient-to-r from-purple-400 to-pink-500",
-    },
+      href: "/products"
+    }
   ];
+
+  // Create banners from categories or use fallback
+  const banners = categories.length > 0 
+    ? categories.slice(0, 6).map((category) => ({
+        id: category._id,
+        image: category.imageUrl || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&auto=format&fit=crop&q=60",
+        alt: category.name,
+        title: category.name,
+        subtitle: category.description || `Explore ${category.name}`,
+        bgColor: "bg-gradient-to-r from-pink-400 to-purple-500",
+        href: `/${category.slug}`
+      }))
+    : fallbackBanners;
 
   // Calculate maximum slides based on screen size
   const maxSlides = isMobile ? banners.length - 1 : banners.length - 3;
@@ -135,10 +132,9 @@ const HeroCarousel = () => {
                 className={`${
                   isMobile ? "w-full" : "w-1/3"
                 } flex-shrink-0 px-1 sm:px-3`}
-              >
-                <div
+              >                <div
                   className={`relative h-64 sm:h-48 md:h-64 lg:h-80 rounded-lg sm:rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group ${banner.bgColor}`}
-                  onClick={() => alert("This function is coming soon!")}
+                  onClick={() => router.push(banner.href)}
                 >
                   {/* Background Image */}
                   <div className="absolute inset-0">

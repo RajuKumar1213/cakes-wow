@@ -4,6 +4,8 @@ import { X, RotateCcw, Sliders, ChevronDown, ChevronUp } from "lucide-react";
 interface FilterSidebarProps {
   onFilterChange: (filters: Record<string, any>) => void;
   category?: string;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 interface PriceRange {
@@ -16,7 +18,7 @@ interface WeightOption {
   count: number;
 }
 
-const FilterSidebar = ({ onFilterChange, category }: FilterSidebarProps) => {
+const FilterSidebar = ({ onFilterChange, category, isOpen = false, onClose }: FilterSidebarProps) => {
   // Use ref to store the latest onFilterChange function
   const onFilterChangeRef = useRef(onFilterChange);
   onFilterChangeRef.current = onFilterChange;
@@ -32,7 +34,8 @@ const FilterSidebar = ({ onFilterChange, category }: FilterSidebarProps) => {
   const [weightOptions, setWeightOptions] = useState<WeightOption[]>([]);
   const [selectedWeights, setSelectedWeights] = useState<string[]>([]);
   const [isEggless, setIsEggless] = useState<boolean | null>(null);
-  const [isBestseller, setIsBestseller] = useState<boolean | null>(null);  const [loading, setLoading] = useState(true);
+  const [isBestseller, setIsBestseller] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isDragging, setIsDragging] = useState<"min" | "max" | null>(null);
   const [isInitialized, setIsInitialized] = useState(false); // Track if initial data is loaded
   const initializedForCategoryRef = useRef<string | undefined | null>(null);
@@ -62,7 +65,9 @@ const FilterSidebar = ({ onFilterChange, category }: FilterSidebarProps) => {
           params.append("category", category);
         }
         const queryString = params.toString();
-        const apiUrl = `/api/products/ranges${queryString ? `?${queryString}` : ''}`;
+        const apiUrl = `/api/products/ranges${
+          queryString ? `?${queryString}` : ""
+        }`;
 
         const response = await fetch(apiUrl);
         if (response.ok) {
@@ -74,7 +79,10 @@ const FilterSidebar = ({ onFilterChange, category }: FilterSidebarProps) => {
           setIsInitialized(true);
           initializedForCategoryRef.current = category; // Mark this category as successfully initialized
         } else {
-          console.error("Failed to fetch ranges: Response not OK", response.status);
+          console.error(
+            "Failed to fetch ranges: Response not OK",
+            response.status
+          );
           setPriceRange({ min: 0, max: 5000 });
           setSelectedPriceRange({ min: 0, max: 5000 });
           setWeightOptions([]);
@@ -98,10 +106,13 @@ const FilterSidebar = ({ onFilterChange, category }: FilterSidebarProps) => {
   }, [category]); // Dependency only on category
 
   // Memoize selectedWeights as a string to prevent unnecessary re-renders
-  const selectedWeightsStr = useMemo(() => selectedWeights.join(','), [selectedWeights]);
+  const selectedWeightsStr = useMemo(
+    () => selectedWeights.join(","),
+    [selectedWeights]
+  );
 
   // Track the previous filter values to detect actual changes
-  const prevFiltersRef = useRef<string>('');
+  const prevFiltersRef = useRef<string>("");
 
   // Apply filters when values change (with debounce for price)
   useEffect(() => {
@@ -132,7 +143,7 @@ const FilterSidebar = ({ onFilterChange, category }: FilterSidebarProps) => {
 
         // Create a string representation of current filters to compare
         const filtersStr = JSON.stringify(filters);
-        
+
         // Only call onFilterChange if filters have actually changed
         if (filtersStr !== prevFiltersRef.current) {
           prevFiltersRef.current = filtersStr;
@@ -153,7 +164,7 @@ const FilterSidebar = ({ onFilterChange, category }: FilterSidebarProps) => {
     isInitialized,
     loading,
     priceRange.min,
-    priceRange.max
+    priceRange.max,
   ]);
 
   // Handle price slider drag
@@ -193,33 +204,37 @@ const FilterSidebar = ({ onFilterChange, category }: FilterSidebarProps) => {
       [section]: !prev[section],
     }));
   };
-
   // Calculate percentage for slider position
   const getSliderPercentage = (value: number, type: "min" | "max") => {
     const range = priceRange.max - priceRange.min;
     return ((value - priceRange.min) / range) * 100;
   };
 
-    function handleQuickPriceSelect(min: number, max: number): void {
-        throw new Error("Function not implemented.");
-    }
-
+  // Handle quick price selection
+  const handleQuickPriceSelect = (min: number, max: number) => {
+    setSelectedPriceRange({ min, max });
+  };
   return (
     <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden" />
+      {/* Mobile Backdrop */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-opacity-50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      
       {/* Sidebar */}
       <div
-        className={`
-          fixed top-0 mr-4 left-0 h-full w-80 bg-white rounded-xl shadow-2xl z-20 transform transition-transform duration-300 ease-out
-          
-          lg:relative lg:translate-x-0 lg:shadow-lg lg:border-r lg:border-gray-200
+        className={` rounded-3xl mr-4
+          fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-out lg:relative lg:w-64 lg:translate-x-0 lg:shadow-lg lg:border-r lg:border-gray-200 lg:z-auto
+          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
         data-filter-sidebar="true"
         data-testid="filter-sidebar"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-pink-50 to-orange-50">
+        <div className="flex items-center justify-between rounded-t-2xl p-3 border-b border-gray-200 bg-gradient-to-r from-pink-300 to-orange-100">
           <div className="flex items-center space-x-2">
             <Sliders className="h-5 w-5 text-pink-600" />
             <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
@@ -232,7 +247,10 @@ const FilterSidebar = ({ onFilterChange, category }: FilterSidebarProps) => {
             >
               <RotateCcw className="h-4 w-4" />
             </button>
-            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors lg:hidden">
+            <button 
+              onClick={onClose}
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors lg:hidden"
+            >
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -364,7 +382,10 @@ const FilterSidebar = ({ onFilterChange, category }: FilterSidebarProps) => {
                         <button
                           key={idx}
                           onClick={() =>
-                            handleQuickPriceSelect(quickRange.min, quickRange.max)
+                            handleQuickPriceSelect(
+                              quickRange.min,
+                              quickRange.max
+                            )
                           }
                           className={`px-3 py-2 text-xs font-medium rounded-md transition-colors ${
                             selectedPriceRange.min === quickRange.min &&
@@ -400,7 +421,6 @@ const FilterSidebar = ({ onFilterChange, category }: FilterSidebarProps) => {
 
                   {expandedSections.weight && (
                     <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {" "}
                       {weightOptions.map((option) => (
                         <label
                           key={option.weight}
@@ -436,6 +456,68 @@ const FilterSidebar = ({ onFilterChange, category }: FilterSidebarProps) => {
                   )}
                 </div>
               )}
+
+              {/* Dietary Preferences Filter */}
+              {/* <div className="space-y-3">
+                <button
+                  onClick={() => toggleSection("dietary")}
+                  className="flex items-center justify-between w-full text-left"
+                >
+                  <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                    Dietary Preferences
+                  </h3>
+                  {expandedSections.dietary ? (
+                    <ChevronUp className="h-4 w-4 text-gray-500" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-gray-500" />
+                  )}
+                </button>
+
+                {expandedSections.dietary && (
+                  <div className="space-y-2">
+                    <label className="flex items-center p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:border-pink-300 hover:bg-pink-50">
+                      <input
+                        type="checkbox"
+                        checked={isEggless === true}
+                        onChange={(e) => setIsEggless(e.target.checked ? true : null)}
+                        className="h-4 w-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
+                      />
+                      <span className="ml-3 text-sm text-gray-700">Eggless</span>
+                    </label>
+                  </div>
+                )}
+              </div> */}
+
+              {/* Product Type Filter */}
+              {/* <div className="space-y-3">
+                <button
+                  onClick={() => toggleSection("type")}
+                  className="flex items-center justify-between w-full text-left"
+                >
+                  <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
+                    Product Type
+                  </h3>
+                  {expandedSections.type ? (
+                    <ChevronUp className="h-4 w-4 text-gray-500" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-gray-500" />
+                  )}
+                </button>
+
+                {expandedSections.type && (
+                  <div className="space-y-2">
+                    <label className="flex items-center p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:border-pink-300 hover:bg-pink-50">
+                      <input
+                        type="checkbox"
+                        checked={isBestseller === true}
+                        onChange={(e) => setIsBestseller(e.target.checked ? true : null)}
+                        className="h-4 w-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
+                      />
+                      <span className="ml-3 text-sm text-gray-700">Bestseller</span>
+                    </label>
+                  </div>
+                )}
+              </div> */}
             </div>
           )}
         </div>

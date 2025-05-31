@@ -3,6 +3,8 @@ export { default as HeroCarousel } from './HeroCarousel';
 export { default as ProductCard } from './ProductCard';
 export { default as ProductSection } from './ProductSection';
 export { default as CategorySection } from './CategorySection';
+export { default as CategoryCard } from './CategoryCard';
+export { default as CategoryShowcase } from './CategoryShowcase';
 export { default as Footer } from './Footer';
 export {default as Breadcrumb } from "./Breadcrumb"
 export {default as ProductGrid } from "./ProductGrid"

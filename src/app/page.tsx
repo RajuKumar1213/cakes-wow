@@ -1,8 +1,22 @@
 "use client"
-import { Header, HeroCarousel, ProductSection, CategorySection, Footer } from '@/components';
+import { Header, HeroCarousel, CategorySection, CategoryShowcase, ProductSection, Footer } from '@/components';
 import { useState, useEffect } from 'react';
 import Loading from '@/components/Loading';
 import axios from 'axios';
+
+interface Category {
+  _id: string;
+  name: string;
+  slug: string;
+  group: string;
+  type: string;
+  description?: string;
+  imageUrl?: string;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 interface Product {
   _id: string;
@@ -19,6 +33,11 @@ interface Product {
   isBestseller: boolean;
   isFeatured: boolean;
   discountPercentage: number;
+  weightOptions?: Array<{
+    weight: string;
+    price: number;
+    discountedPrice?: number;
+  }>;
   categories: Array<{
     name: string;
     slug: string;
@@ -26,131 +45,82 @@ interface Product {
 }
 
 export default function Home() {
-  const [bestSellers, setBestSellers] = useState<Product[]>([]);
-  const [featuredCakes, setFeaturedCakes] = useState<Product[]>([]);
-  const [egglessCakes, setEgglessCakes] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [groupedCategories, setGroupedCategories] = useState<{[key: string]: Category[]}>({});
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [bestsellerProducts, setBestsellerProducts] = useState<Product[]>([]);
+  const [egglessProducts, setEgglessProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     window.scrollTo(0, 0); // Scroll to top on page load
-    const fetchProducts = async () => {
+    
+    const fetchData = async () => {
       try {
-        // Fetch bestsellers
-        const bestSellersResponse = await axios.get('/api/products?isBestseller=true&limit=6');
-        const bestSellersData = bestSellersResponse.data;
+        // Fetch categories
+        const categoriesResponse = await axios.get('/api/categories?format=all');
+        const categoriesData = categoriesResponse.data;
         
-        // Fetch featured cakes
-        const featuredResponse = await axios.get('/api/products?isFeatured=true&limit=6');
-        const featuredData = featuredResponse.data;
-        
-        // Fetch eggless cakes
-        const egglessResponse = await axios.get('/api/products?isEggless=true&limit=6');
-        const egglessData = egglessResponse.data;
+        if (categoriesData.success) {
+          const categories = categoriesData.data;
+          setCategories(categories);
+          
+          // Group categories by their group field
+          const grouped = categories.reduce((acc: {[key: string]: Category[]}, category: Category) => {
+            if (!acc[category.group]) {
+              acc[category.group] = [];
+            }
+            acc[category.group].push(category);
+            return acc;
+          }, {});
+          
+          setGroupedCategories(grouped);
+        }
 
-        if (bestSellersData.success) {
-          setBestSellers(bestSellersData.data.products);
+        // Fetch featured products
+        const featuredResponse = await axios.get('/api/products?isFeatured=true&limit=8');
+        if (featuredResponse.data.success) {
+          setFeaturedProducts(featuredResponse.data.data.products);
         }
-        if (featuredData.success) {
-          setFeaturedCakes(featuredData.data.products);
+
+        // Fetch bestseller products
+        const bestsellerResponse = await axios.get('/api/products?isBestseller=true&limit=8');
+        if (bestsellerResponse.data.success) {
+          setBestsellerProducts(bestsellerResponse.data.data.products);
         }
-        if (egglessData.success) {
-          setEgglessCakes(egglessData.data.products);
+
+        // Fetch eggless products
+        const egglessResponse = await axios.get('/api/products?isEggless=true&limit=8');
+        if (egglessResponse.data.success) {
+          setEgglessProducts(egglessResponse.data.data.products);
         }
+
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
+    fetchData();
   }, []);
 
-  // Static category data - this can be fetched from API later if needed
-  const flavorCategories = [
-    {
-      id: '1',
-      name: 'Chocolate',
-      image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=100&h=100&fit=crop',
-      href: '/chocolate-cakes-1'
-    },
-    {
-      id: '2',
-      name: 'Vanilla',
-      image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=100&h=100&fit=crop',
-      href: '/vanilla-cakes-1'
-    },
-    {
-      id: '3',
-      name: 'Red Velvet',
-      image: 'https://images.unsplash.com/photo-1586985289688-ca3cf47d3e6e?w=100&h=100&fit=crop',
-      href: '/red-velvet-cakes-1'
-    },
-    {
-      id: '4',
-      name: 'Birthday',
-      image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=100&h=100&fit=crop',
-      href: '/birthday-cakes-1'
-    },
-    {
-      id: '5',
-      name: 'Anniversary',
-      image: 'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=100&h=100&fit=crop',
-      href: '/anniversary-cakes-1'
-    },
-    {
-      id: '6',
-      name: 'Bestsellers',
-      image: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=100&h=100&fit=crop',
-      href: '/products?isBestseller=true'
-    }
-  ];
-
-  const dessertCategories = [
-    {
-      id: '1',
-      name: 'Cup Cakes',
-      image: 'https://images.unsplash.com/photo-1426869981800-95ebf51ce900?w=100&h=100&fit=crop',
-      href: '/cup-cakes-1'
-    },
-    {
-      id: '2',
-      name: 'Eggless Cakes',
-      image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=100&h=100&fit=crop',
-      href: '/products?isEggless=true'
-    },
-    {
-      id: '3',
-      name: 'Featured Cakes',
-      image: 'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=100&h=100&fit=crop',
-      href: '/products?isFeatured=true'
-    },
-    {
-      id: '4',
-      name: 'All Products',
-      image: 'https://images.unsplash.com/photo-1586985289688-ca3cf47d3e6e?w=100&h=100&fit=crop',
-      href: '/products'
-    },
-    {
-      id: '5',
-      name: 'Premium Cakes',
-      image: 'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=100&h=100&fit=crop',
-      href: '/products?sortBy=price&sortOrder=desc'
-    },
-    {
-      id: '6',
-      name: 'New Arrivals',
-      image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=100&h=100&fit=crop',
-      href: '/products?sortBy=createdAt&sortOrder=desc'
-    }
-  ];
+  // Helper function to format categories for CategorySection
+  const formatCategoriesForSection = (categoryList: Category[]) => {
+    return categoryList.map(category => ({
+      id: category._id,
+      name: category.name,
+      image: category.imageUrl || 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=100&h=100&fit=crop',
+      href: `/${category.slug}`
+    }));
+  };
 
   if (loading) {
     return (
       <main className="min-h-screen bg-white mx-auto">
         <Header />
         <div className="flex justify-center items-center h-96">
-            <Loading size="lg" text="Baking..." className="text-pink-400" />
+            <Loading size="lg" text="Loading..." className="text-pink-400" />
         </div>
         <Footer />
       </main>
@@ -158,50 +128,98 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-white mx-auto ">
+    <main className="min-h-screen bg-gray-50">
       <Header />
       
       {/* Hero Carousel */}
-      <HeroCarousel />
+      <HeroCarousel categories={categories} />
       
-      {/* Best Sellers Section */}
-      <ProductSection
-        title="Surprise Your Loved One"
-        subtitle="Our Best Sellers"
-        products={bestSellers}
-        viewAllLink="/products?isBestseller=true"
-      />
+      {/* Featured Categories Showcase */}
+      {categories.length > 0 && (
+        <CategoryShowcase
+          title="Explore Our Delicious Categories"
+          subtitle="Discover our wide range of freshly baked treats made with love"
+          categories={categories}
+          maxItems={6}
+        />
+      )}
       
-      {/* Featured Cakes Section */}
-      <ProductSection
-        title="Premium Selection"
-        subtitle="Featured Cakes"
-        products={featuredCakes}
-        viewAllLink="/products?isFeatured=true"
-      />
+      {/* Featured Products */}
+      {featuredProducts.length > 0 && (
+        <div className="bg-white">
+          <ProductSection
+            title="Featured Products"
+            subtitle="Handpicked favorites that our customers love the most"
+            products={featuredProducts}
+            viewAllLink="/products?featured=true"
+          />
+        </div>
+      )}
       
-      {/* Eggless Cakes Section */}
-      <ProductSection
-        title="Eggless Delights"
-        subtitle="Perfect for Everyone"
-        products={egglessCakes}
-        viewAllLink="/products?isEggless=true"
-      />
+      {/* Quick Category Navigation */}
+      {Object.entries(groupedCategories).slice(0, 2).map(([groupName, categoryList], index) => (
+        <div key={groupName} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+          <CategorySection
+            title={`${groupName} Collection`}
+            categories={formatCategoriesForSection(categoryList)}
+          />
+        </div>
+      ))}
       
-      {/* Experience Flavours Section */}
-      <CategorySection
-        title="Experience Flavours"
-        categories={flavorCategories}
-      />
+      {/* Bestseller Products */}
+      {bestsellerProducts.length > 0 && (
+        <div className="relative bg-gradient-to-br from-pink-100 via-pink-50 to-rose-100 overflow-hidden">
+          {/* Texture overlay */}
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute inset-0 bg-gradient-to-r from-pink-200/20 to-transparent"></div>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(255,182,193,0.3),transparent_50%)]"></div>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(255,192,203,0.2),transparent_50%)]"></div>
+            <div className="absolute inset-0" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffc0cb' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+              backgroundSize: '30px 30px'
+            }}></div>
+          </div>
+          
+          {/* Content */}
+          <div className="relative z-10">
+            <ProductSection
+              title="Bestsellers"
+              subtitle="Most loved treats that keep our customers coming back"
+              products={bestsellerProducts}
+              viewAllLink="/products?bestseller=true"
+            />
+          </div>
+        </div>
+      )}
       
-      {/* Looking For Something Else Section */}
-      <CategorySection
-        title="Looking For Something Else"
-        categories={dessertCategories}
-      />
+      {/* Eggless Products */}
+      {egglessProducts.length > 0 && (
+        <div className="relative bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 overflow-hidden">
+          {/* Subtle texture overlay */}
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute inset-0 bg-gradient-to-r from-green-100/30 to-transparent"></div>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(134,239,172,0.2),transparent_50%)]"></div>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,rgba(110,231,183,0.15),transparent_50%)]"></div>
+            <div className="absolute inset-0" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2386efac' fill-opacity='0.08'%3E%3Cpath d='M20 20c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10zm10 0c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+              backgroundSize: '40px 40px'
+            }}></div>
+          </div>
+          
+          {/* Content */}
+          <div className="relative z-10">
+            <ProductSection
+              title="Eggless Delights"
+              subtitle="Delicious eggless options for everyone to enjoy"
+              products={egglessProducts}
+              viewAllLink="/products?eggless=true"
+            />
+          </div>
+        </div>
+      )}
       
       {/* About Section */}
-      <section className="py-16">
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">
@@ -218,17 +236,17 @@ export default function Home() {
               and fill their celebrations with cherished memories.
             </p>
             <button 
-              className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-medium transition-colors"
+              className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-8 py-3 rounded-full font-medium transition-all duration-300 transform hover:scale-105 shadow-lg"
               onClick={() => alert('This function is coming soon!')}
             >
-              View All
+              View All Products
             </button>
           </div>
         </div>
       </section>
 
       {/* Customer Reviews */}
-      <section className="py-16">
+      <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
@@ -244,8 +262,8 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="bg-gray-100 rounded-lg p-6 max-w-2xl mx-auto">
-              <p className="text-gray-700 italic mb-4">
+            <div className="bg-white rounded-xl shadow-lg p-6 max-w-2xl mx-auto">
+              <p className="text-gray-700 italic mb-4 text-lg">
                 "The cake was super delicious thank you."
               </p>
               <p className="font-medium text-gray-800">- mariamelonipaul</p>

@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface Category {
   id: string;
@@ -13,8 +14,10 @@ interface CategorySectionProps {
 }
 
 const CategorySection = ({ title, categories }: CategorySectionProps) => {
+  const router = useRouter();
+
   const handleCategoryClick = (href: string) => {
-    alert('This function is coming soon!');
+    router.push(href);
   };
 
   return (

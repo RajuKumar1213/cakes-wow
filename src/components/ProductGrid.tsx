@@ -147,27 +147,39 @@ const ProductGrid = ({
         ))}
       </div>
     );
-  }
-  return (
-    <div className="flex ">
+  }  return (
+    <div className="flex">
       {/* Filter Sidebar */}
       <FilterSidebar
         onFilterChange={onFilterChange || (() => {})}
         category={category}
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
       />
       
       {/* Main Content */}
-      <div className={`flex-1 transition-all duration-300 ${showFilters ? 'lg:ml-0' : ''}`}>
-        <div className="">
+      <div className="flex-1">
+        <div>
           {/* Header with sorting and view options */}
-          <div className="flex flex-col gap-3 sm:gap-4">
+          <div className="flex flex-col gap-3 sm:gap-4 mb-4">
             <div className="flex items-center justify-between">
-              {/* <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-                {totalCount} Products
-              </h2> */}
+              <div className="flex items-center gap-3">
+                {/* Filter Toggle Button for Mobile */}
+                <button
+                  onClick={() => setShowFilters(true)}
+                  className="lg:hidden flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                >
+                  <Filter className="h-4 w-4" />
+                  Filters
+                </button>
 
-              {/* Sort Dropdown - Mobile optimized */}
-              {/* <div className="relative">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                  {totalCount} Products
+                </h2>
+              </div>
+
+              {/* Sort Dropdown */}
+              <div className="relative">
                 <select
                   value={`${sortBy}:${sortOrder}`}
                   onChange={(e) => handleSortChange(e.target.value)}
@@ -180,11 +192,8 @@ const ProductGrid = ({
                   ))}
                 </select>
                 <ChevronDown className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
-              </div> */}
+              </div>
             </div>
-
-            {/* View Mode and Filter - Enhanced for all screen sizes */}
-            
           </div>
           
           {/* Products Grid */}
