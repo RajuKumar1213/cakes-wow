@@ -18,10 +18,11 @@ import {
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-
+    
     // Extract query parameters
     const category = searchParams.get("category");
     const tags = searchParams.getAll("tags");
+    const weights = searchParams.getAll("weights");
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
     const isEggless = searchParams.get("isEggless");
@@ -33,10 +34,11 @@ export async function GET(request) {
     const page = searchParams.get("page") || 1;
     const limit = searchParams.get("limit") || 12;
 
-    await dbConnect(); // Build filters
+    await dbConnect();    // Build filters
     const filters = createProductFilters({
       category,
       tags,
+      weights,
       minPrice,
       maxPrice,
       isEggless,
@@ -110,10 +112,10 @@ export async function GET(request) {
           limit: limitNum,
           total,
           pages: Math.ceil(total / limitNum),
-        },
-        filters: {
+        },        filters: {
           category,
           tags,
+          weights,
           minPrice,
           maxPrice,
           isEggless,

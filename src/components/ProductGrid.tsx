@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ProductCard from "./ProductCard";
+import FilterSidebar from "./FilterSidebar";
 import { ChevronDown, Filter, Grid, List } from "lucide-react";
 
 interface Product {
@@ -33,6 +34,7 @@ interface ProductGridProps {
   onPageChange?: (page: number) => void;
   onSortChange?: (sortBy: string, sortOrder: string) => void;
   onFilterChange?: (filters: Record<string, any>) => void;
+  category?: string;
 }
 
 const ProductGrid = ({
@@ -43,6 +45,8 @@ const ProductGrid = ({
   totalPages = 1,
   onPageChange,
   onSortChange,
+  onFilterChange,
+  category,
 }: ProductGridProps) => {
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
@@ -144,93 +148,71 @@ const ProductGrid = ({
       </div>
     );
   }
-
   return (
-    <div className="space-y-6">
-      {" "}
-      {/* Header with sorting and view options */}
-      <div className="flex flex-col gap-3 sm:gap-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900">
-            {totalCount} Products
-          </h2>
+    <div className="flex ">
+      {/* Filter Sidebar */}
+      <FilterSidebar
+        onFilterChange={onFilterChange || (() => {})}
+        category={category}
+      />
+      
+      {/* Main Content */}
+      <div className={`flex-1 transition-all duration-300 ${showFilters ? 'lg:ml-0' : ''}`}>
+        <div className="">
+          {/* Header with sorting and view options */}
+          <div className="flex flex-col gap-3 sm:gap-4">
+            <div className="flex items-center justify-between">
+              {/* <h2 className="text-base sm:text-lg font-semibold text-gray-900">
+                {totalCount} Products
+              </h2> */}
 
-          {/* Sort Dropdown - Mobile optimized */}
-          <div className="relative">
-            <select
-              value={`${sortBy}:${sortOrder}`}
-              onChange={(e) => handleSortChange(e.target.value)}
-              className="appearance-none bg-white border border-gray-300 rounded-md px-2 py-1 sm:px-4 sm:py-2 pr-6 sm:pr-8 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-            >
-              {sortOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
+              {/* Sort Dropdown - Mobile optimized */}
+              {/* <div className="relative">
+                <select
+                  value={`${sortBy}:${sortOrder}`}
+                  onChange={(e) => handleSortChange(e.target.value)}
+                  className="appearance-none bg-white border border-gray-300 rounded-md px-2 py-1 sm:px-4 sm:py-2 pr-6 sm:pr-8 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                >
+                  {sortOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
+              </div> */}
+            </div>
+
+            {/* View Mode and Filter - Enhanced for all screen sizes */}
+            
           </div>
-        </div>
-
-        {/* View Mode and Filter - Hidden on mobile for cleaner look */}
-        <div className="hidden sm:flex items-center justify-end space-x-4">
-          {/* View Mode Toggle */}
-          <div className="flex border border-gray-300 rounded-md">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-2 ${
+          
+          {/* Products Grid */}
+          {products.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-gray-500">
+                <h3 className="text-lg font-medium mb-2">No products found</h3>
+                <p>Try adjusting your filters or search terms.</p>
+              </div>
+            </div>
+          ) : (
+            <div
+              className={`grid gap-3 sm:gap-4 ${
                 viewMode === "grid"
-                  ? "bg-pink-600 text-white"
-                  : "text-gray-500 hover:text-pink-600"
+                  ? "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
+                  : "grid-cols-1"
               }`}
             >
-              <Grid className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-2 border-l ${
-                viewMode === "list"
-                  ? "bg-pink-600 text-white"
-                  : "text-gray-500 hover:text-pink-600"
-              }`}
-            >
-              <List className="h-4 w-4" />
-            </button>
-          </div>
-
-          {/* Filter Toggle */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50"
-          >
-            <Filter className="h-4 w-4" />
-            <span>Filters</span>
-          </button>
+              {products.map((product) => (
+                <ProductCard key={product._id} {...product} />
+              ))}
+            </div>
+          )}
+          
+          {/* Pagination */}
+          {renderPagination()}
         </div>
       </div>
-      {/* Products Grid */}
-      {products.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-500">
-            <h3 className="text-lg font-medium mb-2">No products found</h3>
-            <p>Try adjusting your filters or search terms.</p>
-          </div>
-        </div>
-      ) : (
-        <div
-          className={`grid gap-3 sm:gap-6 ${
-            viewMode === "grid"
-              ? "grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-              : "grid-cols-1"
-          }`}
-        >
-          {products.map((product) => (
-            <ProductCard key={product._id} {...product} />
-          ))}
-        </div>
-      )}
-      {/* Pagination */}
-      {renderPagination()}
     </div>
   );
 };

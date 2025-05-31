@@ -203,6 +203,8 @@ export default function AdminProducts() {
     Category | undefined
   >();
   const [loadingData, setLoadingData] = useState(true);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   // Check authentication
   // useEffect(() => {
@@ -218,13 +220,11 @@ export default function AdminProducts() {
   //   }
   // }, [user]);
 
-  console.log(products)
-
   useEffect(() => {
     if (!loading) {
       fetchData();
     }
-  }, [loading, editingCategory]);
+  }, [loading, editingCategory, success]);
 
   const fetchData = async () => {
     setLoadingData(true);
@@ -266,6 +266,8 @@ export default function AdminProducts() {
 
     setFilteredProducts(filtered);
   }, [products, searchTerm, selectedCategory]);
+
+
   const handleSaveProduct = async () => {
     // This function is called by ProductForm's onSuccess callback
     setShowProductForm(false);
@@ -274,42 +276,29 @@ export default function AdminProducts() {
   };
 
   // const handleSaveCategory = async (categoryData: any) => {
-  //   try {
-  //     if (editingCategory) {
-  //       await axios.patch(`/api/categories/${editingCategory._id}`, categoryData);
-  //       showSuccess("Success", "Category updated successfully!");
-  //     } else {
-  //       await axios.post("/api/categories", categoryData);
-  //       showSuccess("Success", "Category created successfully!");
-  //     }
-
-  //     setShowCategoryForm(false);
-  //     setEditingCategory(undefined);
-  //     fetchData();
-  //   } catch (error) {
-  //     console.error("Failed to save category:", error);
-  //     showError("Error", "Failed to save category");
-  //   }
-  // };
-
   const handleDeleteProduct = async (id: string) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
     try {
-      await axios.delete(`/api/products/${id}`);
-      setProducts((prev) => prev.filter((p) => p._id !== id));
-      showSuccess("Success", "Product deleted successfully!");
+      setDeleteLoading(true);
+     const response = await axios.delete(`/api/products/${id}`);
+      console.log(response.data);
+      if (response.data.success) {
+        setSuccess(true);
+        showSuccess("Success", "Product deleted successfully!");
+      } 
     } catch (error) {
       console.error("Failed to delete product:", error);
       showError("Error", "Failed to delete product");
+    } finally {
+      setDeleteLoading(false);
     }
-  };
-
-  const handleDeleteCategory = async (id: string) => {
+  };  const handleDeleteCategory = async (id: string) => {
     if (!confirm("Are you sure you want to delete this category?")) return;
     try {
-      await axios.delete(`/api/categories/${id}`);
-      setCategories((prev) => prev.filter((c) => c._id !== id));
+      await axios.delete(`/api/categories?id=${id}`);
       showSuccess("Success", "Category deleted successfully!");
+      // Refresh categories after deletion
+      fetchData();
     } catch (error) {
       console.error("Failed to delete category:", error);
       showError("Error", "Failed to delete category");
@@ -684,7 +673,11 @@ export default function AdminProducts() {
                         onClick={() => handleDeleteCategory(category._id)}
                         className="text-red-600 hover:text-red-800 transition-colors"
                       >
-                        <Trash2 className="w-4 h-4" />
+                       {deleteLoading ? (
+                         <Loader2 className="w-4 h-4 animate-spin" />
+                       ) : (
+                         <Trash2 className="w-4 h-4" />
+                       )}
                       </button>
                     </div>
                   </div>

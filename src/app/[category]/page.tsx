@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import ProductGrid from "@/components/ProductGrid";
 import { Breadcrumb, Header } from "@/components";
@@ -41,11 +41,10 @@ const CategoryPage = () => {
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-
+  const [currentPage, setCurrentPage] = useState(1);  const [totalPages, setTotalPages] = useState(1);
+  const [currentFilters, setCurrentFilters] = useState<Record<string, any>>({});
   const fetchProducts = useCallback(
-    async (page = 1, sortBy = "createdAt", sortOrder = "desc") => {
+    async (page = 1, sortBy = "createdAt", sortOrder = "desc", filters = {}) => {
       try {
         setLoading(true);
         const params = new URLSearchParams({
@@ -55,18 +54,28 @@ const CategoryPage = () => {
           sortBy,
           sortOrder,
         }); 
+        
         // Add search params from URL
         const search = searchParams.get("search");
         if (search) params.append("search", search);
 
-        const response = await axios.get(`/api/products?${params}`);
+        // Add filter parameters
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value !== null && value !== undefined) {
+            if (Array.isArray(value)) {
+              value.forEach(v => params.append(key, v.toString()));
+            } else {
+              params.append(key, value.toString());
+            }
+          }
+        });        const response = await axios.get(`/api/products?${params}`);
         const data = response.data;
 
         if (data.success) {
           setProducts(data.data.products);
-          setTotalCount(data.data.totalCount);
-          setCurrentPage(data.data.currentPage);
-          setTotalPages(data.data.totalPages);
+          setTotalCount(data.data.pagination.total);
+          setCurrentPage(data.data.pagination.page);
+          setTotalPages(data.data.pagination.pages);
         }
       } catch (error) {
         console.error("Error fetching products:", error);
@@ -76,7 +85,6 @@ const CategoryPage = () => {
     },
     [categorySlug, searchParams]
   );
-
   const fetchCategory = useCallback(async () => {
     try {
       const response = await axios.get(`/api/categories?slug=${categorySlug}`);
@@ -89,27 +97,40 @@ const CategoryPage = () => {
       console.error("Error fetching category:", error);
     }
   }, [categorySlug]);
-  
+  // Fetch initial data
   useEffect(() => {
     const fetchData = async () => {
       if (categorySlug) {
         await fetchCategory();
-        await fetchProducts();
+        await fetchProducts(1, "createdAt", "desc", {});
       }
     };
 
     fetchData();
-  }, [categorySlug, searchParams, fetchCategory, fetchProducts]);
-
-  const handlePageChange = (page: number) => {
+  }, [categorySlug]); // Only depend on categorySlug to prevent infinite loops
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
-    fetchProducts(page);
+    fetchProducts(page, "createdAt", "desc", currentFilters);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  }, [currentFilters]); // Only depend on currentFilters
 
-  const handleSortChange = (sortBy: string, sortOrder: string) => {
-    fetchProducts(1, sortBy, sortOrder);
-  };
+  const handleSortChange = useCallback((sortBy: string, sortOrder: string) => {
+    fetchProducts(1, sortBy, sortOrder, currentFilters);
+  }, [currentFilters]); // Only depend on currentFilters
+  const handleFilterChange = useCallback((filters: Record<string, any>) => {
+    console.log("Filter change received:", filters);
+    
+    // Only update if filters actually changed
+    setCurrentFilters(prev => {
+      const filtersChanged = JSON.stringify(prev) !== JSON.stringify(filters);
+      if (filtersChanged) {
+        setCurrentPage(1); // Reset to first page when filters change
+        // Use setTimeout to prevent immediate re-render conflicts
+        setTimeout(() => fetchProducts(1, "createdAt", "desc", filters), 0);
+      }
+      return filters;
+    });
+  }, [fetchProducts]); // Include fetchProducts in dependencies
 
   const breadcrumbItems = [
     { label: "Home", href: "/" },
@@ -142,9 +163,7 @@ const CategoryPage = () => {
               </span>
             </div>
           </div>
-        )}
-
-        {/* Products Grid */}
+        )}        {/* Products Grid */}
         <ProductGrid
           products={products}
           loading={loading}
@@ -153,6 +172,8 @@ const CategoryPage = () => {
           totalPages={totalPages}
           onPageChange={handlePageChange}
           onSortChange={handleSortChange}
+          onFilterChange={handleFilterChange}
+          category={categorySlug}
         />
       </div>
     </div>

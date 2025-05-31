@@ -107,9 +107,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const imageFile = formData.get('imageUrl') as File | null; // This will be the file
 
     // Validate input
-    if (!name || !group || !type) {
+    if (!group || !type) {
       return NextResponse.json(
-        { success: false, error: "Name, group, and type are required" },
+        { success: false, error: "Group and type are required" },
         { status: 400 }
       );
     }

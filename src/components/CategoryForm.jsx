@@ -15,7 +15,7 @@ const categorySchema = z.object({
     .string()
     .min(1, "Category name is required")
     .max(100, "Name must be less than 100 characters")
-    .regex(/^[a-zA-Z0-9\s\-&'()]+$/, "Name contains invalid characters"),
+    .regex(/^[a-zA-Z0-9\s\-&'()]+$/, "Name contains invalid characters").optional(),
   description: z
     .string()
     .max(500, "Description must be less than 500 characters")

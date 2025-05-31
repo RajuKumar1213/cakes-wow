@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import { useCategories } from "@/hooks/useCategories";
 import {
   Search,
   MapPin,
@@ -27,6 +28,7 @@ import Link from "next/link";
 const Header = () => {
   const { user, logout } = useAuth();
   const { totalItems } = useCart();
+  const { groupedCategories, loading: categoriesLoading } = useCategories();
   const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -73,59 +75,25 @@ const Header = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-  const cakeCategories = {
-    "Trending Cakes": [
-      { name: "Birthday Cakes", href: "/birthday-cakes-1" },
-      { name: "Anniversary Cakes", href: "/anniversary-cakes-1" },
-      { name: "Bestsellers", href: "/products?isBestseller=true" },
-      { name: "Eggless Cakes", href: "/products?isEggless=true" },
-      { name: "Photo Cakes", href: "/photo-cakes" },
-      { name: "Gourmet Cakes", href: "/gourmet-cakes" },
-    ],
-    "By Flavours": [
-      { name: "Chocolate Cakes", href: "/chocolate-cakes-1" },
-      { name: "Vanilla Cakes", href: "/vanilla-cakes-1" },
-      { name: "Red Velvet Cakes", href: "/red-velvet-cakes-1" },
-      { name: "Black Forest Cakes", href: "/black-forest-cakes" },
-      { name: "Strawberry Cakes", href: "/strawberry-cakes" },
-      { name: "Heart Shaped Cakes", href: "/heart-shaped-cakes" },
-      { name: "Butterscotch Cakes", href: "/butterscotch-cakes" },
-      { name: "Mango Cakes", href: "/mango-cakes" },
-      { name: "Pineapple Cakes", href: "/pineapple-cakes" },
-    ],
-    Desserts: [
-      { name: "Cup Cakes", href: "/cup-cakes-1" },
-      { name: "Pastries", href: "/pastries" },
-      { name: "Brownies", href: "/brownies" },
-    ],
+
+  // Create navigation structure from dynamic categories
+  const navigationItems = Object.keys(groupedCategories).map((group) => ({
+    name: group,
+    items: groupedCategories[group].map((category) => ({
+      name: category.name,
+      href: `/${category.slug}`,
+      slug: category.slug,
+    })),
+    hasSubMenu: groupedCategories[group].length > 1,
+  }));
+
+  // Helper function to handle category navigation
+  const handleCategoryClick = (categorySlug: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDropdownOpen(null);
+    setIsMobileMenuOpen(false);
+    router.push(`/${categorySlug}`);
   };
-
-  const themeCakes = [
-    { name: "Birthday Cakes", href: "/birthday-cakes" },
-    { name: "Anniversary Cakes", href: "/anniversary-cakes" },
-    { name: "Kids Cakes", href: "/kids-cakes" },
-    { name: "Wedding Cakes", href: "/wedding-cakes" },
-  ];
-
-  const desserts = [
-    { name: "Pastries", href: "/pastries" },
-    { name: "Jar Cakes", href: "/jar-cakes" },
-    { name: "Cup Cakes", href: "/cup-cakes" },
-    { name: "Brownies", href: "/brownies" },
-    { name: "Cookies", href: "/cookies" },
-  ];
-
-  const mobileMenuItems = [
-    { name: "Cakes", items: cakeCategories, hasSubMenu: true },
-    { name: "Theme Cakes", items: themeCakes, hasSubMenu: false },
-    { name: "By Relationship", href: "/by-relationship", hasSubMenu: false },
-    { name: "Desserts", items: desserts, hasSubMenu: false },
-    { name: "Birthday", href: "/birthday", hasSubMenu: false },
-    { name: "Hampers", href: "/hampers", hasSubMenu: false },
-    { name: "Anniversary", href: "/anniversary", hasSubMenu: false },
-    { name: "Occasion", href: "/occasion", hasSubMenu: false },
-    { name: "Customized Cakes", href: "/customized-cakes", hasSubMenu: false },
-  ];
   const handleDropdown = (menu: string) => {
     setIsDropdownOpen(menu);
   };
@@ -144,7 +112,7 @@ const Header = () => {
   };
   return (
     <>
-      <header className=" bg-white relative z-40">
+      <header className="bg-white relative z-50">
         {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white">
           {/* Left side - Hamburger + Logo */}
@@ -175,14 +143,15 @@ const Header = () => {
               <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                 <Heart className="w-5 h-5 text-gray-700" />
               </button>
-            </Link>
-
+            </Link>{" "}
             <Link href="/cart">
               <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
                 <ShoppingCart className="w-5 h-5 text-gray-700" />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  0
-                </span>
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {totalItems}
+                  </span>
+                )}
               </button>
             </Link>
             <button
@@ -198,7 +167,7 @@ const Header = () => {
         {/* Desktop Header */}
         <div className="hidden lg:block">
           {/* Main header */}
-          <div className="container bg-white lg:px-10 md:px-10 shadow-md min-w-screen mx-auto py-6 fixed top-0 left-0 right-0 z-50 ">
+          <div className="container bg-white lg:px-10 md:px-10 shadow-md min-w-screen mx-auto py-6 fixed top-0 left-0 right-0 z-50">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <Image
@@ -278,171 +247,175 @@ const Header = () => {
                 </div>
               </div>
             </div>
-          </div>
-
+          </div>{" "}
           {/* Desktop Navigation */}
           <nav
-            className="border-t border-gray-200 shadow-sm mt-23"
+            className=" border-gray-200 shadow-sm mt-23 relative z-40"
             ref={dropdownRef}
             style={{
               boxShadow:
                 "0 1px 2px rgba(0,0,0,0.1), 0 -1px 2px rgba(0,0,0,0.1)",
             }}
           >
-            <div className="container mx-auto px-4">
-              <div className="flex items-center justify-center space-x-8 py-3">
-                {/* Cakes Dropdown */}
-                <div
-                  className="relative"
-                  onMouseEnter={() => handleDropdown("cakes")}
-                  onMouseLeave={handleMouseLeave}
-                >
-                  <button className="flex items-center space-x-1 hover:text-red-500 font-medium ">
-                    <span>Cakes</span>
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-                  {isDropdownOpen === "cakes" && (
-                    <div
-                      className="absolute top-full left-0 mt-1 w-[650px] bg-white shadow-2xl rounded-2xl z-50"
-                      style={{ boxShadow: "0 10px 25px rgba(0,0,0,0.15)" }}
-                    >
-                      <div className="grid grid-cols-3 gap-6 p-6">
-                        {Object.entries(cakeCategories).map(
-                          ([categoryTitle, items]) => (
-                            <div key={categoryTitle} className="space-y-3">
-                              <h3 className="font-semibold text-gray-800 text-sm uppercase tracking-wide border-b border-gray-200 pb-2">
-                                {categoryTitle}
-                              </h3>
-                              <div className="space-y-2">
-                                {items.map((item) => (
-                                  <a
-                                    key={item.name}
-                                    href={item.href}
-                                    className="block text-sm text-gray-600 hover:text-red-500 hover:bg-red-50 px-2 py-1 rounded transition-colors duration-200 font-semibold"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      alert("This function is coming soon!");
-                                    }}
-                                  >
-                                    {item.name}
-                                  </a>
-                                ))}
+            <div className="container mx-auto px-6 relative">
+              <div className="flex items-center justify-start flex-wrap space-x-6 py-1 nav-scroll-container">
+                {!categoriesLoading &&
+                  Object.keys(groupedCategories).map((group) => {
+                    // Group categories by type within each group
+                    const categoriesByType = groupedCategories[group].reduce(
+                      (acc: any, category) => {
+                        const type = category.type;
+                        if (!acc[type]) {
+                          acc[type] = [];
+                        }
+                        acc[type].push(category);
+                        return acc;
+                      },
+                      {}
+                    );
+
+                    return (
+                      <div
+                        key={group}
+                        className="relative flex-shrink-0"
+                        onMouseEnter={() => {
+                          if (groupedCategories[group].length > 1) {
+                            handleDropdown(group.toLowerCase());
+                          }
+                        }}
+                        onMouseLeave={handleMouseLeave}
+                      >
+                        <button
+                          className="flex items-center space-x-1 hover:text-red-500 font-medium whitespace-nowrap text-sm px-3 py-2 rounded-md transition-colors duration-200"
+                          onClick={(e) => {
+                            if (groupedCategories[group].length === 1) {
+                              handleCategoryClick(
+                                groupedCategories[group][0].slug,
+                                e
+                              );
+                            }
+                          }}
+                        >
+                          <span>{group}</span>
+                          {groupedCategories[group].length > 1 && (
+                            <ChevronDown className="w-3 h-3" />
+                          )}
+                        </button>
+
+                        {isDropdownOpen === group.toLowerCase() &&
+                          groupedCategories[group].length > 1 && (
+                            <div
+                              className="absolute top-full left-0 min-w-[320px] bg-white shadow-2xl rounded-lg border border-gray-100"
+                              style={{
+                                boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+                                marginTop: "4px",
+                                zIndex: 9999,
+                              }}
+                            >
+                              <div className="p-4">
+                                {Object.keys(categoriesByType).length > 1 ? (
+                                  // Multiple types - organize by type
+                                  <div className="grid grid-cols-1 gap-4">
+                                    {Object.entries(categoriesByType).map(
+                                      ([type, typeCategories]: [
+                                        string,
+                                        any
+                                      ]) => (
+                                        <div key={type}>
+                                          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 border-b border-gray-100 pb-1">
+                                            {type === "Category"
+                                              ? "By Type"
+                                              : type === "Occasion"
+                                              ? "By Occasion"
+                                              : type === "Relationship"
+                                              ? "By Relationship"
+                                              : type === "Dessert"
+                                              ? "Desserts"
+                                              : type === "Theme"
+                                              ? "Theme Cakes"
+                                              : type === "Special"
+                                              ? "Special Cakes"
+                                              : type === "Character"
+                                              ? "Character Cakes"
+                                              : type === "Romantic"
+                                              ? "Romantic Cakes"
+                                              : type === "Fantasy"
+                                              ? "Fantasy Cakes"
+                                              : type === "Adventure"
+                                              ? "Adventure Cakes"
+                                              : type === "Luxury"
+                                              ? "Luxury Collection"
+                                              : type}
+                                          </h3>
+                                          <div className="grid grid-cols-1 gap-1">
+                                            {typeCategories.map(
+                                              (category: any) => (
+                                                <button
+                                                  key={category._id}
+                                                  onClick={(e) =>
+                                                    handleCategoryClick(
+                                                      category.slug,
+                                                      e
+                                                    )
+                                                  }
+                                                  className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors duration-200 font-medium"
+                                                >
+                                                  {category.name}
+                                                </button>
+                                              )
+                                            )}
+                                          </div>
+                                        </div>
+                                      )
+                                    )}
+                                  </div>
+                                ) : (
+                                  // Single type - simple list
+                                  <div className="space-y-1">
+                                    {groupedCategories[group].map(
+                                      (category) => (
+                                        <button
+                                          key={category._id}
+                                          onClick={(e) =>
+                                            handleCategoryClick(
+                                              category.slug,
+                                              e
+                                            )
+                                          }
+                                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors duration-200 font-medium"
+                                        >
+                                          {category.name}
+                                        </button>
+                                      )
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             </div>
-                          )
-                        )}
+                          )}
                       </div>
-                    </div>
-                  )}
-                </div>
+                    );
+                  })}
 
-                {/* Theme Cakes Dropdown */}
-                <div
-                  className="relative"
-                  onMouseEnter={() => handleDropdown("theme")}
-                  onMouseLeave={handleMouseLeave}
+                {/* Special links that don't come from categories */}
+                <Link
+                  href="/products?isBestseller=true"
+                  className="hover:text-red-500 font-medium transition-colors duration-200 whitespace-nowrap text-sm flex-shrink-0 px-2 py-1 rounded-md"
                 >
-                  <button className="flex items-center space-x-1 hover:text-red-500 font-medium">
-                    <span>Theme Cakes</span>
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-                  {isDropdownOpen === "theme" && (
-                    <div
-                      className="absolute top-full left-0 mt-1 w-[200px]  shadow-2xl bg-white rounded-2xl z-50"
-                      style={{ boxShadow: "0 10px 25px rgba(0,0,0,0.15)" }}
-                    >
-                      <div className="py-3">
-                        {themeCakes.map((cake) => (
-                          <a
-                            key={cake.name}
-                            href={cake.href}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:bg-red-50 hover:text-red-500 transition-colors duration-200 font-semibold"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              alert("This function is coming soon!");
-                            }}
-                          >
-                            {cake.name}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  Bestsellers
+                </Link>
 
-                {/* Other navigation items */}
-                <a
-                  href="/by-relationship"
-                  className="hover:text-red-500 font-medium transition-colors duration-200"
+                <Link
+                  href="/products?isEggless=true"
+                  className="hover:text-red-500 font-medium transition-colors duration-200 whitespace-nowrap text-sm flex-shrink-0 px-2 py-1 rounded-md"
                 >
-                  By Relationship
-                </a>
-
-                {/* Desserts Dropdown */}
-                <div
-                  className="relative"
-                  onMouseEnter={() => handleDropdown("desserts")}
-                  onMouseLeave={handleMouseLeave}
-                >
-                  <button className="flex items-center space-x-1 hover:text-red-500 font-medium">
-                    <span>Desserts</span>
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-                  {isDropdownOpen === "desserts" && (
-                    <div
-                      className="absolute top-full left-0 mt-1 w-[200px] bg-white shadow-2xl rounded-lg z-50"
-                      style={{ boxShadow: "0 10px 25px rgba(0,0,0,0.15)" }}
-                    >
-                      <div className="py-3">
-                        {desserts.map((dessert) => (
-                          <a
-                            key={dessert.name}
-                            href={dessert.href}
-                            className="block px-4 py-2 text-sm text-gray-600 hover:bg-red-50 hover:text-red-500 transition-colors duration-200 font-semibold"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              alert("This function is coming soon!");
-                            }}
-                          >
-                            {dessert.name}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <a
-                  href="/birthday"
-                  className="hover:text-red-500 font-medium transition-colors duration-200"
-                >
-                  Birthday
-                </a>
-                <a
-                  href="/hampers"
-                  className="hover:text-red-500 font-medium transition-colors duration-200"
-                >
-                  Hampers
-                </a>
-                <a
-                  href="/anniversary"
-                  className="hover:text-red-500 font-medium transition-colors duration-200"
-                >
-                  Anniversary
-                </a>
-                <a
-                  href="/occasion"
-                  className="hover:text-red-500 font-medium transition-colors duration-200"
-                >
-                  Occasion
-                </a>
-                <a
-                  href="/customized-cakes"
-                  className="hover:text-red-500 font-medium text-red-500 transition-colors duration-200"
-                >
-                  Customized Cakes
-                </a>
+                  Eggless
+                </Link>
               </div>
+
+              {/* Gradient fade indicators for scrollable content */}
+              <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none z-10"></div>
+              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none z-10"></div>
             </div>
           </nav>
         </div>
@@ -504,96 +477,89 @@ const Header = () => {
                   <div className="font-medium">Select Location</div>
                 </div>
               </div>
-            </div>
+            </div>{" "}
             {/* Mobile Menu Items */}
             <div className="py-2">
-              {mobileMenuItems.map((item, index) => (
-                <div
-                  key={index}
-                  className="border-b border-gray-100 last:border-b-0"
-                >
-                  {item.hasSubMenu ? (
-                    <>
-                      <button
-                        onClick={() => toggleCategory(item.name)}
-                        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors text-left"
-                      >
-                        <span className="font-medium text-gray-800">
-                          {item.name}
-                        </span>
-                        {expandedCategory === item.name ? (
-                          <Minus className="w-5 h-5 text-gray-500" />
-                        ) : (
-                          <Plus className="w-5 h-5 text-gray-500" />
-                        )}
-                      </button>
-
-                      {expandedCategory === item.name && (
-                        <div className="bg-gray-50 border-t border-gray-200">
-                          {item.name === "Cakes" ? (
-                            Object.entries(
-                              item.items as typeof cakeCategories
-                            ).map(([categoryTitle, categoryItems]) => (
-                              <div
-                                key={categoryTitle}
-                                className="p-4 border-b border-gray-200 last:border-b-0"
-                              >
-                                <h4 className="font-semibold text-sm text-gray-700 uppercase tracking-wide mb-3">
-                                  {categoryTitle}
-                                </h4>
-                                <div className="space-y-2">
-                                  {categoryItems.map((subItem) => (
-                                    <a
-                                      key={subItem.name}
-                                      href={subItem.href}
-                                      className="block text-sm text-gray-600 hover:text-red-500 py-1 transition-colors"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        alert("This function is coming soon!");
-                                      }}
-                                    >
-                                      {subItem.name}
-                                    </a>
-                                  ))}
-                                </div>
-                              </div>
-                            ))
+              {!categoriesLoading &&
+                Object.keys(groupedCategories).map((group) => (
+                  <div
+                    key={group}
+                    className="border-b border-gray-100 last:border-b-0"
+                  >
+                    {groupedCategories[group].length > 1 ? (
+                      <>
+                        <button
+                          onClick={() => toggleCategory(group)}
+                          className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors text-left"
+                        >
+                          <span className="font-medium text-gray-800">
+                            {group}
+                          </span>
+                          {expandedCategory === group ? (
+                            <Minus className="w-5 h-5 text-gray-500" />
                           ) : (
-                            <div className="p-4">
-                              {(item.items as typeof themeCakes).map(
-                                (subItem) => (
-                                  <a
-                                    key={subItem.name}
-                                    href={subItem.href}
-                                    className="block text-sm text-gray-600 hover:text-red-500 py-2 transition-colors"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      alert("This function is coming soon!");
-                                    }}
-                                  >
-                                    {subItem.name}
-                                  </a>
-                                )
-                              )}
-                            </div>
+                            <Plus className="w-5 h-5 text-gray-500" />
                           )}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <a
-                      href={item.href}
-                      className="block p-4 hover:bg-gray-50 transition-colors font-medium text-gray-800"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        alert("This function is coming soon!");
-                      }}
-                    >
-                      {item.name}
-                    </a>
-                  )}
-                </div>
-              ))}
+                        </button>
+
+                        {expandedCategory === group && (
+                          <div className="bg-gray-50 border-t border-gray-200">
+                            <div className="p-4">
+                              {groupedCategories[group].map((category) => (
+                                <button
+                                  key={category._id}
+                                  onClick={(e) =>
+                                    handleCategoryClick(category.slug, e)
+                                  }
+                                  className="block w-full text-left text-sm text-gray-600 hover:text-red-500 py-2 transition-colors"
+                                >
+                                  {category.name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <button
+                        onClick={(e) =>
+                          handleCategoryClick(
+                            groupedCategories[group][0].slug,
+                            e
+                          )
+                        }
+                        className="block w-full text-left p-4 hover:bg-gray-50 transition-colors font-medium text-gray-800"
+                      >
+                        {group}
+                      </button>
+                    )}
+                  </div>
+                ))}
+
+              {/* Special links that don't come from categories */}
+              <div className="border-b border-gray-100">
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    router.push("/products?isBestseller=true");
+                  }}
+                  className="block w-full text-left p-4 hover:bg-gray-50 transition-colors font-medium text-gray-800"
+                >
+                  Bestsellers
+                </button>
+              </div>
+
+              <div className="border-b border-gray-100">
+                <button
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    router.push("/products?isEggless=true");
+                  }}
+                  className="block w-full text-left p-4 hover:bg-gray-50 transition-colors font-medium text-gray-800"
+                >
+                  Eggless
+                </button>
+              </div>
             </div>{" "}
             {/* User Actions in Mobile Menu */}
             <div className="p-4 border-t border-gray-200 space-y-3">
