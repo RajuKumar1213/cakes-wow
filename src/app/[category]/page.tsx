@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import ProductGrid from "@/components/ProductGrid";
 import { Breadcrumb, Header } from "@/components";
@@ -32,7 +32,7 @@ interface Category {
   type: string;
 }
 
-const CategoryPage = () => {
+const CategoryPageContent = () => {
   const params = useParams();
   const searchParams = useSearchParams();
   const categorySlug = params.category as string;
@@ -174,9 +174,16 @@ const CategoryPage = () => {
           onSortChange={handleSortChange}
           onFilterChange={handleFilterChange}
           category={categorySlug}
-        />
-      </div>
+        />      </div>
     </div>
+  );
+};
+
+const CategoryPage = () => {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div></div>}>
+      <CategoryPageContent />
+    </Suspense>
   );
 };
 

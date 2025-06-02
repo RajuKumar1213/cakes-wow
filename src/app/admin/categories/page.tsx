@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
@@ -47,7 +47,7 @@ interface Category {
   updatedAt: string;
 }
 
-export default function AdminCategoriesPage() {
+function AdminCategoriesContent() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -826,9 +826,16 @@ export default function AdminCategoriesPage() {
                 </button>
               </div>
             </div>
-          </div>
-        )}
+          </div>        )}
       </main>
     </div>
+  );
+}
+
+export default function AdminCategoriesPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div></div>}>
+      <AdminCategoriesContent />
+    </Suspense>
   );
 }
