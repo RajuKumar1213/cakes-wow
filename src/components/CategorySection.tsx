@@ -10,7 +10,7 @@ const CategorySection = () => {
       id: "1",
       name: "Mango",
       slug: "mango-cakes",
-      image: "/images/mango.jpg",
+      image: "/images/heart.jpg",
       href: "/mango-cakes",
     },
     {

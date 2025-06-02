@@ -4,26 +4,10 @@ import {
   HeroCarousel,
   CategorySection,
   CategoryShowcase,
-  ProductSection,
   Footer,
+  ProductCard,
 } from "@/components";
-import { useState, useEffect } from "react";
-import Loading from "@/components/Loading";
-import axios from "axios";
-
-interface Category {
-  _id: string;
-  name: string;
-  slug: string;
-  group: string;
-  type: string;
-  description?: string;
-  imageUrl?: string;
-  isActive: boolean;
-  sortOrder: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import { useEffect } from "react";
 
 interface Product {
   _id: string;
@@ -40,113 +24,159 @@ interface Product {
   isBestseller: boolean;
   isFeatured: boolean;
   discountPercentage: number;
-  weightOptions?: Array<{
-    weight: string;
-    price: number;
-    discountedPrice?: number;
-  }>;
   categories: Array<{
     name: string;
     slug: string;
   }>;
 }
 
-export default function Home() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [groupedCategories, setGroupedCategories] = useState<{
-    [key: string]: Category[];
-  }>({});
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [bestsellerProducts, setBestsellerProducts] = useState<Product[]>([]);
-  const [egglessProducts, setEgglessProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    window.scrollTo(0, 0); // Scroll to top on page load
-
-    const fetchData = async () => {
-      try {
-        // Fetch categories
-        const categoriesResponse = await axios.get(
-          "/api/categories?format=all"
-        );
-        const categoriesData = categoriesResponse.data;
-
-        if (categoriesData.success) {
-          const categories = categoriesData.data;
-          setCategories(categories);
-
-          // Group categories by their group field
-          const grouped = categories.reduce(
-            (acc: { [key: string]: Category[] }, category: Category) => {
-              if (!acc[category.group]) {
-                acc[category.group] = [];
-              }
-              acc[category.group].push(category);
-              return acc;
-            },
-            {}
-          );
-
-          setGroupedCategories(grouped);
-        }
-
-        // Fetch featured products
-        const featuredResponse = await axios.get(
-          "/api/products?isFeatured=true&limit=8"
-        );
-        if (featuredResponse.data.success) {
-          setFeaturedProducts(featuredResponse.data.data.products);
-        }
-
-        // Fetch bestseller products
-        const bestsellerResponse = await axios.get(
-          "/api/products?isBestseller=true&limit=8"
-        );
-        if (bestsellerResponse.data.success) {
-          setBestsellerProducts(bestsellerResponse.data.data.products);
-        }
-
-        // Fetch eggless products
-        const egglessResponse = await axios.get(
-          "/api/products?isEggless=true&limit=8"
-        );
-        if (egglessResponse.data.success) {
-          setEgglessProducts(egglessResponse.data.data.products);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  // Helper function to format categories for CategorySection
-  const formatCategoriesForSection = (categoryList: Category[]) => {
-    return categoryList.map((category) => ({
-      id: category._id,
-      name: category.name,
-      image:
-        category.imageUrl ||
-        "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=100&h=100&fit=crop",
-      href: `/${category.slug}`,
-    }));
-  };
-
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-white mx-auto">
-        <Header />
-        <div className="flex justify-center items-center h-96">
-          <Loading size="lg" text="Loading..." className="text-pink-400" />
-        </div>
-        <Footer />
-      </main>
-    );
+// Hardcoded products data for faster loading
+const featuredProducts: Product[] = [
+  {
+    _id: "1",
+    name: "Chocolate Truffle Cake",
+    slug: "chocolate-truffle-cake",
+    imageUrls: ["/images/chocolateloaded.jpg"],
+    price: 849,
+    discountedPrice: 679,
+    finalPrice: 679,
+    rating: 4.5,
+    reviewCount: 156,
+    shortDescription: "Rich chocolate cake with truffle frosting",
+    isEggless: false,
+    isBestseller: true,
+    isFeatured: true,
+    discountPercentage: 20,
+    categories: [{ name: "Chocolate Cakes", slug: "chocolate-cakes" }]
+  },
+  {
+    _id: "2", 
+    name: "Anniversary Special Cake",
+    slug: "anniversary-special-cake",
+    imageUrls: ["/images/aniversary-2.jpg"],
+    price: 949,
+    discountedPrice: 759,
+    finalPrice: 759,
+    rating: 4.7,
+    reviewCount: 203,
+    shortDescription: "Perfect anniversary celebration cake",
+    isEggless: false,
+    isBestseller: true,
+    isFeatured: true,
+    discountPercentage: 20,
+    categories: [{ name: "Anniversary Cakes", slug: "anniversary-cakes" }]
+  },
+  {
+    _id: "3",
+    name: "Heart Shaped Love Cake",
+    slug: "heart-shaped-love-cake", 
+    imageUrls: ["/images/heart.jpg"],
+    price: 899,
+    discountedPrice: 719,
+    finalPrice: 719,
+    rating: 4.6,
+    reviewCount: 189,
+    shortDescription: "Express your love with this beautiful heart cake",
+    isEggless: true,
+    isBestseller: false,
+    isFeatured: true,
+    discountPercentage: 20,
+    categories: [{ name: "Heart Shaped", slug: "heart-shaped" }]
+  },
+  {
+    _id: "4",
+    name: "Birthday Celebration Cake",
+    slug: "birthday-celebration-cake",
+    imageUrls: ["/images/birthday.jpg"], 
+    price: 799,
+    discountedPrice: 639,
+    finalPrice: 639,
+    rating: 4.4,
+    reviewCount: 142,
+    shortDescription: "Make birthdays extra special",
+    isEggless: true,
+    isBestseller: true,
+    isFeatured: true,
+    discountPercentage: 20,
+    categories: [{ name: "Birthday Cakes", slug: "birthday-cakes" }]
+  },
+  {
+    _id: "5",
+    name: "Jungle Theme Kids Cake",
+    slug: "jungle-theme-kids-cake",
+    imageUrls: ["/images/jungle.png"],
+    price: 1099,
+    discountedPrice: 879,
+    finalPrice: 879,
+    rating: 4.8,
+    reviewCount: 224,
+    shortDescription: "Adventure awaits with this jungle themed cake",
+    isEggless: false,
+    isBestseller: true,
+    isFeatured: true,
+    discountPercentage: 20,
+    categories: [{ name: "Kids Special", slug: "kids-special" }]
+  },
+  {
+    _id: "6",
+    name: "Engagement Bliss Cake",
+    slug: "engagement-bliss-cake",
+    imageUrls: ["/images/engagement.png"],
+    price: 1199,
+    discountedPrice: 959,
+    finalPrice: 959,
+    rating: 4.9,
+    reviewCount: 167,
+    shortDescription: "Celebrate your engagement in style",
+    isEggless: true,
+    isBestseller: false,
+    isFeatured: true,
+    discountPercentage: 20,
+    categories: [{ name: "Engagement Cakes", slug: "engagement-cakes" }]
+  },
+  {
+    _id: "7",
+    name: "Designer Special Cake",
+    slug: "designer-special-cake",
+    imageUrls: ["/images/designcake.png"],
+    price: 1399,
+    discountedPrice: 1119,
+    finalPrice: 1119,
+    rating: 4.7,
+    reviewCount: 198,
+    shortDescription: "Unique designer cake for special occasions",
+    isEggless: false,
+    isBestseller: true,
+    isFeatured: true,
+    discountPercentage: 20,
+    categories: [{ name: "Designer Cakes", slug: "designer-cakes" }]
+  },
+  {
+    _id: "8",
+    name: "Anniversary Celebration",
+    slug: "anniversary-celebration",
+    imageUrls: ["/images/annversary.jpg"],
+    price: 999,
+    discountedPrice: 799,
+    finalPrice: 799,
+    rating: 4.5,
+    reviewCount: 156,
+    shortDescription: "Celebrate years of togetherness",
+    isEggless: true,
+    isBestseller: false,
+    isFeatured: true,
+    discountPercentage: 20,
+    categories: [{ name: "Anniversary Cakes", slug: "anniversary-cakes" }]
   }
+];
+
+const bestsellerProducts = featuredProducts.filter(p => p.isBestseller);
+const egglessProducts = featuredProducts.filter(p => p.isEggless);
+
+export default function Home() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -162,12 +192,29 @@ export default function Home() {
       {/* Featured Products */}
       {featuredProducts.length > 0 && (
         <div className="bg-white">
-          <ProductSection
-            title="Featured Products"
-            subtitle="Handpicked favorites that our customers love the most"
-            products={featuredProducts}
-            viewAllLink="/products?featured=true"
-          />
+          <section className="py-8 md:py-12">
+            <div className="container mx-auto px-2 md:px-4 lg:px-6 xl:px-8">
+              <div className="text-center mb-6 md:mb-8">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-1 md:mb-2">
+                  Featured Products
+                </h2>
+                <p className="text-sm md:text-base text-gray-600">Handpicked favorites that our customers love the most</p>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8 md:px-8">
+                {featuredProducts.map((product) => (
+                  <ProductCard key={product._id} {...product} />
+                ))}
+              </div>
+              <div className="text-center">
+                <button
+                  className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-medium transition-colors"
+                  onClick={() => alert("This function is coming soon!")}
+                >
+                  View All
+                </button>
+              </div>
+            </div>
+          </section>
         </div>
       )}
 
@@ -194,12 +241,29 @@ export default function Home() {
 
           {/* Content */}
           <div className="relative z-10">
-            <ProductSection
-              title="Bestsellers"
-              subtitle="Most loved treats that keep our customers coming back"
-              products={bestsellerProducts}
-              viewAllLink="/products?bestseller=true"
-            />
+            <section className="py-8 md:py-12">
+              <div className="container mx-auto px-2 md:px-4 lg:px-6 xl:px-8">
+                <div className="text-center mb-6 md:mb-8">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-1 md:mb-2">
+                    Bestsellers
+                  </h2>
+                  <p className="text-sm md:text-base text-gray-600">Most loved treats that keep our customers coming back</p>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8 md:px-8">
+                  {bestsellerProducts.map((product) => (
+                    <ProductCard key={product._id} {...product} />
+                  ))}
+                </div>
+                <div className="text-center">
+                  <button
+                    className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-medium transition-colors"
+                    onClick={() => alert("This function is coming soon!")}
+                  >
+                    View All
+                  </button>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
       )}
@@ -223,12 +287,29 @@ export default function Home() {
 
           {/* Content */}
           <div className="relative z-10">
-            <ProductSection
-              title="Eggless Delights"
-              subtitle="Delicious eggless options for everyone to enjoy"
-              products={egglessProducts}
-              viewAllLink="/products?eggless=true"
-            />
+            <section className="py-8 md:py-12">
+              <div className="container mx-auto px-2 md:px-4 lg:px-6 xl:px-8">
+                <div className="text-center mb-6 md:mb-8">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-1 md:mb-2">
+                    Eggless Delights
+                  </h2>
+                  <p className="text-sm md:text-base text-gray-600">Delicious eggless options for everyone to enjoy</p>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8 md:px-8">
+                  {egglessProducts.map((product) => (
+                    <ProductCard key={product._id} {...product} />
+                  ))}
+                </div>
+                <div className="text-center">
+                  <button
+                    className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-medium transition-colors"
+                    onClick={() => alert("This function is coming soon!")}
+                  >
+                    View All
+                  </button>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
       )}
