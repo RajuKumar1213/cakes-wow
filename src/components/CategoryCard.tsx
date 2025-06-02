@@ -23,7 +23,7 @@ const CategoryCard = ({ id, name, image, href }: CategoryCardProps) => {
       onClick={handleClick}
     >
       {/* Image Section with optimized aspect ratio */}
-      <div className="relative h-48 overflow-hidden bg-gray-100">
+      <div className="relative h-36 md:h-48 overflow-hidden bg-gray-100">
         <Image
           src={image}
           alt={name}

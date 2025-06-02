@@ -172,19 +172,8 @@ export default function Home() {
       )}
 
       {/* Quick Category Navigation */}
-      {Object.entries(groupedCategories)
-        .slice(0, 2)
-        .map(([groupName, categoryList], index) => (
-          <div
-            key={groupName}
-            className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}
-          >
-            <CategorySection
-              title={`${groupName} Collection`}
-              categories={formatCategoriesForSection(categoryList)}
-            />
-          </div>
-        ))}
+      <CategorySection />
+         
 
       {/* Bestseller Products */}
       {bestsellerProducts.length > 0 && (
