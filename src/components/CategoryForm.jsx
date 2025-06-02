@@ -32,7 +32,7 @@ const categorySchema = z.object({
     .regex(/^[a-zA-Z0-9\s\-&'()]+$/, "Type contains invalid characters"),
 });
 
-export default function CategoryForm({ category, onCancel }) {
+export default function CategoryForm({ category, onCancel, setLoadData }) {
     const { showSuccess, showError } = useToast();
   // React Hook Form setup
   const {
@@ -58,6 +58,7 @@ export default function CategoryForm({ category, onCancel }) {
   const [existingTypes, setExistingTypes] = useState([]);
   const [showCustomGroup, setShowCustomGroup] = useState(false);
   const [showCustomType, setShowCustomType] = useState(false);
+
 
   // Watch form values for dynamic behavior
   const watchedGroup = watch("group");
@@ -164,6 +165,7 @@ export default function CategoryForm({ category, onCancel }) {
         if (response.data.success) {
           showSuccess("success", "Category updated successfully!");
           onCancel();
+          setLoadData(true);
         }
       }
       else {
@@ -172,6 +174,7 @@ export default function CategoryForm({ category, onCancel }) {
         if (response.data.success) {
           showSuccess("success", "Category created successfully!");
           onCancel();
+          setLoadData(true);
         }
       }
 
@@ -198,59 +201,12 @@ export default function CategoryForm({ category, onCancel }) {
           </div>
         </div>{" "}
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
-          {/* Category Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Category Name *
-            </label>
-            <Controller
-              name="name"
-              control={control}
-              render={({ field }) => (
-                <input
-                  {...field}
-                  type="text"
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-                    errors.name ? "border-red-500" : "border-gray-300"
-                  }`}
-                  placeholder="Enter category name"
-                />
-              )}
-            />
-            {errors.name && (
-              <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
-            )}
-          </div>
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description
-            </label>
-            <Controller
-              name="description"
-              control={control}
-              render={({ field }) => (
-                <textarea
-                  {...field}
-                  rows={3}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-                    errors.description ? "border-red-500" : "border-gray-300"
-                  }`}
-                  placeholder="Enter category description (optional)"
-                />
-              )}
-            />
-            {errors.description && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.description.message}
-              </p>
-            )}
-          </div>{" "}
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Group */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Category *
+                Group *
               </label>
               <div className="space-y-2">
                 {!showCustomGroup ? (
@@ -392,6 +348,55 @@ export default function CategoryForm({ category, onCancel }) {
               )}
             </div>
           </div>
+{/* Category Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Category Name *
+            </label>
+            <Controller
+              name="name"
+              control={control}
+              render={({ field }) => (
+                <input
+                  {...field}
+                  type="text"
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+                    errors.name ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder="Enter category name"
+                />
+              )}
+            />
+            {errors.name && (
+              <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+            )}
+          </div>
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description
+            </label>
+            <Controller
+              name="description"
+              control={control}
+              render={({ field }) => (
+                <textarea
+                  {...field}
+                  rows={3}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
+                    errors.description ? "border-red-500" : "border-gray-300"
+                  }`}
+                  placeholder="Enter category description (optional)"
+                />
+              )}
+            />
+            {errors.description && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.description.message}
+              </p>
+            )}
+          </div>{" "}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Category Image

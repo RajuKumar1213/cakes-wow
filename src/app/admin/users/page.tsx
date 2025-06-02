@@ -231,18 +231,18 @@ const UserDetailsModal = ({ user, isOpen, onClose }: {
 export default function AdminUsersPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const toast = useToast();
+  const { showSuccess, showError } = useToast();
   
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-
-  // Mock data - replace with actual API calls
+  // PLACEHOLDER: Mock data - Real user management system to be implemented
+  // This will be replaced with actual API calls to fetch users from database
   const mockUsers: User[] = [
     {
-      id: '1',
+      id: 'DEMO-1',
       phoneNumber: '+91 98765 43210',
       name: 'Rajesh Kumar',
       email: 'rajesh@example.com',
@@ -254,7 +254,7 @@ export default function AdminUsersPage() {
       orderCount: 25
     },
     {
-      id: '2',
+      id: 'DEMO-2',
       phoneNumber: '+91 87654 32109',
       name: 'Priya Sharma',
       email: 'priya@example.com',
@@ -266,7 +266,7 @@ export default function AdminUsersPage() {
       orderCount: 12
     },
     {
-      id: '3',
+      id: 'DEMO-3',
       phoneNumber: '+91 76543 21098',
       name: 'Amit Patel',
       status: 'inactive',
@@ -277,7 +277,7 @@ export default function AdminUsersPage() {
       orderCount: 8
     },
     {
-      id: '4',
+      id: 'DEMO-4',
       phoneNumber: '+91 65432 10987',
       name: 'Sneha Reddy',
       email: 'sneha@example.com',
@@ -318,23 +318,22 @@ export default function AdminUsersPage() {
     const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
-
   const handleEditUser = (user: User) => {
-    toast.success(`Edit functionality for ${user.name} will be implemented`);
+    showSuccess(`Edit functionality for ${user.name} will be implemented`, 'Coming soon');
   };
 
   const handleBanUser = (userId: string) => {
     setUsers(users.map(user => 
       user.id === userId ? { ...user, status: 'banned' as const } : user
     ));
-    toast.success('User has been banned');
+    showSuccess('User has been banned', 'User status updated successfully');
   };
 
   const handleActivateUser = (userId: string) => {
     setUsers(users.map(user => 
       user.id === userId ? { ...user, status: 'active' as const } : user
     ));
-    toast.success('User has been activated');
+    showSuccess('User has been activated', 'User status updated successfully');
   };
 
   const handleViewDetails = (user: User) => {
@@ -376,10 +375,22 @@ export default function AdminUsersPage() {
             </div>
           </div>
         </div>
-      </header>
-
-      {/* Main Content */}
+      </header>      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Placeholder Notice */}
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <Users className="w-5 h-5 text-blue-600 mt-0.5" />
+            <div>
+              <h3 className="font-medium text-blue-900 mb-1">User Management - Demo Mode</h3>
+              <p className="text-sm text-blue-700">
+                This page displays sample user data for demonstration purposes. 
+                Real user management functionality will be implemented with the authentication system integration.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Search and Filters */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="flex-1 relative">

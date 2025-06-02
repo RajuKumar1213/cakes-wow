@@ -275,7 +275,7 @@ const OrderDetailsModal = ({ order, onClose }: {
 
 export default function AdminOrders() {
   const { user, loading } = useAuth();
-  const { addToast } = useToast();
+  const { showSuccess, showError } = useToast();
   const router = useRouter();
   
   const [orders, setOrders] = useState<Order[]>([]);
@@ -283,12 +283,12 @@ export default function AdminOrders() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-
-  // Mock data - in real app, this would come from API
+  // PLACEHOLDER: Mock data - Real order management system to be implemented
+  // This will be replaced with actual API calls to fetch orders from database
   useEffect(() => {
     const mockOrders: Order[] = [
       {
-        id: '1001',
+        id: 'DEMO-1001',
         customerName: 'John Doe',
         customerPhone: '+91 9876543210',
         customerEmail: 'john@example.com',
@@ -312,7 +312,7 @@ export default function AdminOrders() {
         notes: 'Please deliver before 6 PM'
       },
       {
-        id: '1002',
+        id: 'DEMO-1002',
         customerName: 'Jane Smith',
         customerPhone: '+91 9876543211',
         customerEmail: 'jane@example.com',
@@ -343,7 +343,7 @@ export default function AdminOrders() {
         orderDate: '2024-01-20T14:15:00Z'
       },
       {
-        id: '1003',
+        id: 'DEMO-1003',
         customerName: 'Mike Johnson',
         customerPhone: '+91 9876543212',
         customerEmail: 'mike@example.com',
@@ -393,12 +393,11 @@ export default function AdminOrders() {
     
     setFilteredOrders(filtered);
   }, [orders, searchTerm, statusFilter]);
-
   const handleStatusChange = (orderId: string, newStatus: Order['status']) => {
     setOrders(prev => prev.map(order => 
       order.id === orderId ? { ...order, status: newStatus } : order
     ));
-    addToast(`Order status updated to ${newStatus}`, 'success');
+    showSuccess(`Order status updated to ${newStatus}`, 'Status has been updated successfully');
   };
 
   const handleViewDetails = (order: Order) => {
@@ -438,10 +437,21 @@ export default function AdminOrders() {
             </div>
           </div>
         </div>
-      </header>
-
-      {/* Main Content */}
+      </header>      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Placeholder Notice */}
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+            <div>
+              <h3 className="font-medium text-blue-900 mb-1">Orders Management - Demo Mode</h3>
+              <p className="text-sm text-blue-700">
+                This page displays sample order data for demonstration purposes. 
+                Real order management functionality will be implemented when the shopping cart and checkout system is ready.
+              </p>
+            </div>
+          </div>
+        </div>
         {/* Filters */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-6">
           <div className="flex flex-col md:flex-row gap-4">

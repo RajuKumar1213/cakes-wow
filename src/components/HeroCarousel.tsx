@@ -4,25 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from 'next/navigation';
 
-interface Category {
-  _id: string;
-  name: string;
-  slug: string;
-  group: string;
-  type: string;
-  description?: string;
-  imageUrl?: string;
-  isActive: boolean;
-  sortOrder: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface HeroCarouselProps {
-  categories?: Category[];
-}
-
-const HeroCarousel = ({ categories = [] }: HeroCarouselProps) => {
+const HeroCarousel = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
@@ -38,41 +20,62 @@ const HeroCarousel = ({ categories = [] }: HeroCarouselProps) => {
 
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
-
-  // Fallback banners if no categories provided
-  const fallbackBanners = [
-    {
+  // Hardcoded banners array
+  const banners = [    {
       id: "1",
-      image: "https://cdn.pixabay.com/photo/2017/01/11/11/33/cake-1971552_1280.jpg",
-      alt: "Designer Cakes",
-      title: "Designer Cakes",
-      subtitle: "Celebrate in Style",
+      image: "/images/jungle.png",
+      alt: "Jungle Cakes",
+      title: "Every Kid Deserves a Cake that Wows!",
+      subtitle: "Every Kid Deserves a Cake that Wows!",
       bgColor: "bg-gradient-to-r from-pink-400 to-purple-500",
-      href: "/products"
+      href: "/jungle-cakes"
     },
     {
       id: "2",
-      image: "https://plus.unsplash.com/premium_photo-1713447395823-2e0b40b75a89?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8Y2FrZXxlbnwwfHwwfHx8MA%3D%3D",
-      alt: "Chocolate Cakes",
-      title: "Chocolate Cakes",
+      image: "/images/engagement.png",
+      alt: "engagement",
+      title: "Engaged in Love Celeberated in Cake",
       subtitle: "Rich & Delicious",
       bgColor: "bg-gradient-to-r from-orange-400 to-yellow-500",
+      href: "/engagement-cakes"
+    },
+    {
+      id: "3",
+      image: "/images/aniversary3.png",
+      alt: "Anniversary Cakes",
+      title: "Anniversary Cakes",
+      subtitle: "Make Every Moment Special",
+      bgColor: "bg-gradient-to-r from-blue-400 to-indigo-500",
+      href: "/anniversary-cakes"
+    },
+    {
+      id: "4",
+      image: "/images/birthday.jpg",
+      alt: "birthday",
+      title: "Make Every Birthday Special",
+      subtitle: "Perfect for Your Big Day",
+      bgColor: "bg-gradient-to-r from-rose-400 to-pink-500",
+      href: "/birthday-cakes"
+    },
+    {
+      id: "5",
+      image: "/images/bridetobecake.",
+      alt: "Cupcakes",
+      title: "Cupcakes",
+      subtitle: "Sweet Little Treats",
+      bgColor: "bg-gradient-to-r from-green-400 to-teal-500",
+      href: "/products"
+    },
+    {
+      id: "6",
+      image: "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=600&auto=format&fit=crop&q=60",
+      alt: "Custom Cakes",
+      title: "Custom Cakes",
+      subtitle: "Designed Just for You",
+      bgColor: "bg-gradient-to-r from-purple-400 to-violet-500",
       href: "/products"
     }
   ];
-
-  // Create banners from categories or use fallback
-  const banners = categories.length > 0 
-    ? categories.slice(0, 6).map((category) => ({
-        id: category._id,
-        image: category.imageUrl || "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&auto=format&fit=crop&q=60",
-        alt: category.name,
-        title: category.name,
-        subtitle: category.description || `Explore ${category.name}`,
-        bgColor: "bg-gradient-to-r from-pink-400 to-purple-500",
-        href: `/${category.slug}`
-      }))
-    : fallbackBanners;
 
   // Calculate maximum slides based on screen size
   const maxSlides = isMobile ? banners.length - 1 : banners.length - 3;
@@ -155,9 +158,9 @@ const HeroCarousel = ({ categories = [] }: HeroCarouselProps) => {
                     <h3 className="text-2xl sm:text-lg md:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2 transform group-hover:scale-105 transition-transform duration-300">
                       {banner.title}
                     </h3>
-                    <p className="text-sm sm:text-sm md:text-base lg:text-lg opacity-90 transform group-hover:translate-y-1 transition-transform duration-300">
+                    {/* <p className="text-sm sm:text-sm md:text-base lg:text-lg opacity-90 transform group-hover:translate-y-1 transition-transform duration-300">
                       {banner.subtitle}
-                    </p>
+                    </p> */}
 
                     {/* Shop Now Button */}
                     <button className="mt-2 sm:mt-4 bg-red-500 hover:bg-red-600 text-white px-3 py-1 sm:px-4 sm:py-1.5 md:px-6 md:py-2 rounded-full text-xs sm:text-sm font-medium transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">

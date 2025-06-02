@@ -46,6 +46,8 @@ const Header = () => {
     }
   };
 
+  console.log(groupedCategories);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -250,14 +252,14 @@ const Header = () => {
           </div>{" "}
           {/* Desktop Navigation */}
           <nav
-            className=" border-gray-200 shadow-sm mt-23 relative z-40"
+            className=" border-gray-200  shadow-sm mt-23 relative z-40"
             ref={dropdownRef}
             style={{
               boxShadow:
                 "0 1px 2px rgba(0,0,0,0.1), 0 -1px 2px rgba(0,0,0,0.1)",
             }}
           >
-            <div className="container mx-auto px-6 relative">
+            <div className="container flex items-center justify-center px-6 relative">
               <div className="flex items-center justify-start flex-wrap space-x-6 py-1 nav-scroll-container">
                 {!categoriesLoading &&
                   Object.keys(groupedCategories).map((group) => {
@@ -300,56 +302,60 @@ const Header = () => {
                           {groupedCategories[group].length > 1 && (
                             <ChevronDown className="w-3 h-3" />
                           )}
-                        </button>
-
+                        </button>{" "}
                         {isDropdownOpen === group.toLowerCase() &&
                           groupedCategories[group].length > 1 && (
                             <div
-                              className="absolute top-full left-0 min-w-[320px] bg-white shadow-2xl rounded-lg border border-gray-100"
+                              className="absolute top-full left-0 bg-white shadow-2xl rounded-lg border border-gray-100"
                               style={{
                                 boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
                                 marginTop: "4px",
                                 zIndex: 9999,
+                                minWidth: "200px",
+                                maxWidth: "850px",
+                                width: "max-content",
                               }}
                             >
-                              <div className="p-4">
+                              <div className="p-3"> {/* MODIFIED: p-4 to p-3 */}
                                 {Object.keys(categoriesByType).length > 1 ? (
-                                  // Multiple types - organize by type
-                                  <div className="grid grid-cols-1 gap-4">
+                                  // Multiple types - organize by type with dynamic width
+                                  <div
+                                    className="flex gap-2" // This class might be overridden by style below
+                                    style={{
+                                      display: "grid",
+                                      gridTemplateColumns: `repeat(${Math.min(
+                                        Object.keys(categoriesByType).length,
+                                        5
+                                      )}, minmax(10px, max-content))`,
+                                      gap: "1rem", // MODIFIED: 1.5rem to 1rem
+                                    }}
+                                  >
                                     {Object.entries(categoriesByType).map(
-                                      ([type, typeCategories]: [
-                                        string,
-                                        any
-                                      ]) => (
-                                        <div key={type}>
-                                          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 border-b border-gray-100 pb-1">
-                                            {type === "Category"
-                                              ? "By Type"
-                                              : type === "Occasion"
-                                              ? "By Occasion"
-                                              : type === "Relationship"
-                                              ? "By Relationship"
-                                              : type === "Dessert"
-                                              ? "Desserts"
-                                              : type === "Theme"
-                                              ? "Theme Cakes"
-                                              : type === "Special"
-                                              ? "Special Cakes"
-                                              : type === "Character"
-                                              ? "Character Cakes"
-                                              : type === "Romantic"
-                                              ? "Romantic Cakes"
-                                              : type === "Fantasy"
-                                              ? "Fantasy Cakes"
-                                              : type === "Adventure"
-                                              ? "Adventure Cakes"
-                                              : type === "Luxury"
-                                              ? "Luxury Collection"
-                                              : type}
+                                      (
+                                        [type, typeCategories]: [string, any],
+                                        index: number
+                                      ) => (
+                                        <div
+                                          key={type}
+                                          className={`min-w-0 rounded-lg p-2.5 ${/* MODIFIED: p-4 to p-2.5 */
+                                            index % 2 === 0
+                                              ? "bg-pink-25"
+                                              : "bg-white"
+                                          }`}
+                                          style={{
+                                            backgroundColor:
+                                              index % 2 === 0
+                                                ? "#fef7f7"
+                                                : "white",
+                                          }}
+                                        >
+                                          <h3 className="text-sm font-semibold text-gray-900 mb-1.5 border-b border-gray-100 pb-1 whitespace-nowrap">
+                                            {type}
                                           </h3>
-                                          <div className="grid grid-cols-1 gap-1">
-                                            {typeCategories.map(
-                                              (category: any) => (
+                                          <div className="space-y-0.5">
+                                            {typeCategories
+                                              .slice(0, 5)
+                                              .map((category: any) => (
                                                 <button
                                                   key={category._id}
                                                   onClick={(e) =>
@@ -358,11 +364,16 @@ const Header = () => {
                                                       e
                                                     )
                                                   }
-                                                  className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors duration-200 font-medium"
+                                                  className="w-full text-left py-1 px-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 rounded transition-colors duration-200 font-medium whitespace-nowrap truncate"
                                                 >
                                                   {category.name}
                                                 </button>
-                                              )
+                                              ))}
+                                            {typeCategories.length > 5 && (
+                                              <div className="text-xs text-gray-500 px-2 py-0.5">
+                                                +{typeCategories.length - 5}{" "}
+                                                more
+                                              </div>
                                             )}
                                           </div>
                                         </div>
@@ -371,9 +382,16 @@ const Header = () => {
                                   </div>
                                 ) : (
                                   // Single type - simple list
-                                  <div className="space-y-1">
-                                    {groupedCategories[group].map(
-                                      (category) => (
+                                  <div
+                                    className="space-y-0.5"
+                                    style={{
+                                      minWidth: "150px", // Keep minWidth for single list
+                                      maxWidth: "280px", // Keep maxWidth for single list
+                                    }}
+                                  >
+                                    {groupedCategories[group]
+                                      .slice(0, 8)
+                                      .map((category) => (
                                         <button
                                           key={category._id}
                                           onClick={(e) =>
@@ -382,11 +400,16 @@ const Header = () => {
                                               e
                                             )
                                           }
-                                          className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors duration-200 font-medium"
+                                          className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 rounded transition-colors duration-200 font-medium whitespace-nowrap truncate"
                                         >
                                           {category.name}
                                         </button>
-                                      )
+                                      ))}
+                                    {groupedCategories[group].length > 8 && (
+                                      <div className="text-xs text-gray-500 px-3 py-1 border-t border-gray-100 mt-1">
+                                        +{groupedCategories[group].length - 8}{" "}
+                                        more
+                                      </div>
                                     )}
                                   </div>
                                 )}
@@ -398,7 +421,7 @@ const Header = () => {
                   })}
 
                 {/* Special links that don't come from categories */}
-                <Link
+                {/* <Link
                   href="/products?isBestseller=true"
                   className="hover:text-red-500 font-medium transition-colors duration-200 whitespace-nowrap text-sm flex-shrink-0 px-2 py-1 rounded-md"
                 >
@@ -410,7 +433,7 @@ const Header = () => {
                   className="hover:text-red-500 font-medium transition-colors duration-200 whitespace-nowrap text-sm flex-shrink-0 px-2 py-1 rounded-md"
                 >
                   Eggless
-                </Link>
+                </Link> */}
               </div>
 
               {/* Gradient fade indicators for scrollable content */}
