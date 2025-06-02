@@ -118,15 +118,15 @@ const ProductCard = ({
   };
   return (
     <div className="bg-white rounded-md shadow-md hover:shadow-lg transition-all duration-300 group">
-      <Link href={`/products/${slug}`}>
-        <div className="relative h-36 sm:h-48 overflow-hidden rounded-t-lg">
-          <Image
+      <Link href={`/products/${slug}`}>        <div className="relative h-36 sm:h-48 overflow-hidden rounded-t-lg">          <Image
             src={imageUrls[0] || "/placeholder-cake.jpg"}
             alt={name}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
-            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
             priority
+            placeholder="blur"
+            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
           />
           {discountPercentage > 0 && (
             <div className="absolute bg-red-500 text-white px-2 py-0.5 sm:px-3 sm:py-1 rounded-br-3xl text-xs font-medium">

@@ -126,12 +126,13 @@ const Header = () => {
               <Menu className="w-6 h-6 text-gray-700" />
             </button>
             <Image
-              src="/logoo.webp"
+              src="/logo.webp"
               alt="Bakingo Logo"
               width={120}
               height={20}
               className="cursor-pointer mr-8"
               onClick={() => router.push("/")}
+              priority
             />
           </div>
           {/* Right side - Icons */}
@@ -173,7 +174,7 @@ const Header = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <Image
-                  src="/logoo.webp"
+                  src="/logo.webp"
                   alt="Bakingo Logo"
                   width={155}
                   height={40}
@@ -316,7 +317,9 @@ const Header = () => {
                                 width: "max-content",
                               }}
                             >
-                              <div className="p-3"> {/* MODIFIED: p-4 to p-3 */}
+                              <div className="p-3">
+                                {" "}
+                                {/* MODIFIED: p-4 to p-3 */}
                                 {Object.keys(categoriesByType).length > 1 ? (
                                   // Multiple types - organize by type with dynamic width
                                   <div
@@ -337,7 +340,8 @@ const Header = () => {
                                       ) => (
                                         <div
                                           key={type}
-                                          className={`min-w-0 rounded-lg p-2.5 ${/* MODIFIED: p-4 to p-2.5 */
+                                          className={`min-w-0 rounded-lg p-2.5 ${
+                                            /* MODIFIED: p-4 to p-2.5 */
                                             index % 2 === 0
                                               ? "bg-pink-25"
                                               : "bg-white"
@@ -459,7 +463,7 @@ const Header = () => {
             {/* Mobile Menu Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <Image
-                src="/logoo.webp"
+                src="/logo.webp"
                 alt="Bakingo Logo"
                 width={120}
                 height={20}
@@ -474,33 +478,8 @@ const Header = () => {
               </button>
             </div>{" "}
             {/* Search in Mobile Menu */}
-            <div className="p-4 border-b border-gray-200">
-              <form onSubmit={handleSearch} className="relative">
-                <input
-                  type="text"
-                  placeholder="Search for cakes, pastries..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
-                <button
-                  type="submit"
-                  className="absolute right-3 top-3.5 w-5 h-5 text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  <Search className="w-5 h-5" />
-                </button>
-              </form>
-            </div>
-            {/* Location in Mobile Menu */}
-            <div className="p-4 border-b border-gray-200">
-              <div className="flex items-center space-x-3 cursor-pointer">
-                <MapPin className="w-5 h-5 text-red-500" />
-                <div>
-                  <div className="text-sm text-gray-500">Deliver to</div>
-                  <div className="font-medium">Select Location</div>
-                </div>
-              </div>
-            </div>{" "}
+            
+            
             {/* Mobile Menu Items */}
             <div className="py-2">
               {!categoriesLoading &&
@@ -559,30 +538,7 @@ const Header = () => {
                   </div>
                 ))}
 
-              {/* Special links that don't come from categories */}
-              <div className="border-b border-gray-100">
-                <button
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    router.push("/products?isBestseller=true");
-                  }}
-                  className="block w-full text-left p-4 hover:bg-gray-50 transition-colors font-medium text-gray-800"
-                >
-                  Bestsellers
-                </button>
-              </div>
-
-              <div className="border-b border-gray-100">
-                <button
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    router.push("/products?isEggless=true");
-                  }}
-                  className="block w-full text-left p-4 hover:bg-gray-50 transition-colors font-medium text-gray-800"
-                >
-                  Eggless
-                </button>
-              </div>
+              
             </div>{" "}
             {/* User Actions in Mobile Menu */}
             <div className="p-4 border-t border-gray-200 space-y-3">

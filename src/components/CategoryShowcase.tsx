@@ -7,29 +7,29 @@ const CategoryShowcase = () => {
       id: "1",
       name: "Chocolate Loaded Cakes",
       slug: "chocolate-loaded-cakes",
-      image: "/images/chocolateloaded.jpg",
+      image: "/images/chocolateloaded.webp",
       productCount: 25
     },
     {
       id: "2", 
       name: "Gourmet Cakes",
       slug: "gourmet-cakes",
-   
-      image: "/images/aniversary-2.jpg",
+
+      image: "/images/aniversary2.webp",
     },
     {
       id: "3",
       name: "Photo Cakes",
       slug: "photo-cakes",
-      image: "/images/kid1.png",
+      image: "/images/birthday.webp",
     },
     {
       id: "4",
       name: "Design Cakes",
       slug: "design-cakes",
-      image: "/images/designcake.png",
+      image: "/images/designcake.webp",
     },
-   
+
   ];
 
 
@@ -42,10 +42,8 @@ const CategoryShowcase = () => {
     description: category.description,
     ...(category.productCount && { productCount: category.productCount })
   });
-  return (
-    <section className="py-16 bg-gradient-to-b md:px-10 from-gray-50 to-white">
-      <div className="container mx-auto px-4">
-        <div className=" mb-6">
+  return (    <section className="py-16 bg-gradient-to-b from-gray-50 to-white">      <div className="container mx-auto px-4 md:px-6 lg:px-8">
+        <div className="text-center sm:text-left mb-6">
           <h2 className="text-3xl md:text-3xl font-semibold text-gray-800 mb-4">WOW Them with Every Slice!</h2>
           
         </div>

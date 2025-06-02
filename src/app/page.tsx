@@ -2,11 +2,11 @@
 import {
   Header,
   HeroCarousel,
-  CategorySection,
   CategoryShowcase,
   Footer,
   ProductCard,
 } from "@/components";
+import CategorySection from "@/components/CategorySection";
 import { useEffect } from "react";
 
 interface Product {
@@ -155,7 +155,7 @@ const featuredProducts: Product[] = [
     _id: "8",
     name: "Anniversary Celebration",
     slug: "anniversary-celebration",
-    imageUrls: ["/images/annversary.jpg"],
+    imageUrls: ["/images/annversary.webp"],
     price: 999,
     discountedPrice: 799,
     finalPrice: 799,
@@ -193,14 +193,14 @@ export default function Home() {
       {featuredProducts.length > 0 && (
         <div className="bg-white">
           <section className="py-8 md:py-12">
-            <div className="container mx-auto px-2 md:px-4 lg:px-6 xl:px-8">
+            <div className="container mx-auto px-4 md:px-6 lg:px-8">
               <div className="text-center mb-6 md:mb-8">
                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-1 md:mb-2">
                   Featured Products
                 </h2>
                 <p className="text-sm md:text-base text-gray-600">Handpicked favorites that our customers love the most</p>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8 md:px-8">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
                 {featuredProducts.map((product) => (
                   <ProductCard key={product._id} {...product} />
                 ))}
@@ -242,14 +242,14 @@ export default function Home() {
           {/* Content */}
           <div className="relative z-10">
             <section className="py-8 md:py-12">
-              <div className="container mx-auto px-2 md:px-4 lg:px-6 xl:px-8">
+              <div className="container mx-auto px-4 md:px-6 lg:px-8">
                 <div className="text-center mb-6 md:mb-8">
                   <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-1 md:mb-2">
                     Bestsellers
                   </h2>
                   <p className="text-sm md:text-base text-gray-600">Most loved treats that keep our customers coming back</p>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8 md:px-8">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
                   {bestsellerProducts.map((product) => (
                     <ProductCard key={product._id} {...product} />
                   ))}
@@ -288,14 +288,14 @@ export default function Home() {
           {/* Content */}
           <div className="relative z-10">
             <section className="py-8 md:py-12">
-              <div className="container mx-auto px-2 md:px-4 lg:px-6 xl:px-8">
+              <div className="container mx-auto px-4 md:px-6 lg:px-8">
                 <div className="text-center mb-6 md:mb-8">
                   <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-1 md:mb-2">
                     Eggless Delights
                   </h2>
                   <p className="text-sm md:text-base text-gray-600">Delicious eggless options for everyone to enjoy</p>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8 md:px-8">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
                   {egglessProducts.map((product) => (
                     <ProductCard key={product._id} {...product} />
                   ))}
@@ -316,7 +316,7 @@ export default function Home() {
 
       {/* About Section */}
       <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">
               About us
@@ -345,7 +345,7 @@ export default function Home() {
 
       {/* Customer Reviews */}
       <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 md:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
               What our customers say about us!
