@@ -189,7 +189,7 @@ export default function CategoryForm({ category, onCancel, setLoadData }) {
       <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="font-poppins text-2xl font-bold text-gray-900">
               {category ? "Edit Category" : "Add New Category"}
             </h2>
             <button

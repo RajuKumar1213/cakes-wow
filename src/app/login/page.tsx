@@ -121,7 +121,7 @@ export default function LoginPage() {
                 <MessageSquare className="w-8 h-8 text-orange-600" />
               )}
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="font-poppins text-2xl font-bold text-gray-900 mb-2">
               {step === 1 ? 'Welcome to Bakingo' : 'Verify Your Phone'}
             </h1>
             <p className="text-gray-600">

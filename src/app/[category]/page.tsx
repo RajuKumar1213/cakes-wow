@@ -145,8 +145,7 @@ const CategoryPageContent = () => {
 
         {/* Category Header */}
         {category && (
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">            <h1 className="font-poppins text-3xl font-bold text-gray-900 mb-2">
               {category.name}
             </h1>
             {category.description && (

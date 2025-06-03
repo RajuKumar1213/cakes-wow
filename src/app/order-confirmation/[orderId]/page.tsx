@@ -162,7 +162,7 @@ export default function OrderConfirmationPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Order not found</h1>
+          <h1 className="font-poppins text-2xl font-bold text-gray-900 mb-2">Order not found</h1>
           <p className="text-gray-600 mb-6">The order you're looking for doesn't exist.</p>
           <Link
             href="/"
@@ -193,7 +193,7 @@ export default function OrderConfirmationPage() {
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="text-center">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="font-poppins text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
               Order Placed Successfully!
             </h1>
             <p className="text-gray-600 mb-4">

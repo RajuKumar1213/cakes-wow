@@ -124,16 +124,19 @@ const Header = () => {
               className="mobile-menu-trigger p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <Menu className="w-6 h-6 text-gray-700" />
-            </button>
-            <Image
-              src="/logo.webp"
-              alt="Bakingo Logo"
-              width={120}
-              height={20}
-              className="cursor-pointer mr-8"
+            </button>{" "}
+            <div
+              className="flex items-center cursor-pointer"
               onClick={() => router.push("/")}
-              priority
-            />
+            >
+              <Image
+                src="/logo.webp"
+                alt="cakes wow Logo"
+                width={120}
+                height={32}
+                priority
+              />
+            </div>
           </div>
           {/* Right side - Icons */}
           <div className="flex items-center space-x-1">
@@ -171,15 +174,18 @@ const Header = () => {
         <div className="hidden lg:block">
           {/* Main header */}
           <div className="container bg-white lg:px-10 md:px-10 shadow-md min-w-screen mx-auto py-6 fixed top-0 left-0 right-0 z-50">
+            {" "}
             <div className="flex items-center justify-between">
-              <div className="flex items-center">
+              <div
+                className="flex items-center cursor-pointer"
+                onClick={() => router.push("/")}
+              >
                 <Image
                   src="/logo.webp"
-                  alt="Bakingo Logo"
-                  width={155}
-                  height={40}
-                  className="h-10 cursor-pointer mr-8"
-                  onClick={() => router.push("/")}
+                  alt="cakes wow Logo"
+                  width={140}
+                  height={48}
+                  
                 />
               </div>
               {/* Location */}
@@ -312,13 +318,12 @@ const Header = () => {
                                 boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
                                 marginTop: "4px",
                                 zIndex: 9999,
-                                minWidth: "200px",
-                                maxWidth: "850px",
+                                minWidth: "100px",
+                                maxWidth: "900px",
                                 width: "max-content",
                               }}
                             >
                               <div className="p-3">
-                                {" "}
                                 {/* MODIFIED: p-4 to p-3 */}
                                 {Object.keys(categoriesByType).length > 1 ? (
                                   // Multiple types - organize by type with dynamic width
@@ -329,8 +334,8 @@ const Header = () => {
                                       gridTemplateColumns: `repeat(${Math.min(
                                         Object.keys(categoriesByType).length,
                                         5
-                                      )}, minmax(10px, max-content))`,
-                                      gap: "1rem", // MODIFIED: 1.5rem to 1rem
+                                      )}, minmax(4px, max-content))`,
+                                      gap: "2rem", // MODIFIED: 1.5rem to 1rem
                                     }}
                                   >
                                     {Object.entries(categoriesByType).map(
@@ -349,7 +354,7 @@ const Header = () => {
                                           style={{
                                             backgroundColor:
                                               index % 2 === 0
-                                                ? "#fef7f7"
+                                                ? "#faeef0"
                                                 : "white",
                                           }}
                                         >
@@ -358,7 +363,6 @@ const Header = () => {
                                           </h3>
                                           <div className="space-y-0.5">
                                             {typeCategories
-                                              .slice(0, 5)
                                               .map((category: any) => (
                                                 <button
                                                   key={category._id}
@@ -368,17 +372,12 @@ const Header = () => {
                                                       e
                                                     )
                                                   }
-                                                  className="w-full text-left py-1 px-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 rounded transition-colors duration-200 font-medium whitespace-nowrap truncate"
+                                                  className=" flex text-left py-1  text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 rounded transition-colors duration-200 font-medium whitespace-nowrap truncate"
                                                 >
                                                   {category.name}
                                                 </button>
                                               ))}
-                                            {typeCategories.length > 5 && (
-                                              <div className="text-xs text-gray-500 px-2 py-0.5">
-                                                +{typeCategories.length - 5}{" "}
-                                                more
-                                              </div>
-                                            )}
+                                            <div className="flex-grow" />
                                           </div>
                                         </div>
                                       )
@@ -390,11 +389,10 @@ const Header = () => {
                                     className="space-y-0.5"
                                     style={{
                                       minWidth: "150px", // Keep minWidth for single list
-                                      maxWidth: "280px", // Keep maxWidth for single list
+                                      maxWidth: "180px", // Keep maxWidth for single list
                                     }}
                                   >
                                     {groupedCategories[group]
-                                      .slice(0, 8)
                                       .map((category) => (
                                         <button
                                           key={category._id}
@@ -409,12 +407,7 @@ const Header = () => {
                                           {category.name}
                                         </button>
                                       ))}
-                                    {groupedCategories[group].length > 8 && (
-                                      <div className="text-xs text-gray-500 px-3 py-1 border-t border-gray-100 mt-1">
-                                        +{groupedCategories[group].length - 8}{" "}
-                                        more
-                                      </div>
-                                    )}
+                                    
                                   </div>
                                 )}
                               </div>
@@ -423,21 +416,6 @@ const Header = () => {
                       </div>
                     );
                   })}
-
-                {/* Special links that don't come from categories */}
-                {/* <Link
-                  href="/products?isBestseller=true"
-                  className="hover:text-red-500 font-medium transition-colors duration-200 whitespace-nowrap text-sm flex-shrink-0 px-2 py-1 rounded-md"
-                >
-                  Bestsellers
-                </Link>
-
-                <Link
-                  href="/products?isEggless=true"
-                  className="hover:text-red-500 font-medium transition-colors duration-200 whitespace-nowrap text-sm flex-shrink-0 px-2 py-1 rounded-md"
-                >
-                  Eggless
-                </Link> */}
               </div>
 
               {/* Gradient fade indicators for scrollable content */}
@@ -464,7 +442,7 @@ const Header = () => {
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <Image
                 src="/logo.webp"
-                alt="Bakingo Logo"
+                alt="cakes wow Logo"
                 width={120}
                 height={20}
                 className="cursor-pointer mr-8"
@@ -478,8 +456,6 @@ const Header = () => {
               </button>
             </div>{" "}
             {/* Search in Mobile Menu */}
-            
-            
             {/* Mobile Menu Items */}
             <div className="py-2">
               {!categoriesLoading &&
@@ -537,8 +513,6 @@ const Header = () => {
                     )}
                   </div>
                 ))}
-
-              
             </div>{" "}
             {/* User Actions in Mobile Menu */}
             <div className="p-4 border-t border-gray-200 space-y-3">

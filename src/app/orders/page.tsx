@@ -118,7 +118,7 @@ export default function OrdersPage() {
             Back to Home
           </Link>
           
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">My Orders</h1>
+          <h1 className="font-poppins text-2xl sm:text-3xl font-bold text-gray-900 mb-2">My Orders</h1>
           <p className="text-gray-600">Track and manage your cake orders</p>
         </div>
 

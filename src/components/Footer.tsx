@@ -36,7 +36,7 @@ const Footer = () => {
       <div className="bg-red-500 py-3 sm:py-6">
         <div className="container mx-auto px-2 sm:px-4">
           <div className="flex flex-col md:flex-row items-center justify-between">
-            <h3 className="text-base sm:text-xl font-bold mb-3 md:mb-0 text-white text-center md:text-left">Subscribe To Newsletter</h3>
+            <h3 className="font-poppins text-base sm:text-xl font-bold mb-3 md:mb-0 text-white text-center md:text-left">Subscribe To Newsletter</h3>
             <div className="flex w-full md:w-auto">
               <input
                 type="email"
@@ -55,8 +55,7 @@ const Footer = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
             {/* Company Info */}
             <div className="col-span-1 sm:col-span-2 lg:col-span-1">
-              <h3 className="text-xl sm:text-2xl font-bold text-red-500 mb-2 sm:mb-4">Cakes wow</h3>
-              <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
+              <h3 className="font-poppins text-xl sm:text-2xl font-bold text-red-500 mb-2 sm:mb-4">Cakes wow</h3>              <p className="font-inter text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
                 Your trusted FSSAI-certified bakery where every dessert tells a story! 
                 We bake perfection with quality ingredients into impeccable cakes, pastries, and more.
               </p>
@@ -71,7 +70,7 @@ const Footer = () => {
 
             {/* Know Us */}
             <div>
-              <h4 className="text-base sm:text-lg font-semibold mb-2 sm:mb-4 text-gray-800">Know Us</h4>
+              <h4 className="font-poppins text-base sm:text-lg font-semibold mb-2 sm:mb-4 text-gray-800">Know Us</h4>
               <ul className="space-y-1 sm:space-y-2">
                 <li><a href="#" className="text-gray-600 hover:text-red-500 transition-colors text-sm sm:text-base">Our Story</a></li>
                 <li><a href="#" className="text-gray-600 hover:text-red-500 transition-colors text-sm sm:text-base">Contact Us</a></li>
@@ -84,7 +83,7 @@ const Footer = () => {
 
             {/* Need Help */}
             <div>
-              <h4 className="text-base sm:text-lg font-semibold mb-2 sm:mb-4 text-gray-800">Need Help</h4>
+              <h4 className="font-poppins text-base sm:text-lg font-semibold mb-2 sm:mb-4 text-gray-800">Need Help</h4>
               <ul className="space-y-1 sm:space-y-2">
                 <li><a href="#" className="text-gray-600 hover:text-red-500 transition-colors text-sm sm:text-base">FAQ</a></li>
                 <li><a href="#" className="text-gray-600 hover:text-red-500 transition-colors text-sm sm:text-base">Cancellation & Refund</a></li>
@@ -96,7 +95,7 @@ const Footer = () => {
 
             {/* More */}
             <div>
-              <h4 className="text-base sm:text-lg font-semibold mb-2 sm:mb-4 text-gray-800">More</h4>
+              <h4 className="font-poppins text-base sm:text-lg font-semibold mb-2 sm:mb-4 text-gray-800">More</h4>
               <ul className="space-y-1 sm:space-y-2">
                 <li><a href="#" className="text-gray-600 hover:text-red-500 transition-colors text-sm sm:text-base">Trending Cakes</a></li>
                 <li><a href="#" className="text-gray-600 hover:text-red-500 transition-colors text-sm sm:text-base">By Type</a></li>

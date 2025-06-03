@@ -144,8 +144,7 @@ const BestSeller = () => {
         <section className="py-8 md:py-12">
           <div className="container mx-auto px-4 md:px-6 lg:px-8">
             {" "}
-            <div className="text-center sm:text-left mb-6 md:mb-8">
-              <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-1 md:mb-2">
+            <div className="text-center sm:text-left mb-6 md:mb-8">              <h2 className="font-poppins text-2xl md:text-3xl font-semibold text-gray-800 mb-1 md:mb-2">
                 Our Best Sellers
               </h2>
               {error && (

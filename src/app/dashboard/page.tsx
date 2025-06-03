@@ -33,7 +33,7 @@ export default function DashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-orange-600">Bakingo</h1>
+              <h1 className="font-poppins text-2xl font-bold text-orange-600">Bakingo</h1>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-gray-700">
@@ -57,7 +57,7 @@ export default function DashboardPage() {
         <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-8 text-white mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-3xl font-bold mb-2">Welcome back!</h2>
+              <h2 className="font-poppins text-3xl font-bold mb-2">Welcome back!</h2>
               <p className="text-orange-100 text-lg">
                 Ready to order some delicious cakes?
               </p>

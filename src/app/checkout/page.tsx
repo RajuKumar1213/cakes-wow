@@ -229,7 +229,7 @@ export default function CheckoutPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="text-center">
           <ShoppingCart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Your cart is empty</h1>
+          <h1 className="font-poppins text-2xl font-bold text-gray-900 mb-2">Your cart is empty</h1>
           <p className="text-gray-600 mb-6">Add some delicious cakes to your cart first!</p>
           <button
             onClick={() => router.push('/')}
@@ -247,7 +247,7 @@ export default function CheckoutPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="text-center">
           <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Order Placed Successfully!</h1>
+          <h1 className="font-poppins text-3xl font-bold text-gray-900 mb-4">Order Placed Successfully!</h1>
           <p className="text-gray-600 text-lg mb-6">
             Thank you for your order. You will receive a confirmation message shortly.
           </p>
@@ -264,7 +264,7 @@ export default function CheckoutPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Checkout</h1>
+          <h1 className="font-poppins text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Checkout</h1>
           <p className="text-gray-600">Review your order and complete your purchase</p>
         </div>
 

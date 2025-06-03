@@ -182,34 +182,8 @@ export default function Home() {
 
       <CategoryShowcase />
 
-      {/* Featured Products */}
-      {/* {featuredProducts.length > 0 && (
-        <div className="bg-white">
-          <section className="py-8 md:py-12">
-            <div className="container mx-auto px-4 md:px-6 lg:px-8">
-              <div className="text-center mb-6 md:mb-8">
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-1 md:mb-2">
-                  Featured Products
-                </h2>
-                <p className="text-sm md:text-base text-gray-600">Handpicked favorites that our customers love the most</p>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
-                {featuredProducts.map((product) => (
-                  <ProductCard key={product._id} {...product} />
-                ))}
-              </div>
-              <div className="text-center">
-                <button
-                  className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-medium transition-colors"
-                  onClick={() => alert("This function is coming soon!")}
-                >
-                  View All
-                </button>
-              </div>
-            </div>
-          </section>
-        </div>
-      )} */}
+      
+   
 
       {/* Quick Category Navigation */}
       <CategorySection />
@@ -228,10 +202,10 @@ export default function Home() {
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4 md:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">
+            <h2 className="font-poppins text-3xl md:text-4xl font-bold text-gray-800 mb-6">
               About us
             </h2>
-            <p className="text-gray-600 leading-relaxed mb-8">
+            <p className="font-inter text-gray-600 leading-relaxed mb-8">
               Bakingo is an FSSAI-certified bakery where every dessert tells a
               story! Our bakery came to light intending to make your remarkable
               occasions even sweeter and more memorable. We bake perfection with
@@ -257,7 +231,7 @@ export default function Home() {
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4 md:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+            <h2 className="font-poppins text-3xl md:text-4xl font-bold text-gray-800 mb-4">
               What our customers say about us!
             </h2>
             <div className="flex justify-center items-center space-x-4 mb-8">

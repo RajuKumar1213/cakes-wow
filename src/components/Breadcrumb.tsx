@@ -12,6 +12,8 @@ interface BreadcrumbProps {
 }
 
 const Breadcrumb = ({ items }: BreadcrumbProps) => {
+
+
   return (
     <nav className="flex mb-6" aria-label="Breadcrumb">
       <ol className="flex items-center space-x-2">
