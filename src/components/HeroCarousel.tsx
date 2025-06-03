@@ -68,8 +68,8 @@ const HeroCarousel = () => {
     {
       id: "5",
       image: "/images/bridetobecake.webp",
-      alt: "Cupcakes",
-      title: "Cupcakes",
+      alt: "bride to be cake",
+      title: "Bride to Be Cake",
       bgColor: "bg-gradient-to-r from-green-400 to-teal-500",
       href: "/products",
     },

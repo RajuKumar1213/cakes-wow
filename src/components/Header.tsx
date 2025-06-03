@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import Login from "./Login";
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -38,6 +39,7 @@ const Header = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const rightSidebarRef = useRef<HTMLDivElement>(null);
+  const [showLogin, setShowLogin] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +48,7 @@ const Header = () => {
     }
   };
 
-  console.log(groupedCategories);
+  console.log(showLogin)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -115,18 +117,20 @@ const Header = () => {
   return (
     <>
       <header className="bg-white relative z-50">
+        {" "}
         {/* Mobile Header */}
-        <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white">
+        <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-gradient-to-r from-white via-pink-50/30 to-orange-50/30 backdrop-blur-md shadow-lg border-b border-pink-100/50">
+          {" "}
           {/* Left side - Hamburger + Logo */}
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-3">
             <button
               onClick={toggleMobileMenu}
-              className="mobile-menu-trigger p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="mobile-menu-trigger p-2.5 hover:bg-gradient-to-r hover:from-pink-100 hover:to-orange-100 rounded-xl transition-all duration-300 transform hover:scale-110 group"
             >
-              <Menu className="w-6 h-6 text-gray-700" />
+              <Menu className="w-5 h-5 text-gray-700 group-hover:text-pink-600 transition-colors" />
             </button>{" "}
             <div
-              className="flex items-center cursor-pointer"
+              className="flex items-center cursor-pointer transform hover:scale-105 transition-transform duration-300"
               onClick={() => router.push("/")}
             >
               <Image
@@ -135,47 +139,48 @@ const Header = () => {
                 width={120}
                 height={32}
                 priority
+                className="drop-shadow-md"
               />
             </div>
-          </div>
+          </div>{" "}
           {/* Right side - Icons */}
           <div className="flex items-center space-x-1">
             <Link href="/m-search">
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <Search className="w-5 h-5 text-gray-700" />
+              <button className="p-2.5 hover:bg-gradient-to-r hover:from-pink-100 hover:to-orange-100 rounded-xl transition-all duration-300 transform hover:scale-110 group">
+                <Search className="w-5 h-5 text-gray-700 group-hover:text-pink-600 transition-colors" />
               </button>
             </Link>
             <Link href="/wishlist">
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <Heart className="w-5 h-5 text-gray-700" />
+              <button className="p-2.5 hover:bg-gradient-to-r hover:from-pink-100 hover:to-orange-100 rounded-xl transition-all duration-300 transform hover:scale-110 group">
+                <Heart className="w-5 h-5 text-gray-700 group-hover:text-pink-600 transition-colors" />
               </button>
             </Link>{" "}
             <Link href="/cart">
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
-                <ShoppingCart className="w-5 h-5 text-gray-700" />
+              <button className="p-2.5 hover:bg-gradient-to-r hover:from-pink-100 hover:to-orange-100 rounded-xl transition-all duration-300 transform hover:scale-110 relative group">
+                <ShoppingCart className="w-5 h-5 text-gray-700 group-hover:text-pink-600 transition-colors" />
                 {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg animate-pulse">
                     {totalItems}
                   </span>
                 )}
               </button>
             </Link>
             <button
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors right-sidebar-trigger"
+              className="p-2.5 hover:bg-gradient-to-r hover:from-pink-100 hover:to-orange-100 rounded-xl transition-all duration-300 transform hover:scale-110 right-sidebar-trigger group"
               onClick={() => setIsRightSidebarOpen(true)}
               aria-label="Open more menu"
             >
-              <MoreHorizontal className="w-5 h-5 text-gray-700" />
+              <MoreHorizontal className="w-5 h-5 text-gray-700 group-hover:text-pink-600 transition-colors" />
             </button>
           </div>
-        </div>
-
+        </div>{" "}
         {/* Desktop Header */}
         <div className="hidden lg:block">
           {/* Main header */}
           <div className="container bg-white lg:px-10 md:px-10 shadow-md min-w-screen mx-auto py-6 fixed top-0 left-0 right-0 z-50">
             {" "}
             <div className="flex items-center justify-between">
+              {" "}
               <div
                 className="flex items-center cursor-pointer"
                 onClick={() => router.push("/")}
@@ -185,9 +190,8 @@ const Header = () => {
                   alt="cakes wow Logo"
                   width={140}
                   height={48}
-                  
                 />
-              </div>
+              </div>{" "}
               {/* Location */}
               <div className="flex items-center space-x-2 cursor-pointer">
                 <MapPin className="w-5 h-5 text-red-500" />
@@ -236,7 +240,7 @@ const Header = () => {
                 ) : (
                   <div
                     className="flex items-center space-x-1 cursor-pointer right-sidebar-trigger"
-                    onClick={() => router.push("/login")}
+                    onClick={() => setShowLogin(true)}
                   >
                     <User className="w-5 h-5" />
                     <span>Login/Signup</span>
@@ -294,6 +298,7 @@ const Header = () => {
                         }}
                         onMouseLeave={handleMouseLeave}
                       >
+                        {" "}
                         <button
                           className="flex items-center space-x-1 hover:text-red-500 font-medium whitespace-nowrap text-sm px-3 py-2 rounded-md transition-colors duration-200"
                           onClick={(e) => {
@@ -313,30 +318,28 @@ const Header = () => {
                         {isDropdownOpen === group.toLowerCase() &&
                           groupedCategories[group].length > 1 && (
                             <div
-                              className="absolute top-full left-0 bg-white shadow-2xl rounded-lg border border-gray-100"
+                              className={`absolute top-full -left-14 bg-white/95 backdrop-blur-xl shadow-2xl rounded-2xl border border-pink-100/50 overflow-hidden`}
                               style={{
-                                boxShadow: "0 10px 25px rgba(0,0,0,0.15)",
+                                boxShadow:
+                                  "0 20px 40px rgba(0,0,0,0.15), 0 0 20px rgba(236, 72, 153, 0.1)",
                                 marginTop: "4px",
                                 zIndex: 9999,
-                                minWidth: "100px",
-                                maxWidth: "900px",
-                                width: "max-content",
                               }}
                             >
-                              <div className="p-3">
+                              <div>
                                 {/* MODIFIED: p-4 to p-3 */}
                                 {Object.keys(categoriesByType).length > 1 ? (
                                   // Multiple types - organize by type with dynamic width
                                   <div
-                                    className="flex gap-2" // This class might be overridden by style below
-                                    style={{
-                                      display: "grid",
-                                      gridTemplateColumns: `repeat(${Math.min(
-                                        Object.keys(categoriesByType).length,
-                                        5
-                                      )}, minmax(4px, max-content))`,
-                                      gap: "2rem", // MODIFIED: 1.5rem to 1rem
-                                    }}
+                                    className="flex flex-row gap-4" // This class might be overridden by style below
+                                    // style={{
+                                    //   display: "grid",
+                                    //   gridTemplateColumns: `repeat(${Math.min(
+                                    //     Object.keys(categoriesByType).length,
+                                    //     5
+                                    //   )}, minmax(10px, max-content))`,
+                                    //   gap: "0rem", // MODIFIED: 1.5rem to 1rem
+                                    // }}
                                   >
                                     {Object.entries(categoriesByType).map(
                                       (
@@ -345,39 +348,37 @@ const Header = () => {
                                       ) => (
                                         <div
                                           key={type}
-                                          className={`min-w-0 rounded-lg p-2.5 ${
+                                          className={`w-60 p-2 relative overflow-hidden ${
                                             /* MODIFIED: p-4 to p-2.5 */
                                             index % 2 === 0
-                                              ? "bg-pink-25"
-                                              : "bg-white"
+                                              ? "bg-gradient-to-br from-pink-50/80 to-orange-50/80"
+                                              : "bg-gradient-to-br from-white to-pink-50/30"
                                           }`}
-                                          style={{
-                                            backgroundColor:
-                                              index % 2 === 0
-                                                ? "#faeef0"
-                                                : "white",
-                                          }}
                                         >
-                                          <h3 className="text-sm font-semibold text-gray-900 mb-1.5 border-b border-gray-100 pb-1 whitespace-nowrap">
-                                            {type}
-                                          </h3>
-                                          <div className="space-y-0.5">
-                                            {typeCategories
-                                              .map((category: any) => (
-                                                <button
-                                                  key={category._id}
-                                                  onClick={(e) =>
-                                                    handleCategoryClick(
-                                                      category.slug,
-                                                      e
-                                                    )
-                                                  }
-                                                  className=" flex text-left py-1  text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 rounded transition-colors duration-200 font-medium whitespace-nowrap truncate"
-                                                >
-                                                  {category.name}
-                                                </button>
-                                              ))}
-                                            <div className="flex-grow" />
+                                          {" "}
+                                          <div className="p-4">
+                                            <h3 className="text-sm font-bold text-gray-900 mb-2 border-b border-pink-200/50 pb-2 whitespace-nowrap bg-gradient-to-r from-pink-600 to-orange-600 bg-clip-text">
+                                              {type}
+                                            </h3>
+                                            <div className="">
+                                              {typeCategories.map(
+                                                (category: any) => (
+                                                  <button
+                                                    key={category._id}
+                                                    onClick={(e) =>
+                                                      handleCategoryClick(
+                                                        category.slug,
+                                                        e
+                                                      )
+                                                    }
+                                                    className="flex text-left py-2 px-2 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-pink-100 hover:to-orange-100 hover:text-pink-700 rounded-lg transition-all duration-300 font-medium whitespace-nowrap line-clamp-1 w-full hover:shadow-sm transform hover:scale-105"
+                                                  >
+                                                    {category.name}
+                                                  </button>
+                                                )
+                                              )}
+                                              <div className="flex-grow" />
+                                            </div>
                                           </div>
                                         </div>
                                       )
@@ -385,15 +386,9 @@ const Header = () => {
                                   </div>
                                 ) : (
                                   // Single type - simple list
-                                  <div
-                                    className="space-y-0.5"
-                                    style={{
-                                      minWidth: "150px", // Keep minWidth for single list
-                                      maxWidth: "180px", // Keep maxWidth for single list
-                                    }}
-                                  >
-                                    {groupedCategories[group]
-                                      .map((category) => (
+                                  <div className="p-3 flex flex-col">
+                                    {groupedCategories[group].map(
+                                      (category) => (
                                         <button
                                           key={category._id}
                                           onClick={(e) =>
@@ -402,12 +397,12 @@ const Header = () => {
                                               e
                                             )
                                           }
-                                          className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 rounded transition-colors duration-200 font-medium whitespace-nowrap truncate"
+                                          className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-pink-100 hover:to-orange-100 hover:text-pink-700 rounded-lg transition-all duration-300 font-medium whitespace-nowrap transform hover:scale-105 hover:shadow-sm"
                                         >
                                           {category.name}
                                         </button>
-                                      ))}
-                                    
+                                      )
+                                    )}
                                   </div>
                                 )}
                               </div>
@@ -416,11 +411,10 @@ const Header = () => {
                       </div>
                     );
                   })}
-              </div>
-
+              </div>{" "}
               {/* Gradient fade indicators for scrollable content */}
-              <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none z-10"></div>
-              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none z-10"></div>
+              <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-white via-pink-50/20 to-transparent pointer-events-none z-10"></div>
+              <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white via-pink-50/20 to-transparent pointer-events-none z-10"></div>
             </div>
           </nav>
         </div>
@@ -599,6 +593,8 @@ const Header = () => {
           </div>
         </div>
       )}
+
+      {showLogin && <Login setShowLogin={setShowLogin} />}
     </>
   );
 };

@@ -358,7 +358,6 @@ const ProductPage = () => {
                   <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight">
                     {product.name}
                   </h1>
-
                   <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
                     <div className="flex items-center text-yellow-400">
                       <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
@@ -375,11 +374,13 @@ const ProductPage = () => {
                         Bestseller
                       </span>
                     )}
-                  </div>
-
-                  <div className="flex items-baseline space-x-2 sm:space-x-3 mb-3 sm:mb-4">
+                  </div>{" "}
+                  <div className="flex align-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
                     <span className="text-2xl sm:text-3xl font-bold text-gray-900">
                       ₹{getCurrentPrice()}
+                    </span>
+                    <span className="text-xs text-gray-500 self-end mb-1">
+                      (Incl. of all taxes)
                     </span>
                     {getOriginalPrice() && (
                       <>
@@ -392,7 +393,6 @@ const ProductPage = () => {
                       </>
                     )}
                   </div>
-
                   <div className="bg-gray-50 p-3 rounded-lg mb-4 flex items-center">
                     <div className="mr-3">🕒</div>
                     <div>
@@ -404,7 +404,6 @@ const ProductPage = () => {
                       </p>
                     </div>
                   </div>
-
                   <div className="mb-4">
                     <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
                       {product.shortDescription}
@@ -722,7 +721,7 @@ const ProductPage = () => {
             </div>
 
             {/* Sticky cart bar that appears when product is in cart */}
-            {isInCart(product?._id || "") && (
+            {/* {isInCart(product?._id || "") && (
               <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-gray-200 p-3 z-50">
                 <div className="max-w-7xl mx-auto flex items-center justify-between">
                   <div className="flex items-center">
@@ -750,7 +749,7 @@ const ProductPage = () => {
                   </button>
                 </div>
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </div>
