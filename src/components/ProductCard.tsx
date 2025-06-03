@@ -12,12 +12,10 @@ interface ProductCardProps {
   name: string;
   slug: string;
   imageUrls: string[];
-  price: number;
-  discountedPrice?: number;
+  price: number;  discountedPrice?: number;
   rating: number;
   reviewCount: number;
   isBestseller?: boolean;
-  isEggless?: boolean;
   weightOptions?: Array<{
     weight: string;
     price: number;
@@ -27,6 +25,7 @@ interface ProductCardProps {
     name: string;
     slug: string;
   }>;
+  flag?: string;
 }
 
 const ProductCard = ({
@@ -35,13 +34,12 @@ const ProductCard = ({
   slug,
   imageUrls,
   price,
-  discountedPrice,
-  rating,
+  discountedPrice,  rating,
   reviewCount,
   isBestseller,
-  isEggless,
   weightOptions,
   categories,
+  flag,
 }: ProductCardProps) => {
   const {
     addToCart,
@@ -118,7 +116,11 @@ const ProductCard = ({
   };
   return (
     <div className="bg-white rounded-md shadow-md hover:shadow-lg transition-all duration-300 group">
-      <Link href={`/products/${slug}`}>        <div className="relative h-36 sm:h-48 overflow-hidden rounded-t-lg">          <Image
+      <Link href={`/products/${slug}`}>
+        {" "}
+        <div className="relative h-44 sm:h-56 overflow-hidden rounded-t-lg">
+          {" "}
+          <Image
             src={imageUrls[0] || "/placeholder-cake.jpg"}
             alt={name}
             fill
@@ -132,17 +134,11 @@ const ProductCard = ({
             <div className="absolute bg-red-500 text-white px-2 py-0.5 sm:px-3 sm:py-1 rounded-br-3xl text-xs font-medium">
               {discountPercentage}% OFF
             </div>
-          )}
-          {/* {isBestseller && (
+          )}          {/* {isBestseller && (
             <div className="absolute top-0 right-0 sm:top-0 sm:right-0 bg-yellow-500 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-bl-3xl text-xs font-medium">
               Bestseller
             </div>
           )} */}
-          {isEggless && (
-            <div className="absolute bottom-0 right-0 bg-green-500 text-white px-1.5 py-0.5 sm:px-3 sm:py-0.5 rounded-tl-3xl text-xs font-medium">
-              Eggless
-            </div>
-          )}
         </div>
       </Link>
 
@@ -172,45 +168,47 @@ const ProductCard = ({
             </span>
             {discountedPrice && (
               <span className="text-xs sm:text-sm text-gray-500 line-through">
-              ₹{price}
+                ₹{price}
               </span>
             )}
           </div>
         </div>
 
-        {categories.length > 0 && (
+        {flag !== "bestseller" && categories.length > 0 && (
           <div className="mb-2 sm:mb-3">
             <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded">
               {categories[0].name}
             </span>
           </div>
-        )}
-
-        {/* Action Buttons */}
+        )}        {/* Action Buttons */}
         <div className="flex space-x-1 sm:space-x-2">
-          <button
-            onClick={handleAddToCart}
-            disabled={addingToCart}
-            className="flex-1 bg-pink-600 text-white px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-1"
-          >
-            {addingToCart ? (
-              <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-white"></div>
-            ) : isInCart(_id) ? (
-              <>
-                <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Added</span>
-              </>
-            ) : (
-              <>
-                <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Add</span>
-              </>
-            )}
-          </button>
+          {flag !== "bestseller" && (
+            <button
+              onClick={handleAddToCart}
+              disabled={addingToCart}
+              className="flex-1 bg-pink-600 text-white px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-1"
+            >
+              {addingToCart ? (
+                <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-white"></div>
+              ) : isInCart(_id) ? (
+                <>
+                  <ShoppingCart className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Added</span>
+                </>
+              ) : (
+                <>
+                  <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Add</span>
+                </>
+              )}
+            </button>
+          )}
 
-          <button
+          {flag !=="bestseller" && <button
             onClick={handleWishlistToggle}
             className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
+              flag === "bestseller" ? "flex-1" : ""
+            } ${
               isInWishlist(_id)
                 ? "bg-pink-100 text-pink-600"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -224,7 +222,8 @@ const ProductCard = ({
                 isInWishlist(_id) ? "fill-current" : ""
               }`}
             />
-          </button>
+            
+          </button>}
         </div>
       </div>
     </div>

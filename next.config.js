@@ -7,6 +7,23 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+    // Image optimization improvements
+    unoptimized: false,
+    loader: 'default',
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
@@ -15,8 +32,8 @@ const nextConfig = {
   trailingSlash: false,
   compress: true,
   reactStrictMode: true,
-  poweredByHeader: false,
-  generateEtags: false,  experimental: {
+  poweredByHeader: false,  generateEtags: true, // Enable ETags for better caching
+  experimental: {
     optimizePackageImports: ['lucide-react'],
   },
   // Add headers for better caching
@@ -28,6 +45,15 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      {
+        source: '/api/products/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, s-maxage=300, stale-while-revalidate=600',
           },
         ],
       },

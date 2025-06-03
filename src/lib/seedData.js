@@ -122,14 +122,12 @@ const sampleProducts = [
       "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500&h=400&fit=crop",
       "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=500&h=400&fit=crop"
     ],
-    categoryName: "Chocolate Cakes",
-    tags: ["chocolate", "truffle", "premium", "bestseller"],
+    categoryName: "Chocolate Cakes",    tags: ["chocolate", "truffle", "premium", "bestseller"],
     weightOptions: [
       { weight: "500g", price: 699, discountedPrice: 599 },
       { weight: "1kg", price: 899, discountedPrice: 699 },
       { weight: "2kg", price: 1699, discountedPrice: 1399 }
     ],
-    isEggless: false,
     isBestseller: true,
     isFeatured: true,
     rating: 4.8,
@@ -145,14 +143,12 @@ const sampleProducts = [
       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&h=400&fit=crop",
       "https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=500&h=400&fit=crop"
     ],
-    categoryNames: ["Vanilla Cakes", "Birthday Cakes"],
-    tags: ["vanilla", "birthday", "colorful", "celebration"],
+    categoryNames: ["Vanilla Cakes", "Birthday Cakes"],    tags: ["vanilla", "birthday", "colorful", "celebration"],
     weightOptions: [
       { weight: "500g", price: 599, discountedPrice: 499 },
       { weight: "1kg", price: 749, discountedPrice: 599 },
       { weight: "1.5kg", price: 1099, discountedPrice: 899 }
     ],
-    isEggless: true,
     isBestseller: true,
     rating: 4.6,
     reviewCount: 189
@@ -171,10 +167,8 @@ const sampleProducts = [
     tags: ["red velvet", "heart shaped", "anniversary", "romantic"],
     weightOptions: [
       { weight: "750g", price: 799, discountedPrice: 699 },
-      { weight: "1kg", price: 999, discountedPrice: 799 },
-      { weight: "1.5kg", price: 1399, discountedPrice: 1199 }
+      { weight: "1kg", price: 999, discountedPrice: 799 },      { weight: "1.5kg", price: 1399, discountedPrice: 1199 }
     ],
-    isEggless: false,
     isBestseller: false,
     isFeatured: true,
     rating: 4.7,
@@ -193,10 +187,8 @@ const sampleProducts = [
     categoryName: "Cup Cakes",
     tags: ["cupcakes", "chocolate chip", "party", "individual"],
     weightOptions: [
-      { weight: "6 pieces", price: 399, discountedPrice: 299 },
-      { weight: "12 pieces", price: 699, discountedPrice: 549 }
+      { weight: "6 pieces", price: 399, discountedPrice: 299 },      { weight: "12 pieces", price: 699, discountedPrice: 549 }
     ],
-    isEggless: true,
     isBestseller: false,
     rating: 4.4,
     reviewCount: 98
@@ -215,10 +207,8 @@ const sampleProducts = [
     tags: ["double chocolate", "fudge", "intense", "premium"],
     weightOptions: [
       { weight: "1kg", price: 1099, discountedPrice: 899 },
-      { weight: "1.5kg", price: 1599, discountedPrice: 1299 },
-      { weight: "2kg", price: 2099, discountedPrice: 1699 }
+      { weight: "1.5kg", price: 1599, discountedPrice: 1299 },      { weight: "2kg", price: 2099, discountedPrice: 1699 }
     ],
-    isEggless: false,
     isBestseller: true,
     isFeatured: false,
     rating: 4.9,
@@ -237,10 +227,8 @@ const sampleProducts = [
     categoryNames: ["Vanilla Cakes", "Anniversary Cakes"],
     tags: ["wedding", "three tier", "elegant", "roses"],
     weightOptions: [
-      { weight: "2kg", price: 2499, discountedPrice: 1999 },
-      { weight: "3kg", price: 3299, discountedPrice: 2699 }
+      { weight: "2kg", price: 2499, discountedPrice: 1999 },      { weight: "3kg", price: 3299, discountedPrice: 2699 }
     ],
-    isEggless: true,
     isBestseller: false,
     isFeatured: true,
     rating: 4.8,
@@ -324,11 +312,9 @@ async function seedDatabase() {
           shortDescription: productData.shortDescription,
           price: productData.price,
           discountedPrice: productData.discountedPrice,
-          imageUrls: productData.imageUrls,
-          categories: [...new Set(categories)], // Remove duplicates
+          imageUrls: productData.imageUrls,          categories: [...new Set(categories)], // Remove duplicates
           tags: productData.tags,
           weightOptions: productData.weightOptions,
-          isEggless: productData.isEggless,
           isAvailable: true,
           isBestseller: productData.isBestseller,
           isFeatured: productData.isFeatured || false,

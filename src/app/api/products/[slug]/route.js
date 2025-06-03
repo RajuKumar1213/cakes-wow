@@ -8,19 +8,28 @@ import {
   validateImageUrls, 
   validateWeightOptions 
 } from '@/lib/productUtils';
+import { logDatabaseQueryTime } from '@/lib/performance';
 
 export async function GET(request, { params }) {
+  const startTime = Date.now();
+  
   try {
     const { slug } = await params;
 
     await dbConnect();
-
+    
+    const queryStartTime = Date.now();
+    
+    // Optimize query with specific field selection and leaner populate
     const product = await Product.findOne({ 
       slug, 
       isAvailable: true 
     })
-    .populate('categories', 'name slug group type')
-    .lean();
+    .populate('categories', 'name slug') // Only select needed fields
+    .select('-__v -updatedAt') // Exclude unnecessary fields
+    .lean(); // Use lean() for better performance
+
+    logDatabaseQueryTime('Product.findOne by slug', queryStartTime);
 
     if (!product) {
       return NextResponse.json(
@@ -30,10 +39,19 @@ export async function GET(request, { params }) {
     }
 
     const formattedProduct = formatProductResponse(product);
+    
+    const totalTime = Date.now() - startTime;
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`📦 Product API response time: ${totalTime}ms`);
+    }
 
     return NextResponse.json({
       success: true,
       data: formattedProduct
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600', // Cache for 5 minutes
+      }
     });
 
   } catch (error) {
@@ -48,9 +66,7 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   try {
     const { slug } = await params;
-    const body = await request.json();
-
-    const {
+    const body = await request.json();    const {
       name,
       description,
       shortDescription,
@@ -60,7 +76,6 @@ export async function PUT(request, { params }) {
       categories,
       tags,
       weightOptions,
-      isEggless,
       isBestseller,
       isFeatured,
       stockQuantity,
@@ -147,11 +162,9 @@ export async function PUT(request, { params }) {
         shortDescription: shortDescription || '',
         price: validatedPrice,
         discountedPrice: validatedDiscountedPrice,
-        imageUrls: validatedImageUrls,
-        categories,
+        imageUrls: validatedImageUrls,        categories,
         tags: tags || [],
         weightOptions: validatedWeightOptions,
-        isEggless: Boolean(isEggless),
         isBestseller: Boolean(isBestseller),
         isFeatured: Boolean(isFeatured),
         stockQuantity: stockQuantity || 100,

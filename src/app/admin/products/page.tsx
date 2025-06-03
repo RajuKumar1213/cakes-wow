@@ -47,13 +47,11 @@ interface Product {
     group: string;
     type: string;
   }>;
-  tags: string[];
-  weightOptions: Array<{
+  tags: string[];  weightOptions: Array<{
     weight: string;
     price: number;
     discountedPrice?: number;
   }>;
-  isEggless: boolean;
   isAvailable: boolean;
   isBestseller: boolean;
   isFeatured: boolean;
@@ -521,13 +519,7 @@ export default function AdminProducts() {
                                 </div>
                                 <div className="text-sm text-gray-500 max-w-xs line-clamp-2">
                                   {product.shortDescription}
-                                </div>
-                                <div className="flex items-center gap-2 mt-1">
-                                  {product.isEggless && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                      Eggless
-                                    </span>
-                                  )}
+                                </div>                                <div className="flex items-center gap-2 mt-1">
                                   {product.isFeatured && (
                                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
                                       Featured
@@ -725,13 +717,7 @@ export default function AdminProducts() {
                         )}
                       </div>
 
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {product.isEggless && (
-                            <span className="text-green-600 text-xs">
-                              🥚 Eggless
-                            </span>
-                          )}
+                      <div className="flex items-center justify-between">                        <div className="flex items-center gap-2">
                           <span className={`text-xs px-2 py-1 rounded-full ${
                             product.isAvailable 
                               ? 'bg-green-100 text-green-800' 

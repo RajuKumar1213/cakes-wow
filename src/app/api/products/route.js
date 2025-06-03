@@ -10,6 +10,7 @@ import {
   createSortOptions,
   calculatePagination,
   formatProductResponse,
+  generateUniqueSlug,
   validatePrice,
   validateImageUrls,
   validateWeightOptions,
@@ -25,7 +26,6 @@ export async function GET(request) {
     const weights = searchParams.getAll("weights");
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
-    const isEggless = searchParams.get("isEggless");
     const isBestseller = searchParams.get("isBestseller");
     const isFeatured = searchParams.get("isFeatured");
     const search = searchParams.get("search");
@@ -34,14 +34,15 @@ export async function GET(request) {
     const page = searchParams.get("page") || 1;
     const limit = searchParams.get("limit") || 12;
 
-    await dbConnect();    // Build filters
+    await dbConnect();
+
+    // Build filters
     const filters = createProductFilters({
       category,
       tags,
       weights,
       minPrice,
       maxPrice,
-      isEggless,
       isBestseller,
       isFeatured,
       search,
@@ -112,13 +113,13 @@ export async function GET(request) {
           limit: limitNum,
           total,
           pages: Math.ceil(total / limitNum),
-        },        filters: {
+        },
+        filters: {
           category,
           tags,
           weights,
           minPrice,
           maxPrice,
-          isEggless,
           isBestseller,
           isFeatured,
           search,
@@ -153,7 +154,6 @@ export async function POST(request) {
       : null;
     const stockQuantity = parseInt(formData.get("stockQuantity")) || 100;
     const preparationTime = formData.get("preparationTime") || "4-6 hours";
-    const isEggless = formData.get("isEggless") === "true";
     const isBestseller = formData.get("isBestseller") === "true";
     const isFeatured = formData.get("isFeatured") === "true";
     const isAvailable = formData.get("isAvailable") !== "false"; // Default to true
@@ -318,10 +318,10 @@ export async function POST(request) {
     // while (await Product.findOne({ slug })) {
     //   slug = `${baseSlug}-${counter}`;
     //   counter++;
-    // }
+    // }    // Validate weight options
+    const validatedWeightOptions = validateWeightOptions(weightOptions);
 
-    // Validate weight options
-    const validatedWeightOptions = validateWeightOptions(weightOptions); // Create product
+    // Create product
     const product = new Product({
       name,
       slug,
@@ -333,7 +333,6 @@ export async function POST(request) {
       categories,
       tags: tags || [],
       weightOptions: validatedWeightOptions,
-      isEggless: Boolean(isEggless),
       isBestseller: Boolean(isBestseller),
       isFeatured: Boolean(isFeatured),
       isAvailable: Boolean(isAvailable),
@@ -402,13 +401,11 @@ export async function PATCH(request) {
     const name = formData.get("name");
     const description = formData.get("description");
     const shortDescription = formData.get("shortDescription");
-    const price = parseFloat(formData.get("price"));
-    const discountedPrice = formData.get("discountedPrice")
+    const price = parseFloat(formData.get("price"));    const discountedPrice = formData.get("discountedPrice")
       ? parseFloat(formData.get("discountedPrice"))
       : null;
     const stockQuantity = parseInt(formData.get("stockQuantity")) || 100;
     const preparationTime = formData.get("preparationTime") || "4-6 hours";
-    const isEggless = formData.get("isEggless") === "true";
     const isBestseller = formData.get("isBestseller") === "true";
     const isFeatured = formData.get("isFeatured") === "true";
     const isAvailable = formData.get("isAvailable") !== "false"; // Default to true
@@ -428,9 +425,10 @@ export async function PATCH(request) {
         nutritionalInfo = JSON.parse(nutritionalInfoStr);
       } catch (e) {
         // If parsing fails, use empty object
-        nutritionalInfo = {};
-      }
-    } // Get arrays
+        nutritionalInfo = {};      }
+    }
+
+    // Get arrays
     const categories = formData.getAll("categories");
     const tags = formData.getAll("tags");
     const ingredients = formData.getAll("ingredients");
@@ -592,7 +590,6 @@ export async function PATCH(request) {
         categories,
         tags: tags || [],
         weightOptions: validatedWeightOptions,
-        isEggless: Boolean(isEggless),
         isBestseller: Boolean(isBestseller),
         isFeatured: Boolean(isFeatured),
         isAvailable: Boolean(isAvailable),

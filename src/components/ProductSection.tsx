@@ -7,11 +7,9 @@ interface Product {
   imageUrls: string[];
   price: number;
   discountedPrice: number;
-  finalPrice: number;
-  rating: number;
+  finalPrice: number;  rating: number;
   reviewCount: number;
   shortDescription: string;
-  isEggless: boolean;
   isBestseller: boolean;
   isFeatured: boolean;
   discountPercentage: number;

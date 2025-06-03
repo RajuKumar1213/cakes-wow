@@ -25,7 +25,7 @@ const baseProductSchema = z.object({
       })
     )
     .min(1, "At least one weight option is required"),
-  isEggless: z.boolean(),
+
   isAvailable: z.boolean(),
   isBestseller: z.boolean(),
   isFeatured: z.boolean(),
@@ -108,9 +108,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
     reset,  } = useForm<ProductFormData>({
     resolver: zodResolver(baseProductSchema),
     mode: "onChange",
-    defaultValues: {
-      isEggless: false,
-      isAvailable: true,
+    defaultValues: {      isAvailable: true,
       isBestseller: false,
       isFeatured: false,
       stockQuantity: 100,
@@ -148,9 +146,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       setValue(
         "weightOptions",
         product.weightOptions || [{ weight: "", price: 0, discountedPrice: 0 }]
-      );
-      setValue("isEggless", product.isEggless || false);
-      setValue(
+      );      setValue(
         "isAvailable",
         product.isAvailable !== undefined ? product.isAvailable : true
       );
@@ -250,10 +246,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
       (data.allergens || []).forEach((allergen) => {
         formData.append("allergens", allergen);
-      });
-
-      // Add boolean fields
-      formData.append("isEggless", data.isEggless.toString());
+      });      // Add boolean fields
       formData.append("isAvailable", data.isAvailable.toString());
       formData.append("isBestseller", data.isBestseller.toString());
       formData.append("isFeatured", data.isFeatured.toString());
@@ -1087,50 +1080,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
                           {errors.sortOrder.message}
                         </p>
                       )}
-                    </div>
-                    {/* Boolean toggles */}
+                    </div>                    {/* Boolean toggles */}
                     <div className="space-y-3">
-                      <Controller
-                        name="isEggless"
-                        control={control}
-                        render={({ field }) => (
-                          <label className="flex items-center space-x-3 cursor-pointer group">
-                            <div className="relative">
-                              <input
-                                type="checkbox"
-                                checked={field.value}
-                                onChange={field.onChange}
-                                className="sr-only"
-                              />
-                              <div
-                                className={`w-6 h-6 rounded-lg border-2 transition-all duration-200 ${
-                                  field.value
-                                    ? "bg-gradient-to-r from-yellow-400 to-orange-500 border-orange-500"
-                                    : "border-gray-300 group-hover:border-orange-400"
-                                }`}
-                              >
-                                {field.value && (
-                                  <svg
-                                    className="w-4 h-4 text-white absolute top-0.5 left-0.5"
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                  >
-                                    <path
-                                      fillRule="evenodd"
-                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                      clipRule="evenodd"
-                                    />
-                                  </svg>
-                                )}
-                              </div>
-                            </div>
-                            <span className="text-sm font-medium text-gray-700 group-hover:text-orange-600 transition-colors">
-                              Eggless
-                            </span>
-                          </label>
-                        )}
-                      />
-
                       <Controller
                         name="isAvailable"
                         control={control}

@@ -5,6 +5,9 @@ import {
   CategoryShowcase,
   Footer,
   ProductCard,
+  BestSeller,
+  CelebratedLovedDay,
+  SpeciallyTendingCakes,
 } from "@/components";
 import CategorySection from "@/components/CategorySection";
 import { useEffect } from "react";
@@ -20,7 +23,6 @@ interface Product {
   rating: number;
   reviewCount: number;
   shortDescription: string;
-  isEggless: boolean;
   isBestseller: boolean;
   isFeatured: boolean;
   discountPercentage: number;
@@ -43,14 +45,13 @@ const featuredProducts: Product[] = [
     rating: 4.5,
     reviewCount: 156,
     shortDescription: "Rich chocolate cake with truffle frosting",
-    isEggless: false,
     isBestseller: true,
     isFeatured: true,
     discountPercentage: 20,
-    categories: [{ name: "Chocolate Cakes", slug: "chocolate-cakes" }]
+    categories: [{ name: "Chocolate Cakes", slug: "chocolate-cakes" }],
   },
   {
-    _id: "2", 
+    _id: "2",
     name: "Anniversary Special Cake",
     slug: "anniversary-special-cake",
     imageUrls: ["/images/aniversary-2.jpg"],
@@ -60,16 +61,15 @@ const featuredProducts: Product[] = [
     rating: 4.7,
     reviewCount: 203,
     shortDescription: "Perfect anniversary celebration cake",
-    isEggless: false,
     isBestseller: true,
     isFeatured: true,
     discountPercentage: 20,
-    categories: [{ name: "Anniversary Cakes", slug: "anniversary-cakes" }]
+    categories: [{ name: "Anniversary Cakes", slug: "anniversary-cakes" }],
   },
   {
     _id: "3",
     name: "Heart Shaped Love Cake",
-    slug: "heart-shaped-love-cake", 
+    slug: "heart-shaped-love-cake",
     imageUrls: ["/images/heart.jpg"],
     price: 899,
     discountedPrice: 719,
@@ -77,28 +77,26 @@ const featuredProducts: Product[] = [
     rating: 4.6,
     reviewCount: 189,
     shortDescription: "Express your love with this beautiful heart cake",
-    isEggless: true,
     isBestseller: false,
     isFeatured: true,
     discountPercentage: 20,
-    categories: [{ name: "Heart Shaped", slug: "heart-shaped" }]
+    categories: [{ name: "Heart Shaped", slug: "heart-shaped" }],
   },
   {
     _id: "4",
     name: "Birthday Celebration Cake",
     slug: "birthday-celebration-cake",
-    imageUrls: ["/images/birthday.jpg"], 
+    imageUrls: ["/images/birthday.jpg"],
     price: 799,
     discountedPrice: 639,
     finalPrice: 639,
     rating: 4.4,
     reviewCount: 142,
     shortDescription: "Make birthdays extra special",
-    isEggless: true,
     isBestseller: true,
     isFeatured: true,
     discountPercentage: 20,
-    categories: [{ name: "Birthday Cakes", slug: "birthday-cakes" }]
+    categories: [{ name: "Birthday Cakes", slug: "birthday-cakes" }],
   },
   {
     _id: "5",
@@ -111,11 +109,10 @@ const featuredProducts: Product[] = [
     rating: 4.8,
     reviewCount: 224,
     shortDescription: "Adventure awaits with this jungle themed cake",
-    isEggless: false,
     isBestseller: true,
     isFeatured: true,
     discountPercentage: 20,
-    categories: [{ name: "Kids Special", slug: "kids-special" }]
+    categories: [{ name: "Kids Special", slug: "kids-special" }],
   },
   {
     _id: "6",
@@ -128,11 +125,10 @@ const featuredProducts: Product[] = [
     rating: 4.9,
     reviewCount: 167,
     shortDescription: "Celebrate your engagement in style",
-    isEggless: true,
     isBestseller: false,
     isFeatured: true,
     discountPercentage: 20,
-    categories: [{ name: "Engagement Cakes", slug: "engagement-cakes" }]
+    categories: [{ name: "Engagement Cakes", slug: "engagement-cakes" }],
   },
   {
     _id: "7",
@@ -145,11 +141,10 @@ const featuredProducts: Product[] = [
     rating: 4.7,
     reviewCount: 198,
     shortDescription: "Unique designer cake for special occasions",
-    isEggless: false,
     isBestseller: true,
     isFeatured: true,
     discountPercentage: 20,
-    categories: [{ name: "Designer Cakes", slug: "designer-cakes" }]
+    categories: [{ name: "Designer Cakes", slug: "designer-cakes" }],
   },
   {
     _id: "8",
@@ -162,16 +157,14 @@ const featuredProducts: Product[] = [
     rating: 4.5,
     reviewCount: 156,
     shortDescription: "Celebrate years of togetherness",
-    isEggless: true,
     isBestseller: false,
     isFeatured: true,
     discountPercentage: 20,
-    categories: [{ name: "Anniversary Cakes", slug: "anniversary-cakes" }]
-  }
+    categories: [{ name: "Anniversary Cakes", slug: "anniversary-cakes" }],
+  },
 ];
 
-const bestsellerProducts = featuredProducts.filter(p => p.isBestseller);
-const egglessProducts = featuredProducts.filter(p => p.isEggless);
+const bestsellerProducts = featuredProducts.filter((p) => p.isBestseller);
 
 export default function Home() {
   useEffect(() => {
@@ -190,7 +183,7 @@ export default function Home() {
       <CategoryShowcase />
 
       {/* Featured Products */}
-      {featuredProducts.length > 0 && (
+      {/* {featuredProducts.length > 0 && (
         <div className="bg-white">
           <section className="py-8 md:py-12">
             <div className="container mx-auto px-4 md:px-6 lg:px-8">
@@ -216,104 +209,21 @@ export default function Home() {
             </div>
           </section>
         </div>
-      )}
+      )} */}
 
       {/* Quick Category Navigation */}
       <CategorySection />
-         
 
       {/* Bestseller Products */}
-      {bestsellerProducts.length > 0 && (
-        <div className="relative bg-gradient-to-br from-pink-100 via-pink-50 to-rose-100 overflow-hidden">
-          {/* Texture overlay */}
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute inset-0 bg-gradient-to-r from-pink-200/20 to-transparent"></div>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(255,182,193,0.3),transparent_50%)]"></div>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(255,192,203,0.2),transparent_50%)]"></div>
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffc0cb' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-                backgroundSize: "30px 30px",
-              }}
-            ></div>
-          </div>
 
-          {/* Content */}
-          <div className="relative z-10">
-            <section className="py-8 md:py-12">
-              <div className="container mx-auto px-4 md:px-6 lg:px-8">
-                <div className="text-center mb-6 md:mb-8">
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-1 md:mb-2">
-                    Bestsellers
-                  </h2>
-                  <p className="text-sm md:text-base text-gray-600">Most loved treats that keep our customers coming back</p>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
-                  {bestsellerProducts.map((product) => (
-                    <ProductCard key={product._id} {...product} />
-                  ))}
-                </div>
-                <div className="text-center">
-                  <button
-                    className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-medium transition-colors"
-                    onClick={() => alert("This function is coming soon!")}
-                  >
-                    View All
-                  </button>
-                </div>
-              </div>
-            </section>
-          </div>
-        </div>
-      )}
+      <BestSeller />
 
-      {/* Eggless Products */}
-      {egglessProducts.length > 0 && (
-        <div className="relative bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 overflow-hidden">
-          {/* Subtle texture overlay */}
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute inset-0 bg-gradient-to-r from-green-100/30 to-transparent"></div>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(134,239,172,0.2),transparent_50%)]"></div>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,rgba(110,231,183,0.15),transparent_50%)]"></div>
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2386efac' fill-opacity='0.08'%3E%3Cpath d='M20 20c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10zm10 0c0-5.5-4.5-10-10-10s-10 4.5-10 10 4.5 10 10 10 10-4.5 10-10z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-                backgroundSize: "40px 40px",
-              }}
-            ></div>
-          </div>
+      {/* Celeberate the Loved day */}
+      <CelebratedLovedDay />
 
-          {/* Content */}
-          <div className="relative z-10">
-            <section className="py-8 md:py-12">
-              <div className="container mx-auto px-4 md:px-6 lg:px-8">
-                <div className="text-center mb-6 md:mb-8">
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-1 md:mb-2">
-                    Eggless Delights
-                  </h2>
-                  <p className="text-sm md:text-base text-gray-600">Delicious eggless options for everyone to enjoy</p>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
-                  {egglessProducts.map((product) => (
-                    <ProductCard key={product._id} {...product} />
-                  ))}
-                </div>
-                <div className="text-center">
-                  <button
-                    className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-medium transition-colors"
-                    onClick={() => alert("This function is coming soon!")}
-                  >
-                    View All
-                  </button>
-                </div>
-              </div>
-            </section>
-          </div>
-        </div>
-      )}
+      <SpeciallyTendingCakes />
 
+      {/* 
       {/* About Section */}
       <section className="py-16 bg-white">
         <div className="container mx-auto px-4 md:px-6 lg:px-8">

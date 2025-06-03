@@ -11,4 +11,7 @@ export {default as ProductGrid } from "./ProductGrid"
 export { default as Loading, Spinner, PageLoading } from './Loading';
 export {default as CategoryForm} from "./CategoryForm"
 export {default as ProductForm} from "./ProductForm"
+export { default as BestSeller } from './BestSeller';
+export {default as CelebratedLovedDay} from "./CelebrateLovedDay"
+export {default as SpeciallyTendingCakes} from "./SpeciallyTendingCakes"
 export { useToast } from './Toast';

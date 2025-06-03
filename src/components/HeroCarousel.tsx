@@ -4,14 +4,31 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from 'next/navigation';
 
-const HeroCarousel = () => {  const [currentSlide, setCurrentSlide] = useState(0);
+const HeroCarousel = () => {
+  const [currentSlide, setCurrentSlide] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     setIsMounted(true);
+    
+    // Check if we're on a desktop-sized screen
+    const checkScreenSize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+    
+    // Initialize on mount
+    checkScreenSize();
+    
+    // Update on resize
+    window.addEventListener('resize', checkScreenSize);
+    
+    return () => {
+      window.removeEventListener('resize', checkScreenSize);
+    };
   }, []);
 
   // Hardcoded banners array
@@ -56,24 +73,22 @@ const HeroCarousel = () => {  const [currentSlide, setCurrentSlide] = useState(0
       bgColor: "bg-gradient-to-r from-green-400 to-teal-500",
       href: "/products"
     },
-    {
-      id: "6",
-      image: "/images/bridetobecake.webp",
-      alt: "Custom Cakes",
-      title: "Custom Cakes",
-      bgColor: "bg-gradient-to-r from-purple-400 to-violet-500",
-      href: "/products"
-    }
+   
   ];
   // Calculate maximum slides based on screen size
-  // On mobile: show 1 card at a time (6 total slides)
-  // On desktop: show 3 cards at a time (4 total slides since we have 6 cards)
-  const maxSlidesMobile = banners.length - 1; // 5 (0-5)
-  const maxSlidesDesktop = banners.length - 3; // 3 (0-3)
+  // On mobile: show 1 card at a time (5 total slides)
+  // On desktop: show 3 cards at a time (3 total slides since we have 5 cards)
+  const maxSlidesMobile = banners.length - 1; // 4 (0-4)
+  const maxSlidesDesktop = banners.length - 3; // 2 (0-2)
+  
+  // Get current maximum slides based on screen size
+  const getMaxSlides = () => isDesktop ? maxSlidesDesktop : maxSlidesMobile;
+  
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => {
-        if (prev >= maxSlidesMobile) {
+        const maxSlides = getMaxSlides();
+        if (prev >= maxSlides) {
           return 0;
         }
         return prev + 1;
@@ -81,10 +96,12 @@ const HeroCarousel = () => {  const [currentSlide, setCurrentSlide] = useState(0
     }, 4000);
 
     return () => clearInterval(timer);
-  }, [maxSlidesMobile]);
+  }, [isDesktop]); // Only depend on isDesktop since the other values are derived
+  
   const nextSlide = () => {
     setCurrentSlide((prev) => {
-      if (prev >= maxSlidesMobile) {
+      const maxSlides = getMaxSlides();
+      if (prev >= maxSlides) {
         return 0;
       }
       return prev + 1;
@@ -93,8 +110,9 @@ const HeroCarousel = () => {  const [currentSlide, setCurrentSlide] = useState(0
 
   const prevSlide = () => {
     setCurrentSlide((prev) => {
+      const maxSlides = getMaxSlides();
       if (prev <= 0) {
-        return maxSlidesMobile;
+        return maxSlides;
       }
       return prev - 1;
     });
@@ -137,7 +155,8 @@ const HeroCarousel = () => {  const [currentSlide, setCurrentSlide] = useState(0
       `}</style>
       <div className="relative w-full py-4 sm:py-8 md:max-w-7xl mx-auto overflow-hidden">
       <div className="container mx-auto px-4 md:px-6 lg:px-8">
-        <div className="relative overflow-hidden">          <div
+        <div className="relative overflow-hidden">          
+          <div
             className="flex transition-transform duration-700 ease-in-out carousel-container"
             style={{
               transform: `translateX(-${currentSlide * 100}%)`
@@ -146,12 +165,13 @@ const HeroCarousel = () => {  const [currentSlide, setCurrentSlide] = useState(0
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-            {banners.map((banner, index) => (              <div
+            {banners.map((banner, index) => (              
+              <div
                 key={banner.id}
                 className="w-full flex-shrink-0 px-1 sm:px-3 carousel-item"
               >
                 <div
-                  className={`relative h-64 sm:h-48 md:h-64 lg:h-80 rounded-lg sm:rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group ${banner.bgColor}`}
+                  className={`relative h-[400px] md:h-64 lg:h-80 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group ${banner.bgColor}`}
                   onClick={() => router.push(banner.href)}
                 >
                   <div className="absolute inset-0">
@@ -159,7 +179,7 @@ const HeroCarousel = () => {  const [currentSlide, setCurrentSlide] = useState(0
                       src={banner.image}
                       alt={banner.alt}
                       fill
-                      className="object-cover opacity-80 group-hover:scale-110 transition-transform duration-500"
+                      className="object-cover rounded-2xl opacity-80 group-hover:scale-110 transition-transform duration-500"
                       priority={index < 4}
                       sizes="(max-width: 768px) 100vw, 33vw"
                       placeholder="blur"
@@ -189,8 +209,10 @@ const HeroCarousel = () => {  const [currentSlide, setCurrentSlide] = useState(0
             <svg className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-          </button>          <div className="flex space-x-1 sm:space-x-2">
-            {Array.from({ length: maxSlidesMobile + 1 }).map((_, index) => (
+          </button>
+          
+          <div className="flex space-x-1 sm:space-x-2">
+            {Array.from({ length: getMaxSlides() + 1 }).map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentSlide(index)}
@@ -208,7 +230,8 @@ const HeroCarousel = () => {  const [currentSlide, setCurrentSlide] = useState(0
             <svg className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
-          </button>        </div>
+          </button>
+        </div>
       </div>
     </div>
     </>

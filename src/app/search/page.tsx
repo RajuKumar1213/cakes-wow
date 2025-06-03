@@ -12,10 +12,8 @@ interface Product {
   price: number;
   discountedPrice: number;
   finalPrice: number;
-  rating: number;
-  reviewCount: number;
+  rating: number;  reviewCount: number;
   shortDescription: string;
-  isEggless: boolean;
   isBestseller: boolean;
   isFeatured: boolean;
   discountPercentage: number;

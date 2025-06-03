@@ -23,7 +23,7 @@ const CategoryCard = ({ id, name, image, href }: CategoryCardProps) => {
       onClick={handleClick}
     >
       {/* Image Section with optimized aspect ratio */}
-      <div className="relative h-36 md:h-48 overflow-hidden bg-gray-100">
+      <div className="relative h-44 md:h-56 overflow-hidden bg-gray-100">
         <Image
           src={image}
           alt={name}
@@ -49,8 +49,8 @@ const CategoryCard = ({ id, name, image, href }: CategoryCardProps) => {
       </div>
       
       {/* Content Section with improved spacing */}
-      <div className="p-4">
-        <h3 className="text-lg text-center font-bold text-gray-800 group-hover:text-pink-600 transition-colors duration-200 mb-2 leading-tight">
+      <div className="p-2">
+        <h3 className="text-sm py-2 text-center md:text-lg font-bold text-gray-800 group-hover:text-pink-600 transition-colors duration-200  leading-tight">
           {name}
         </h3>
 

@@ -12,11 +12,9 @@ interface Product {
   slug: string;
   imageUrls: string[];
   price: number;
-  discountedPrice?: number;
-  rating: number;
+  discountedPrice?: number;  rating: number;
   reviewCount: number;
   isBestseller?: boolean;
-  isEggless?: boolean;
   categories: Array<{
     name: string;
     slug: string;

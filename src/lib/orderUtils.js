@@ -1,0 +1,272 @@
+/**
+ * Order utility functions
+ */
+import Order from '@/models/Order.models';
+
+/**
+ * Generate unique order ID
+ * Format: BKG + YYYYMMDD + 4-digit sequence number
+ * Example: BKG20250602001
+ */
+export async function generateOrderId() {
+  try {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const datePrefix = `${year}${month}${day}`;
+    
+    // Get today's orders count to generate sequence number
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    
+    const todayOrdersCount = await Order.countDocuments({
+      orderDate: {
+        $gte: startOfDay,
+        $lt: endOfDay
+      }
+    });
+    
+    // Generate sequence number (starting from 1)
+    const sequenceNumber = String(todayOrdersCount + 1).padStart(3, '0');
+    
+    return `BKG${datePrefix}${sequenceNumber}`;
+  } catch (error) {
+    console.error('Error generating order ID:', error);
+    // Fallback to timestamp-based ID
+    return `BKG${Date.now()}`;
+  }
+}
+
+/**
+ * Calculate order statistics
+ */
+export function calculateOrderStats(orders) {
+  const stats = {
+    total: orders.length,
+    pending: 0,
+    confirmed: 0,
+    preparing: 0,
+    outForDelivery: 0,
+    delivered: 0,
+    cancelled: 0,
+    totalRevenue: 0,
+    averageOrderValue: 0
+  };
+
+  orders.forEach(order => {
+    stats[order.status]++;
+    if (order.status !== 'cancelled') {
+      stats.totalRevenue += order.totalAmount;
+    }
+  });
+
+  stats.averageOrderValue = stats.total > 0 ? stats.totalRevenue / stats.total : 0;
+
+  return stats;
+}
+
+/**
+ * Format order for display
+ */
+export function formatOrderForDisplay(order) {
+  return {
+    orderId: order.orderId,
+    customerName: order.customerInfo.fullName,
+    mobileNumber: order.customerInfo.mobileNumber,
+    items: order.items.map(item => ({
+      name: item.name,
+      quantity: item.quantity,
+      price: item.price,
+      selectedWeight: item.selectedWeight,
+      total: item.price * item.quantity
+    })),
+    totalAmount: order.totalAmount,
+    status: order.status,
+    paymentStatus: order.paymentStatus,
+    orderDate: order.orderDate,
+    estimatedDeliveryDate: order.estimatedDeliveryDate,
+    deliveryAddress: {
+      area: order.customerInfo.area,
+      pinCode: order.customerInfo.pinCode,
+      fullAddress: order.customerInfo.fullAddress
+    },
+    timeSlot: order.timeSlot,
+    notes: order.notes
+  };
+}
+
+/**
+ * Get order status display info
+ */
+export function getOrderStatusInfo(status) {
+  const statusMap = {
+    pending: {
+      label: 'Order Placed',
+      color: 'bg-yellow-100 text-yellow-800',
+      icon: '🕐',
+      description: 'Your order has been placed and is being processed'
+    },
+    confirmed: {
+      label: 'Confirmed',
+      color: 'bg-blue-100 text-blue-800',
+      icon: '✅',
+      description: 'Your order has been confirmed and is being prepared'
+    },
+    preparing: {
+      label: 'Preparing',
+      color: 'bg-orange-100 text-orange-800',
+      icon: '👨‍🍳',
+      description: 'Your delicious cake is being prepared'
+    },
+    out_for_delivery: {
+      label: 'Out for Delivery',
+      color: 'bg-purple-100 text-purple-800',
+      icon: '🚗',
+      description: 'Your order is on the way'
+    },
+    delivered: {
+      label: 'Delivered',
+      color: 'bg-green-100 text-green-800',
+      icon: '🎉',
+      description: 'Your order has been delivered successfully'
+    },
+    cancelled: {
+      label: 'Cancelled',
+      color: 'bg-red-100 text-red-800',
+      icon: '❌',
+      description: 'This order has been cancelled'
+    }
+  };
+
+  return statusMap[status] || statusMap.pending;
+}
+
+/**
+ * Validate order delivery date and time
+ */
+export function validateDeliveryDateTime(deliveryDate, timeSlot) {
+  const now = new Date();
+  const delivery = new Date(deliveryDate);
+  
+  // Check if delivery date is in the future
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  delivery.setHours(0, 0, 0, 0);
+  
+  if (delivery < today) {
+    return {
+      isValid: false,
+      error: 'Delivery date cannot be in the past'
+    };
+  }
+
+  // Check if delivery is too far in the future (30 days limit)
+  const maxDate = new Date();
+  maxDate.setDate(maxDate.getDate() + 30);
+  
+  if (delivery > maxDate) {
+    return {
+      isValid: false,
+      error: 'Delivery date cannot be more than 30 days from now'
+    };
+  }
+
+  // Validate time slot
+  const validTimeSlots = [
+    "9:00 AM - 12:00 PM",
+    "12:00 PM - 3:00 PM",
+    "3:00 PM - 6:00 PM",
+    "6:00 PM - 9:00 PM"
+  ];
+
+  if (!validTimeSlots.includes(timeSlot)) {
+    return {
+      isValid: false,
+      error: 'Invalid time slot selected'
+    };
+  }
+
+  return {
+    isValid: true,
+    error: null
+  };
+}
+
+/**
+ * Calculate estimated preparation time based on items
+ */
+export function calculatePreparationTime(items) {
+  // Base preparation time in hours
+  let prepTime = 4;
+  
+  // Add extra time based on quantity and complexity
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+  
+  if (totalItems > 5) {
+    prepTime += 2; // Extra 2 hours for large orders
+  }
+  
+  // Check for special items that need more time
+  const hasCustomCake = items.some(item => 
+    item.name.toLowerCase().includes('custom') || 
+    item.name.toLowerCase().includes('designer')
+  );
+  
+  if (hasCustomCake) {
+    prepTime += 4; // Extra 4 hours for custom cakes
+  }
+  
+  return `${prepTime}-${prepTime + 2} hours`;
+}
+
+/**
+ * Get delivery charge based on area
+ */
+export function getDeliveryCharge(area, totalAmount) {
+  const areaCharges = {
+    "Rajendra Nagar": 50,
+    "Ashok Nagar": 50,
+    "Harmu": 60,
+    "Lalpur": 70,
+    "Kanke": 80,
+    "Doranda": 60,
+    "Bariatu": 70,
+    "Ranchi University": 80,
+    "Hatia": 100,
+    "Namkum": 120
+  };
+
+  const baseCharge = areaCharges[area] || 100;
+  
+  // Free delivery for orders above ₹1000
+  if (totalAmount >= 1000) {
+    return 0;
+  }
+  
+  return baseCharge;
+}
+
+/**
+ * Format date for display
+ */
+export function formatDate(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-IN', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
+/**
+ * Format time for display
+ */
+export function formatTime(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+}

@@ -44,7 +44,7 @@ const CategoryShowcase = () => {
   });
   return (    <section className="py-16 bg-gradient-to-b from-gray-50 to-white">      <div className="container mx-auto px-4 md:px-6 lg:px-8">
         <div className="text-center sm:text-left mb-6">
-          <h2 className="text-3xl md:text-3xl font-semibold text-gray-800 mb-4">WOW Them with Every Slice!</h2>
+          <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-4">WOW Them with Every Slice!</h2>
           
         </div>
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto justify-items-center">

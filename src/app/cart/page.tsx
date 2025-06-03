@@ -174,12 +174,12 @@ export default function CartPage() {
                     <span className="text-pink-600">₹{totalPrice.toFixed(2)}</span>
                   </div>
                 </div>
-              </div>
-
-              <div className="space-y-3">
-                <Button className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3">
-                  Proceed to Checkout
-                </Button>
+              </div>              <div className="space-y-3">
+                <Link href="/checkout">
+                  <Button className="w-full bg-pink-600 hover:bg-pink-700 text-white py-3">
+                    Proceed to Checkout
+                  </Button>
+                </Link>
                 
                 <Link href="/">
                   <Button variant="outline" className="w-full">

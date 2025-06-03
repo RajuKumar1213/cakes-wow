@@ -31,20 +31,16 @@ const FilterSidebar = ({ onFilterChange, category, isOpen = false, onClose }: Fi
     min: 0,
     max: 5000,
   });
-  const [weightOptions, setWeightOptions] = useState<WeightOption[]>([]);
-  const [selectedWeights, setSelectedWeights] = useState<string[]>([]);
-  const [isEggless, setIsEggless] = useState<boolean | null>(null);
+  const [weightOptions, setWeightOptions] = useState<WeightOption[]>([]);  const [selectedWeights, setSelectedWeights] = useState<string[]>([]);
   const [isBestseller, setIsBestseller] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDragging, setIsDragging] = useState<"min" | "max" | null>(null);
   const [isInitialized, setIsInitialized] = useState(false); // Track if initial data is loaded
   const initializedForCategoryRef = useRef<string | undefined | null>(null);
-
   // Collapsible sections state
   const [expandedSections, setExpandedSections] = useState({
     price: true,
     weight: true,
-    dietary: true,
     type: true,
   });
   // Fetch price ranges and weight options
@@ -130,12 +126,8 @@ const FilterSidebar = ({ onFilterChange, category, isOpen = false, onClose }: Fi
         }
         if (selectedPriceRange.max < priceRange.max) {
           filters.maxPrice = selectedPriceRange.max;
-        }
-        if (selectedWeights.length > 0) {
+        }        if (selectedWeights.length > 0) {
           filters.weights = selectedWeights;
-        }
-        if (isEggless !== null) {
-          filters.isEggless = isEggless;
         }
         if (isBestseller !== null) {
           filters.isBestseller = isBestseller;
@@ -153,12 +145,10 @@ const FilterSidebar = ({ onFilterChange, category, isOpen = false, onClose }: Fi
       isDragging ? 0 : 300
     );
 
-    return () => clearTimeout(timeoutId);
-  }, [
+    return () => clearTimeout(timeoutId);  }, [
     selectedPriceRange.min,
     selectedPriceRange.max,
     selectedWeightsStr,
-    isEggless,
     isBestseller,
     isDragging,
     isInitialized,
@@ -188,12 +178,10 @@ const FilterSidebar = ({ onFilterChange, category, isOpen = false, onClose }: Fi
         : [...prev, weight]
     );
   };
-
   // Reset all filters
   const resetFilters = () => {
     setSelectedPriceRange(priceRange);
     setSelectedWeights([]);
-    setIsEggless(null);
     setIsBestseller(null);
   };
 
@@ -454,70 +442,8 @@ const FilterSidebar = ({ onFilterChange, category, isOpen = false, onClose }: Fi
                       ))}
                     </div>
                   )}
-                </div>
-              )}
+                </div>              )}
 
-              {/* Dietary Preferences Filter */}
-              {/* <div className="space-y-3">
-                <button
-                  onClick={() => toggleSection("dietary")}
-                  className="flex items-center justify-between w-full text-left"
-                >
-                  <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-                    Dietary Preferences
-                  </h3>
-                  {expandedSections.dietary ? (
-                    <ChevronUp className="h-4 w-4 text-gray-500" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 text-gray-500" />
-                  )}
-                </button>
-
-                {expandedSections.dietary && (
-                  <div className="space-y-2">
-                    <label className="flex items-center p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:border-pink-300 hover:bg-pink-50">
-                      <input
-                        type="checkbox"
-                        checked={isEggless === true}
-                        onChange={(e) => setIsEggless(e.target.checked ? true : null)}
-                        className="h-4 w-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
-                      />
-                      <span className="ml-3 text-sm text-gray-700">Eggless</span>
-                    </label>
-                  </div>
-                )}
-              </div> */}
-
-              {/* Product Type Filter */}
-              {/* <div className="space-y-3">
-                <button
-                  onClick={() => toggleSection("type")}
-                  className="flex items-center justify-between w-full text-left"
-                >
-                  <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">
-                    Product Type
-                  </h3>
-                  {expandedSections.type ? (
-                    <ChevronUp className="h-4 w-4 text-gray-500" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 text-gray-500" />
-                  )}
-                </button>
-
-                {expandedSections.type && (
-                  <div className="space-y-2">
-                    <label className="flex items-center p-3 border rounded-lg cursor-pointer transition-all duration-200 hover:border-pink-300 hover:bg-pink-50">
-                      <input
-                        type="checkbox"
-                        checked={isBestseller === true}
-                        onChange={(e) => setIsBestseller(e.target.checked ? true : null)}
-                        className="h-4 w-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
-                      />
-                      <span className="ml-3 text-sm text-gray-700">Bestseller</span>
-                    </label>
-                  </div>
-                )}
-              </div> */}
             </div>
           )}
         </div>

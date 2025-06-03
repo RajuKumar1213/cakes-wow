@@ -105,13 +105,16 @@ export function createProductFilters(params) {
     const filteredWeights = weightArray.filter(weight => weight && weight.trim().length > 0);
     if (filteredWeights.length > 0) {
       filters['weightOptions.weight'] = { $in: filteredWeights };
-    }
+  }
   }
 
-  // Eggless filter
-  if (params.isEggless === 'true') {
-    filters.isEggless = true;
-  }
+  // Weight filter
+  if (params.weights && params.weights.length > 0) {
+    const weightArray = Array.isArray(params.weights) ? params.weights : [params.weights];
+    const filteredWeights = weightArray.filter(weight => weight && weight.trim().length > 0);
+    if (filteredWeights.length > 0) {
+      filters['weightOptions.weight'] = { $in: filteredWeights };
+    }  }
 
   // Bestseller filter
   if (params.isBestseller === 'true') {

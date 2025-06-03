@@ -56,12 +56,7 @@ const productSchema = new mongoose.Schema({
       type: Number,
       default: null,
       min: 0,
-    },
-  }],
-  isEggless: {
-    type: Boolean,
-    default: false,
-  },
+    },  }],
   isAvailable: {
     type: Boolean,
     default: true,
@@ -124,7 +119,7 @@ const productSchema = new mongoose.Schema({
 });
 
 // Indexes for better performance
-productSchema.index({ slug: 1 });
+productSchema.index({ slug: 1, isAvailable: 1 }); // Compound index for product page queries
 productSchema.index({ categories: 1 });
 productSchema.index({ tags: 1 });
 productSchema.index({ price: 1 });
@@ -132,6 +127,8 @@ productSchema.index({ isAvailable: 1 });
 productSchema.index({ isBestseller: 1 });
 productSchema.index({ isFeatured: 1 });
 productSchema.index({ name: 'text', description: 'text', tags: 'text' });
+productSchema.index({ createdAt: -1 }); // For sorting by newest
+productSchema.index({ rating: -1, reviewCount: -1 }); // For sorting by popularity
 
 // Virtual for discount percentage
 productSchema.virtual('discountPercentage').get(function() {
