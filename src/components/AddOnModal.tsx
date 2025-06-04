@@ -21,52 +21,6 @@ interface AddOnModalProps {
   productName?: string;
 }
 
-// Default add-ons data (like Bakingo)
-const defaultAddOns: AddOn[] = [
-  {
-    _id: '1',
-    name: "Personalized Message Card",
-    price: 50,
-    image: "/images/heart.webp",
-    rating: 4.8
-  },
-  {
-    _id: '2',
-    name: "Premium Gift Wrapping",
-    price: 100,
-    image: "/images/birthday1.webp",
-    rating: 4.9
-  },
-  {
-    _id: '3',
-    name: "Surprise Balloon Bouquet",
-    price: 150,
-    image: "/images/aniversary.webp",
-    rating: 4.7
-  },
-  {
-    _id: '4',
-    name: "Special Candles Set",
-    price: 75,
-    image: "/images/chocolate.webp",
-    rating: 4.6
-  },
-  {
-    _id: '5',
-    name: "Fresh Flowers Bouquet",
-    price: 200,
-    image: "/images/engagement.webp",
-    rating: 4.9
-  },
-  {
-    _id: '6',
-    name: "Celebration Confetti",
-    price: 40,
-    image: "/images/kid.webp",
-    rating: 4.5
-  }
-];
-
 const SELECTED_ADDONS_KEY = 'bakingo-selected-addons';
 
 const AddOnModal: React.FC<AddOnModalProps> = ({
@@ -77,9 +31,35 @@ const AddOnModal: React.FC<AddOnModalProps> = ({
   productName
 }) => {
   const [selectedAddOns, setSelectedAddOns] = useState<AddOn[]>([]);
-  const { showSuccess } = useToast();
+  const [addOns, setAddOns] = useState<AddOn[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { showSuccess, showError } = useToast();
 
-  // Load selected add-ons from localStorage on mount
+  // Fetch add-ons from API
+  const fetchAddOns = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch('/api/addons');
+      const data = await response.json();
+      
+      if (data.success) {
+        setAddOns(data.data);
+      } else {
+        setError('Failed to load add-ons');
+        showError('Error', 'Failed to load add-ons');
+      }
+    } catch (error) {
+      console.error('Error fetching add-ons:', error);
+      setError('Failed to load add-ons');
+      showError('Error', 'Failed to load add-ons');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load selected add-ons from localStorage and fetch add-ons from API when modal opens
   useEffect(() => {
     if (isOpen) {
       try {
@@ -90,6 +70,9 @@ const AddOnModal: React.FC<AddOnModalProps> = ({
       } catch (error) {
         console.error('Error loading selected add-ons:', error);
       }
+      
+      // Fetch add-ons from API
+      fetchAddOns();
     }
   }, [isOpen]);
 
@@ -173,85 +156,104 @@ const AddOnModal: React.FC<AddOnModalProps> = ({
               </span>
             </div>
           )}
-        </div>
-
-        {/* Scrollable Content */}
+        </div>        {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-4">
-          <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-            {defaultAddOns.map((addOn) => (
-              <div
-                key={addOn._id}
-                className={`bg-white rounded-lg shadow-md border-2 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer ${
-                  isSelected(addOn._id) 
-                    ? 'border-pink-500 ring-2 ring-pink-100' 
-                    : 'border-gray-100 hover:border-pink-200'
-                }`}
-                onClick={() => handleAddOnToggle(addOn)}
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+              <span className="ml-3 text-gray-600">Loading add-ons...</span>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <p className="text-red-500 mb-4">{error}</p>
+              <button
+                onClick={fetchAddOns}
+                className="bg-pink-500 text-white px-4 py-2 rounded-lg hover:bg-pink-600 transition-colors"
               >
-                <div className="relative h-20">
-                  <Image
-                    src={addOn.image}
-                    alt={addOn.name}
-                    fill
-                    className="object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = "/images/heart.webp";
-                    }}
-                  />
-                  {/* Selection indicator */}
-                  <div className={`absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
-                    isSelected(addOn._id)
-                      ? 'bg-pink-500 text-white'
-                      : 'bg-white/80 text-gray-400'
-                  }`}>
-                    {isSelected(addOn._id) ? (
-                      <Check className="w-2.5 h-2.5" />
-                    ) : (
-                      <Plus className="w-2.5 h-2.5" />
-                    )}
-                  </div>
-                </div>
-                
-                <div className="p-2 space-y-1">
-                  <div>                    <h4 className="font-semibold text-gray-800 text-xs mb-1">
-                      {addOn.name}
-                    </h4>
-                    
-                    <div className="flex items-center gap-1 mb-1">
-                      <div className="flex items-center">
-                        {Array.from({ length: 5 }).map((_, index) => (
-                          <Star
-                            key={index}
-                            className={`w-2 h-2 ${
-                              index < Math.floor(addOn.rating)
-                                ? 'text-yellow-400 fill-current'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
-                        <span className="text-xs text-gray-600 ml-1">
-                          {addOn.rating}
-                        </span>
+                Try Again
+              </button>
+            </div>
+          ) : addOns.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No add-ons available at the moment</p>
+            </div>
+          ) : (
+            <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+              {addOns.map((addOn) => (
+                <div
+                  key={addOn._id}
+                  className={`bg-white rounded-lg shadow-md border-2 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer ${
+                    isSelected(addOn._id) 
+                      ? 'border-pink-500 ring-2 ring-pink-100' 
+                      : 'border-gray-100 hover:border-pink-200'
+                  }`}
+                  onClick={() => handleAddOnToggle(addOn)}
+                >
+                  <div className="relative h-20">
+                    <Image
+                      src={addOn.image}
+                      alt={addOn.name}
+                      fill
+                      className="object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = "/images/heart.webp";
+                      }}
+                    />
+                    {/* Selection indicator */}
+                    <div className={`absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
+                      isSelected(addOn._id)
+                        ? 'bg-pink-500 text-white'
+                        : 'bg-white/80 text-gray-400'
+                    }`}>
+                      {isSelected(addOn._id) ? (
+                        <Check className="w-2.5 h-2.5" />
+                      ) : (
+                        <Plus className="w-2.5 h-2.5" />
+                      )}
+                    </div>
+                  </div>                  
+                  <div className="p-2 space-y-1">
+                    <div>
+                      <h4 className="font-semibold text-gray-800 text-xs mb-1">
+                        {addOn.name}
+                      </h4>
+                      
+                      <div className="flex items-center gap-1 mb-1">
+                        <div className="flex items-center">
+                          {Array.from({ length: 5 }).map((_, index) => (
+                            <Star
+                              key={index}
+                              className={`w-2 h-2 ${
+                                index < Math.floor(addOn.rating)
+                                  ? 'text-yellow-400 fill-current'
+                                  : 'text-gray-300'
+                              }`}
+                            />
+                          ))}
+                          <span className="text-xs text-gray-600 ml-1">
+                            {addOn.rating}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-gray-900">
+                        ₹{addOn.price}
+                      </span>
+                      <div className={`text-xs font-medium px-1.5 py-0.5 rounded ${
+                        isSelected(addOn._id)
+                          ? 'bg-pink-100 text-pink-600'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {isSelected(addOn._id) ? 'Added' : 'Add'}
                       </div>
                     </div>
                   </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-gray-900">
-                      ₹{addOn.price}
-                    </span>
-                    <div className={`text-xs font-medium px-1.5 py-0.5 rounded ${
-                      isSelected(addOn._id)
-                        ? 'bg-pink-100 text-pink-600'
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {isSelected(addOn._id) ? 'Added' : 'Add'}
-                    </div>
-                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           {/* Selected Add-ons Summary */}
           {selectedAddOns.length > 0 && (

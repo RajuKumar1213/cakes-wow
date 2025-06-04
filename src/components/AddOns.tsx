@@ -15,55 +15,9 @@ interface AddOn {
 
 interface AddOnsProps {
   showTitle?: boolean;
-  layout?: 'grid' | 'list';
+  layout?: 'grid' | 'flat';
   maxItems?: number;
 }
-
-// Default add-ons data (like Bakingo)
-const defaultAddOns: AddOn[] = [
-  {
-    _id: '1',
-    name: "Personalized Message Card",
-    price: 50,
-    image: "/images/heart.webp",
-    rating: 4.8
-  },
-  {
-    _id: '2',
-    name: "Premium Gift Wrapping",
-    price: 100,
-    image: "/images/birthday1.webp",
-    rating: 4.9
-  },
-  {
-    _id: '3',
-    name: "Surprise Balloon Bouquet",
-    price: 150,
-    image: "/images/aniversary.webp",
-    rating: 4.7
-  },
-  {
-    _id: '4',
-    name: "Special Candles Set",
-    price: 75,
-    image: "/images/chocolate.webp",
-    rating: 4.6
-  },
-  {
-    _id: '5',
-    name: "Fresh Flowers Bouquet",
-    price: 200,
-    image: "/images/engagement.webp",
-    rating: 4.9
-  },
-  {
-    _id: '6',
-    name: "Celebration Confetti",
-    price: 40,
-    image: "/images/kid.webp",
-    rating: 4.5
-  }
-];
 
 const SELECTED_ADDONS_KEY = 'bakingo-selected-addons';
 
@@ -73,7 +27,33 @@ const AddOns: React.FC<AddOnsProps> = ({
   maxItems
 }) => {
   const [selectedAddOns, setSelectedAddOns] = useState<AddOn[]>([]);
-  const { showSuccess } = useToast();
+  const [addOns, setAddOns] = useState<AddOn[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { showSuccess, showError } = useToast();
+
+  // Fetch add-ons from API
+  const fetchAddOns = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch('/api/addons');
+      const data = await response.json();
+      
+      if (data.success) {
+        setAddOns(data.data);
+      } else {
+        setError('Failed to load add-ons');
+        showError('Error', 'Failed to load add-ons');
+      }
+    } catch (error) {
+      console.error('Error fetching add-ons:', error);
+      setError('Failed to load add-ons');
+      showError('Error', 'Failed to load add-ons');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Load selected add-ons from localStorage on mount
   useEffect(() => {
@@ -85,18 +65,22 @@ const AddOns: React.FC<AddOnsProps> = ({
     } catch (error) {
       console.error('Error loading selected add-ons:', error);
     }
+    
+    // Fetch add-ons from API
+    fetchAddOns();
   }, []);
-
   // Save to localStorage whenever selectedAddOns changes
   useEffect(() => {
     try {
       localStorage.setItem(SELECTED_ADDONS_KEY, JSON.stringify(selectedAddOns));
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new CustomEvent('addons-updated'));
     } catch (error) {
       console.error('Error saving selected add-ons:', error);
     }
   }, [selectedAddOns]);
 
-  const displayAddOns = maxItems ? defaultAddOns.slice(0, maxItems) : defaultAddOns;
+  const displayAddOns = maxItems ? addOns.slice(0, maxItems) : addOns;
 
   const handleAddOnToggle = (addOn: AddOn) => {
     const isSelected = selectedAddOns.some(item => item._id === addOn._id);
@@ -140,85 +124,103 @@ const AddOns: React.FC<AddOnsProps> = ({
             </div>
           )}
         </div>
-      )}
-
-      <div className={`grid gap-4 ${
-        layout === 'grid' 
-          ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
-          : 'grid-cols-1'
-      }`}>
-        {displayAddOns.map((addOn) => (
-          <div
-            key={addOn._id}
-            className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow duration-300"
+      )}      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+          <span className="ml-3 text-gray-600">Loading add-ons...</span>
+        </div>
+      ) : error ? (
+        <div className="text-center py-12">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={fetchAddOns}
+            className="bg-pink-500 text-white px-4 py-2 rounded-lg hover:bg-pink-600 transition-colors"
           >
-            <div className="relative h-40">
-              <Image
-                src={addOn.image}
-                alt={addOn.name}
-                fill
-                className="object-cover"
-                onError={(e) => {
-                  // Fallback to a default image if the specified image fails to load
-                  e.currentTarget.src = "/images/heart.webp";
-                }}
-              />
-            </div>
-            
-            <div className="p-4 space-y-3">
-              <div>
-                <h4 className="font-semibold text-gray-800 text-sm mb-1">
-                  {addOn.name}
-                </h4>
-                
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center">
-                    {Array.from({ length: 5 }).map((_, index) => (
-                      <Star
-                        key={index}
-                        className={`w-3 h-3 ${
-                          index < Math.floor(addOn.rating)
-                            ? 'text-yellow-400 fill-current'
-                            : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                    <span className="text-xs text-gray-600 ml-1">
-                      {addOn.rating}
-                    </span>
+            Try Again
+          </button>
+        </div>
+      ) : displayAddOns.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500">No add-ons available at the moment</p>
+        </div>
+      ) : (        <div className={`gap-2 ${
+          layout === 'grid' 
+            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
+            : 'flex flex-row overflow-x-auto overflow-y-hidden  pb-2'
+        }`} style={layout !== 'grid' ? { scrollbarWidth: 'none', msOverflowStyle: 'none' } : {}}>
+          {displayAddOns.map((addOn) => (
+            <div
+              key={addOn._id}
+              className={`bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow duration-300 ${
+                layout !== 'grid' ? 'flex-shrink-0 w-44 md:w-52' : ''
+              }`}
+            >
+              <div className="relative h-32 md:h-40">
+                <Image
+                  src={addOn.image}
+                  alt={addOn.name}
+                  fill
+                  className="object-cover"
+                  onError={(e) => {
+                    // Fallback to a default image if the specified image fails to load
+                    e.currentTarget.src = "/images/heart.webp";
+                  }}
+                />
+              </div>
+              
+              <div className="p-3 md:p-4 space-y-2 md:space-y-3">
+                <div>                  <h4 className="font-semibold text-gray-800 text-xs md:text-sm mb-1">
+                    {addOn.name}
+                  </h4>
+                  
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center">
+                      {Array.from({ length: 5 }).map((_, index) => (                        <Star
+                          key={index}
+                          className={`w-2.5 h-2.5 md:w-3 md:h-3 ${
+                            index < Math.floor(addOn.rating)
+                              ? 'text-yellow-400 fill-current'
+                              : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
+                      <span className="text-xs text-gray-600 ml-1">
+                        {addOn.rating}
+                      </span>
+                    </div>
                   </div>
+                </div>                <div className="flex items-center justify-between">
+                  <span className="text-sm md:text-lg font-bold text-gray-900">
+                    ₹{addOn.price}
+                  </span>
+                  <button
+                    onClick={() => handleAddOnToggle(addOn)}
+                    className={`flex items-center gap-1 px-2 md:px-3 py-1 md:py-1.5 rounded-lg text-xs md:text-sm font-medium transition-colors ${
+                      isSelected(addOn._id)
+                        ? 'bg-pink-500 text-white hover:bg-pink-600'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {isSelected(addOn._id) ? (
+                      <>
+                        <Check className="w-3 h-3 md:w-4 md:h-4" />
+                        <span className="hidden sm:inline">Added</span>
+                        <span className="sm:hidden">✓</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-3 h-3 md:w-4 md:h-4" />
+                        <span className="hidden sm:inline">Add</span>
+                        <span className="sm:hidden">+</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-lg font-bold text-gray-900">
-                  ₹{addOn.price}
-                </span>
-                <button
-                  onClick={() => handleAddOnToggle(addOn)}
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    isSelected(addOn._id)
-                      ? 'bg-pink-500 text-white hover:bg-pink-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {isSelected(addOn._id) ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                      <span>Added</span>
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="w-4 h-4" />
-                      <span>Add</span>
-                    </>
-                  )}
-                </button>
-              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Summary section when add-ons are selected */}
       {selectedAddOns.length > 0 && (
