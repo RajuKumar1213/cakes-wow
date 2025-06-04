@@ -35,43 +35,38 @@ const HeroCarousel = () => {
   const banners = [
     {
       id: "1",
-      image: "/images/jungle2.webp",
+      image: "/images/kid.webp",
       alt: "Jungle Cakes",
       // title: "Every Kid Deserves a Cake that Wows!",
-      bgColor: "bg-gradient-to-r from-pink-400 to-purple-500",
       href: "/jungle-cakes",
     },
     {
       id: "2",
-      image: "/images/aniversary4.webp",
+      image: "/images/engagement1.webp",
       alt: "engagement",
       // title: "Engaged in Love Celeberated in Cake",
-      bgColor: "bg-gradient-to-r from-orange-400 to-yellow-500",
       href: "/engagement-cakes",
     },
     {
       id: "3",
-      image: "/images/sweetmomories.webp",
+      image: "/images/aniversary6.webp",
       alt: "Anniversary Cakes",
       // title: "Anniversary Cakes",
-      bgColor: "bg-gradient-to-r from-blue-400 to-indigo-500",
       href: "/anniversary-cakes",
     },
     {
       id: "4",
-      image: "/images/birthday.webp",
+      image: "/images/birthday1.webp",
       alt: "birthday",
       title: "Make Every Birthday Special",
-      bgColor: "bg-gradient-to-r from-rose-400 to-pink-500",
       href: "/birthday-cakes",
     },
     {
       id: "5",
-      image: "/images/bridetobecake.webp",
+      image: "/images/bridetobe.webp",
       alt: "bride to be cake",
       title: "Bride to Be Cake",
-      bgColor: "bg-gradient-to-r from-green-400 to-teal-500",
-      href: "/products",
+      href: "/bride-to-be-cakes",
     },
   ];
   // Calculate maximum slides based on screen size
@@ -152,7 +147,7 @@ const HeroCarousel = () => {
           }
         }
       `}</style>
-      <div className="relative w-full py-4 sm:py-8 md:max-w-7xl mx-auto overflow-hidden">
+      <div className="relative w-full py-4 sm:py-8 md:max-w-7xl md:px-10 mx-auto overflow-hidden">
         <div className="container mx-auto px-4 md:px-6 lg:px-8">
           <div className="relative overflow-hidden">
             <div
@@ -170,44 +165,33 @@ const HeroCarousel = () => {
                   className="w-full flex-shrink-0 px-1 sm:px-3 carousel-item"
                 >
                   <div
-                    className={`relative h-[400px] md:h-[340px]  rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group ${banner.bgColor}`}
+                    className={`relative h-[350px] md:h-[320px]  rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group`}
                     onClick={() => router.push(banner.href)}
                   >
+                    {" "}
                     <div className="absolute inset-0">
                       <Image
                         src={banner.image}
                         alt={banner.alt}
                         fill
-                        className=" rounded-2xl opacity-80 "
+                        className="rounded-2xl  brightness-110 saturate-110 contrast-105 hover:brightness-115 hover:saturate-120 transition-all duration-300"
                         priority={index < 4}
                         sizes="(max-width: 788px) 100vw, 33vw"
-                        placeholder="blur"
-                        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                       />
                     </div>
-                    {/* <div className="absolute inset-0 bg-opacity-40 group-hover:bg-opacity-30 transition-all duration-300"></div>
-                    <div className="absolute inset-0 flex flex-col justify-center items-center text-center text-white p-2 sm:p-4 md:p-6">
-                      {" "}
-                      <h3 className="font-poppins text-2xl sm:text-lg md:text-2xl lg:text-3xl font-bold mb-1 sm:mb-2 transform group-hover:scale-105 transition-transform duration-300">
-                        {banner.title}
-                      </h3>
-                      <button className="mt-2 sm:mt-4 bg-red-500 hover:bg-red-600 text-white px-3 py-1 sm:px-4 sm:py-1.5 md:px-6 md:py-2 rounded-full text-xs sm:text-sm font-medium transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                        Shop Now
-                      </button>
-                    </div> */}
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="flex items-center justify-center mt-4 sm:mt-6 md:mt-8 space-x-2 sm:space-x-4">
+          <div className="flex items-center justify-center mt-4 sm:mt-4 md:mt-6 space-x-2 sm:space-x-4">
             <button
               onClick={prevSlide}
-              className="p-1.5 sm:p-2 md:p-3 rounded-full bg-white shadow-lg hover:shadow-xl border border-gray-200 hover:bg-gray-50 transition-all duration-300"
+              className="p-1.5 sm:p-2 md:p-3 rounded-full  shadow-lg hover:shadow-xl border border-gray-200 hover:bg-gray-50 transition-all duration-300"
             >
               <svg
-                className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-600"
+                className="w-3 h-3 sm:w-3 sm:h-3 md:w-4 md:h-4 text-gray-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -240,7 +224,7 @@ const HeroCarousel = () => {
               className="p-1.5 sm:p-2 md:p-3 rounded-full bg-white shadow-lg hover:shadow-xl border border-gray-200 hover:bg-gray-50 transition-all duration-300"
             >
               <svg
-                className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-gray-600"
+                className="w-3 h-3 sm:w-4 sm:h-4 md:w-4 md:h-4 text-gray-600"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

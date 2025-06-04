@@ -21,7 +21,6 @@ import {
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import AddOns from '@/components/AddOns';
 
 const trustFeatures = [
   {
@@ -41,25 +40,32 @@ const trustFeatures = [
   }
 ];
 
-export default function CartPage() {
+export default function CartPage() {  
   const { 
     items, 
     totalItems, 
     totalPrice, 
     updateQuantity, 
     removeFromCart, 
-    clearCart 
+    clearCart,
   } = useCart();
 
-  // State for selected add-ons
-  const [selectedAddOns, setSelectedAddOns] = React.useState<string[]>([]);
+  // Load selected add-ons from localStorage
+  const [selectedAddOns, setSelectedAddOns] = React.useState<any[]>([]);
 
-  const handleAddOnToggle = (addOnId: string) => {
-    setSelectedAddOns(prev =>
-      prev.includes(addOnId)
-        ? prev.filter(id => id !== addOnId)
-        : [...prev, addOnId]
-    );
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem('bakingo-selected-addons');
+      if (saved) {
+        setSelectedAddOns(JSON.parse(saved));
+      }
+    } catch (error) {
+      console.error('Error loading selected add-ons:', error);
+    }
+  }, []);
+
+  const getAddOnsTotal = () => {
+    return selectedAddOns.reduce((total, addOn) => total + addOn.price, 0);
   };
 
   if (items.length === 0) {
@@ -231,50 +237,106 @@ export default function CartPage() {
                                 <X className="w-5 h-5" />
                               </button>
                             </div>
-                          </div>
-
-                          {/* Item Total */}
+                          </div>                          {/* Item Total */}
                           <div className="mt-3 text-right">
                             <span className="text-lg font-semibold text-gray-800">
                               Subtotal: ₹{((item.discountedPrice || item.price) * item.quantity).toFixed(2)}
                             </span>
                           </div>
+
+                          {/* Selected Add-ons */}
+                          {item.selectedAddOns && item.selectedAddOns.length > 0 && (
+                            <div className="mt-3 p-3 bg-orange-50 rounded border-l-4 border-orange-200">
+                              <h4 className="text-sm font-semibold text-gray-700 mb-2">Selected Add-ons:</h4>
+                              <div className="space-y-1">
+                                {item.selectedAddOns.map((addOn, index) => (
+                                  <div key={index} className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-600">{addOn.name}</span>
+                                    <span className="font-semibold text-orange-600">+₹{addOn.price}</span>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="mt-2 pt-2 border-t border-orange-200">
+                                <div className="flex justify-between items-center text-sm font-semibold">
+                                  <span>Add-ons Total:</span>
+                                  <span className="text-orange-600">
+                                    +₹{item.selectedAddOns.reduce((sum, addOn) => sum + addOn.price, 0).toFixed(2)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>              {/* Add-ons Section */}
-              <div className="bg-white rounded shadow-xl overflow-hidden">
-                <div className="bg-orange-600 text-white p-6">
-                  <h2 className="text-xl font-semibold flex items-center gap-2">
-                    <Gift className="w-6 h-6" />
-                    Make it Extra Special
-                  </h2>
-                  <p className="text-orange-100 mt-1">Add these premium extras to your order</p>
+              </div>              {/* Add-ons Section - Show selected add-ons from localStorage */}
+              {selectedAddOns.length > 0 && (
+                <div className="bg-white rounded shadow-xl overflow-hidden">
+                  <div className="bg-orange-600 text-white p-6">
+                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                      <Gift className="w-6 h-6" />
+                      Selected Add-ons
+                    </h2>
+                    <p className="text-orange-100 mt-1">Extra special touches for your order</p>
+                  </div>
+                  
+                  <div className="p-6">
+                    <div className="space-y-3">
+                      {selectedAddOns.map((addOn) => (
+                        <div key={addOn._id} className="flex justify-between items-center p-3 bg-orange-50 rounded border border-orange-200">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 relative rounded overflow-hidden">
+                              <Image
+                                src={addOn.image}
+                                alt={addOn.name}
+                                fill
+                                className="object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src = "/images/heart.webp";
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-gray-800">{addOn.name}</h4>
+                              <div className="flex items-center gap-1">
+                                <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                                <span className="text-xs text-gray-600">{addOn.rating}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <span className="font-semibold text-orange-600">₹{addOn.price}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-orange-200">
+                      <div className="flex justify-between items-center font-bold text-lg">
+                        <span className="text-gray-800">Add-ons Total:</span>
+                        <span className="text-orange-600">₹{getAddOnsTotal()}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="p-6">
-                  <AddOns
-                    selectedAddOns={selectedAddOns}
-                    onAddOnToggle={handleAddOnToggle}
-                    showTitle={false}
-                    layout="grid"
-                  />
-                </div>
-              </div>
+              )}
             </div>            {/* Order Summary */}
             <div className="lg:col-span-1">              <div className="bg-white rounded shadow-xl overflow-hidden sticky top-4">
                 <div className="bg-orange-600 text-white p-6">
                   <h2 className="text-xl font-semibold">Order Summary</h2>
                 </div>
                 
-                <div className="p-6">
-                  <div className="space-y-4 mb-6">
+                <div className="p-6">                  <div className="space-y-4 mb-6">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Subtotal ({totalItems} items)</span>
                       <span className="font-semibold">₹{totalPrice.toFixed(2)}</span>
                     </div>
+                    
+                    {selectedAddOns.length > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Add-ons ({selectedAddOns.length} items)</span>
+                        <span className="font-semibold">₹{getAddOnsTotal().toFixed(2)}</span>
+                      </div>
+                    )}
                     
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">Delivery</span>
@@ -291,13 +353,13 @@ export default function CartPage() {
                       <div className="border-t pt-4">
                       <div className="flex justify-between text-xl font-bold">
                         <span>Total</span>
-                        <span className="text-orange-600">₹{totalPrice.toFixed(2)}</span>
+                        <span className="text-orange-600">₹{(totalPrice + getAddOnsTotal()).toFixed(2)}</span>
                       </div>
                       <div className="text-sm text-green-600 text-right mt-1">
                         You saved ₹50 on delivery!
                       </div>
                     </div>
-                  </div>                  <div className="space-y-3 mb-6">
+                  </div><div className="space-y-3 mb-6">
                     <Link href="/checkout">                      <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white py-4 text-lg rounded">
                         Proceed to Checkout
                       </Button>

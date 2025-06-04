@@ -12,8 +12,8 @@ import {
   Share2,
   Check,
 } from "lucide-react";
-import { Breadcrumb, Footer, Header } from "@/components";
-import { useCart } from "@/contexts/CartContext";
+import { Breadcrumb, Footer, Header, AddOns, AddOnModal } from "@/components";
+import { useCart, AddOn } from "@/contexts/CartContext";
 import { useToast } from "@/contexts/ToastContext";
 import axios from "axios";
 
@@ -71,13 +71,13 @@ const ProductPage = () => {
     items,
   } = useCart();
   const { showSuccess } = useToast();
-
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [selectedWeight, setSelectedWeight] = useState<string>("");
-  const [quantity, setQuantity] = useState(1);
+  const [selectedWeight, setSelectedWeight] = useState<string>("");  const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [selectedAddOns, setSelectedAddOns] = useState<AddOn[]>([]);
+  const [showAddOnModal, setShowAddOnModal] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "description" | "ingredients" | "nutrition" | "reviews"
   >("description");
@@ -146,8 +146,7 @@ const ProductPage = () => {
       return weightOption?.discountedPrice ? weightOption.price : null;
     }
     return product?.discountedPrice ? product.price : null;
-  };
-  const getDiscountPercentage = () => {
+  };  const getDiscountPercentage = () => {
     const currentPrice = getCurrentPrice();
     const originalPrice = getOriginalPrice();
 
@@ -161,18 +160,23 @@ const ProductPage = () => {
 
     setAddingToCart(true);
     try {
-      addToCart(product, quantity, selectedWeight);
+      // Add to cart without add-ons first
+      addToCart(product, quantity, selectedWeight, []);
       showSuccess(
         "Added to Cart!",
         `${quantity}x ${product.name} (${selectedWeight}) added to your cart`,
         "cart"
       );
+      
+      // Show add-on modal after successful cart addition
+      setShowAddOnModal(true);
     } catch (error) {
       console.error("Error adding to cart:", error);
     } finally {
       setAddingToCart(false);
     }
   };
+
   const goToCart = () => {
     router.push("/cart");
   };
@@ -195,7 +199,32 @@ const ProductPage = () => {
         "heart"
       );
     }
+  };  const handleAddOnToggle = (addOnId: string, addOn: AddOn) => {
+    const isSelected = selectedAddOns.some(selected => selected._id === addOn._id);
+    
+    if (isSelected) {
+      setSelectedAddOns(prev => prev.filter(selected => selected._id !== addOn._id));
+    } else {
+      setSelectedAddOns(prev => [...prev, addOn]);
+    }
   };
+
+  const handleModalSkip = () => {
+    // Skip add-ons and go directly to cart
+    setShowAddOnModal(false);
+    router.push("/cart");
+  };
+
+  const handleModalContinue = () => {
+    // Continue with selected add-ons and go to cart
+    setShowAddOnModal(false);
+    router.push("/cart");
+  };
+
+  const handleModalClose = () => {
+    setShowAddOnModal(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -460,9 +489,8 @@ const ProductPage = () => {
                         className="p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
                       >
                         <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-                      </button>
-                    </div>
-                  </div>{" "}
+                      </button>                    </div>                  </div>
+
                   <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                     {isInCart(product?._id || "") ? (
                       <div className="w-full sm:flex-1 flex space-x-2">
@@ -749,10 +777,19 @@ const ProductPage = () => {
                   </button>
                 </div>
               </div>
-            )} */}
-          </div>
+            )} */}          </div>
         </div>
       </div>
+      
+      {/* Add-On Modal */}
+      <AddOnModal
+        isOpen={showAddOnModal}
+        onClose={handleModalClose}
+        onSkip={handleModalSkip}
+        onContinue={handleModalContinue}
+        productName={product?.name}
+      />
+      
       <Footer />
     </>
   );

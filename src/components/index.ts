@@ -14,4 +14,6 @@ export {default as ProductForm} from "./ProductForm"
 export { default as BestSeller } from './BestSeller';
 export {default as CelebratedLovedDay} from "./CelebrateLovedDay"
 export {default as SpeciallyTendingCakes} from "./SpeciallyTendingCakes"
+export { default as AddOns } from './AddOns';
+export { default as AddOnModal } from './AddOnModal';
 export { useToast } from './Toast';

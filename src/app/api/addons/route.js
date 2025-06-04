@@ -192,7 +192,7 @@ export async function POST(request) {
 }
 
 // PUT - Update add-on by ID with optional image upload
-export async function PUT(request) {
+export async function PATCH(request) {
   try {
     await connectDB();
     

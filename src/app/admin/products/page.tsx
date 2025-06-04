@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { CategoryForm, ProductForm } from "@/components";
+import AddOnForm from "@/components/AddOnForm";
 
 interface Product {
   _id: string;
@@ -75,13 +76,22 @@ interface Category {
   sortOrder?: number;
 }
 
+interface AddOn {
+  _id: string;
+  name: string;
+  price: number;
+  image: string;
+  rating: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 
 export default function AdminProducts() {
   const { user, loading } = useAuth();
   const { showSuccess, showError } = useToast();
   const router = useRouter();
-
-  const [activeTab, setActiveTab] = useState<"products" | "categories">(
+  const [activeTab, setActiveTab] = useState<"products" | "categories" | "addons">(
     "products"
   );
   const [products, setProducts] = useState<Product[]>([]);
@@ -100,12 +110,17 @@ export default function AdminProducts() {
   const [sortBy, setSortBy] = useState<'name' | 'price' | 'stock' | 'created' | 'group'>('created');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [loadData, setLoadData] = useState(false);
+  const [addons, setAddons] = useState<AddOn[]>([]);
+  const [filteredAddons, setFilteredAddons] = useState<AddOn[]>([]);
+  const [showAddOnForm, setShowAddOnForm] = useState(false);
+  const [editingAddOn, setEditingAddOn] = useState<AddOn | undefined>();
 
   useEffect(() => {
     if (!loading) {
       fetchData();
+      fetchAddOns();
     }
-  }, [loading, editingCategory, loadData]);
+  }, [loading, editingCategory, loadData, editingAddOn]);
 
   const fetchData = async () => {
     setLoadingData(true);
@@ -126,6 +141,15 @@ export default function AdminProducts() {
       setLoadingData(false);
     }
   };
+  const fetchAddOns = async () => {
+    try {
+      const res = await axios.get("/api/addons");
+      setAddons(res.data.data || []);
+    } catch (error) {
+      showError("Error", "Failed to load add-ons");
+    }
+  };
+
   // Filter products
   useEffect(() => {
     let filtered = products;
@@ -179,6 +203,15 @@ export default function AdminProducts() {
 
     setFilteredProducts(filtered);
   }, [products, searchTerm, selectedCategory, sortBy, sortOrder]);
+  useEffect(() => {
+    let filtered = addons;
+    if (searchTerm) {
+      filtered = filtered.filter((addon) =>
+        addon.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    setFilteredAddons(filtered);
+  }, [addons, searchTerm]);
   const handleSort = (field: 'name' | 'price' | 'stock' | 'created' | 'group') => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -224,6 +257,26 @@ export default function AdminProducts() {
       console.error("Failed to delete category:", error);
       showError("Error", "Failed to delete category");
     }
+  };
+  const handleDeleteAddOn = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this add-on?")) return;
+    try {
+      setDeleteLoading(true);
+      const response = await axios.delete(`/api/addons/${id}`);
+      if (response.data.success) {
+        showSuccess("Success", "Add-on deleted successfully!");
+        fetchAddOns();
+      }
+    } catch (error) {
+      showError("Error", "Failed to delete add-on");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+  const handleSaveAddOn = async () => {
+    setShowAddOnForm(false);
+    setEditingAddOn(undefined);
+    await fetchAddOns();
   };
 
   if (loading || loadingData) {
@@ -334,6 +387,17 @@ export default function AdminProducts() {
             >
               <CategoryIcon className="w-4 h-4 inline mr-2" />
               Categories ({allCategories?.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("addons")}
+              className={`px-6 py-3 font-medium text-sm ${
+                activeTab === "addons"
+                  ? "border-b-2 border-orange-500 text-orange-600"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              <Tag className="w-4 h-4 inline mr-2" />
+              Addons ({addons.length})
             </button>
           </div>
         </div>
@@ -1116,11 +1180,7 @@ export default function AdminProducts() {
                             onClick={() => handleDeleteCategory(category._id)}
                             className="text-red-600 hover:text-red-800 transition-colors"
                           >
-                           {deleteLoading ? (
-                             <Loader2 className="w-4 h-4 animate-spin" />
-                           ) : (
-                             <Trash2 className="w-4 h-4" />
-                           )}
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
@@ -1139,6 +1199,124 @@ export default function AdminProducts() {
                 <p className="text-gray-600">
                   Get started by adding your first category
                 </p>
+              </div>
+            )}
+          </>
+        )}
+        {/* Addons Tab */}
+        {activeTab === "addons" && (
+          <>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="relative">
+                    <Search className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search add-ons..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent w-full sm:w-64"
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowAddOnForm(true)}
+                  className="bg-orange-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Add-On
+                </button>
+              </div>
+              <div className="flex items-center justify-between text-sm text-gray-600 mt-4">
+                <div>
+                  Showing {filteredAddons.length} of {addons.length} add-ons
+                  {searchTerm && (
+                    <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                      Search: "{searchTerm}"
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredAddons.map((addon) => (
+                      <tr key={addon._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {addon.image ? (
+                            <Image src={addon.image} alt={addon.name} width={48} height={48} className="h-12 w-12 rounded-lg object-cover" />
+                          ) : (
+                            <div className="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                              <ImageIcon className="w-5 h-5 text-gray-400" />
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{addon.name}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">₹{addon.price}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{addon.rating?.toFixed(1) || '0.0'}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                          {new Date(addon.createdAt).toLocaleDateString('en-US', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => {
+                                setEditingAddOn(addon);
+                                setShowAddOnForm(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-900 transition-colors p-1 rounded hover:bg-blue-50"
+                              title="Edit Add-On"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAddOn(addon._id)}
+                              className="text-red-600 hover:text-red-900 transition-colors p-1 rounded hover:bg-red-50"
+                              title="Delete Add-On"
+                              disabled={deleteLoading}
+                            >
+                              {deleteLoading ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {filteredAddons.length === 0 && (
+              <div className="text-center py-12">
+                <Tag className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No add-ons found</h3>
+                <p className="text-gray-600">Get started by adding your first add-on</p>
               </div>
             )}
           </>
@@ -1163,6 +1341,16 @@ export default function AdminProducts() {
               setEditingCategory(undefined);
             }}
             setLoadData={setLoadData}
+          />
+        )}
+        {showAddOnForm && (
+          <AddOnForm
+            addOn={editingAddOn}
+            onSuccess={handleSaveAddOn}
+            onCancel={() => {
+              setShowAddOnForm(false);
+              setEditingAddOn(undefined);
+            }}
           />
         )}
       </div>

@@ -73,7 +73,7 @@ const SpeciallyTendingCakes = () => {
       {/* Content */}
       <div className="relative z-10">
         <section className="py-8 md:py-12">
-          <div className="container mx-auto px-4 md:px-6 lg:px-8">            <h2 className="font-poppins text-2xl text-center md:text-left md:text-3xl font-semibold text-gray-800 mb-6">
+          <div className="container mx-auto px-2 md:px-6 lg:px-8">            <h2 className="font-poppins text-2xl text-center md:text-left md:text-3xl font-semibold text-gray-800 mb-6">
               Specially Tending Cakes
             </h2>
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">

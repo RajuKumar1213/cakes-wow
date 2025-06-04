@@ -23,12 +23,12 @@ const CategoryCard = ({ id, name, image, href }: CategoryCardProps) => {
       onClick={handleClick}
     >
       {/* Image Section with optimized aspect ratio */}
-      <div className="relative h-44 md:h-56 overflow-hidden bg-gray-100">
+      <div className="relative md:h-65 h-36 overflow-hidden bg-gray-100">
         <Image
           src={image}
           alt={name}
           fill
-          className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+          className=" group-hover:scale-110 transition-transform duration-700 ease-out"
           priority
           sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
           placeholder="blur"
@@ -53,9 +53,6 @@ const CategoryCard = ({ id, name, image, href }: CategoryCardProps) => {
         <h3 className="text-sm py-2 text-center md:text-lg font-bold text-gray-800 group-hover:text-pink-600 transition-colors duration-200  leading-tight">
           {name}
         </h3>
-
-
-
       </div>
     </div>
   );

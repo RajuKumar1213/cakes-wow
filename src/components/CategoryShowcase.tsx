@@ -7,7 +7,7 @@ const CategoryShowcase = () => {
       id: "1",
       name: "Chocolate Loaded Cakes",
       slug: "chocolate-loaded-cakes",
-      image: "/images/chocolateloaded.webp",
+      image: "/images/chocolate.webp",
       productCount: 25,
     },
     {
@@ -42,14 +42,14 @@ const CategoryShowcase = () => {
   return (
     <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
       {" "}
-      <div className="container mx-auto px-4 md:px-6 lg:px-8">
+      <div className="container mx-auto px-2 md:px-6 lg:px-8">
         {" "}
         <div className="text-center sm:text-left mb-6">
           <h2 className="font-poppins text-2xl md:text-3xl font-bold text-gray-800 mb-4 ">
             WOW Them with Every Slice!
           </h2>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto justify-items-center">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 max-w-7xl mx-auto justify-items-center">
           {categories.map((category) => {
             const cardProps = formatCategoriesForCard(category);
             return <CategoryCard key={cardProps.id} {...cardProps} />;

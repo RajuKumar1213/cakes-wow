@@ -3,6 +3,14 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 
 // Types
+export interface AddOn {
+  _id: string;
+  name: string;
+  price: number;
+  image: string;
+  rating: number;
+}
+
 export interface CartItem {
   id: string;
   productId: string;
@@ -15,6 +23,7 @@ export interface CartItem {
   quantity: number;
   selectedWeight?: string;
   weightOptions?: { weight: string; price: number }[];
+  selectedAddOns?: AddOn[];
 }
 
 export interface WishlistItem {
@@ -37,9 +46,10 @@ interface CartState {
 }
 
 interface CartContextType extends CartState {
-  addToCart: (product: any, quantity?: number, selectedWeight?: string) => void;
+  addToCart: (product: any, quantity?: number, selectedWeight?: string, selectedAddOns?: AddOn[]) => void;
   removeFromCart: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
+  updateCartItemAddOns: (itemId: string, addOns: AddOn[]) => void;
   clearCart: () => void;
   addToWishlist: (product: any) => void;
   removeFromWishlist: (productId: string) => void;
@@ -50,9 +60,10 @@ interface CartContextType extends CartState {
 
 // Action types
 type CartAction =
-  | { type: 'ADD_TO_CART'; payload: { product: any; quantity: number; selectedWeight?: string } }
+  | { type: 'ADD_TO_CART'; payload: { product: any; quantity: number; selectedWeight?: string; selectedAddOns?: AddOn[] } }
   | { type: 'REMOVE_FROM_CART'; payload: { itemId: string } }
   | { type: 'UPDATE_QUANTITY'; payload: { itemId: string; quantity: number } }
+  | { type: 'UPDATE_CART_ITEM_ADDONS'; payload: { itemId: string; addOns: AddOn[] } }
   | { type: 'CLEAR_CART' }
   | { type: 'ADD_TO_WISHLIST'; payload: { product: any } }
   | { type: 'REMOVE_FROM_WISHLIST'; payload: { productId: string } }
@@ -72,8 +83,10 @@ const initialState: CartState = {
 const calculateTotals = (items: CartItem[]) => {
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
   const totalPrice = items.reduce((sum, item) => {
-    const price = item.discountedPrice || item.price;
-    return sum + (price * item.quantity);
+    const basePrice = item.discountedPrice || item.price;
+    const addOnsPrice = item.selectedAddOns?.reduce((addOnSum, addOn) => addOnSum + addOn.price, 0) || 0;
+    const itemTotal = (basePrice + addOnsPrice) * item.quantity;
+    return sum + itemTotal;
   }, 0);
   return { totalItems, totalPrice };
 };
@@ -84,9 +97,8 @@ const generateCartItemId = (productId: string, selectedWeight?: string) => {
 
 // Reducer
 const cartReducer = (state: CartState, action: CartAction): CartState => {
-  switch (action.type) {
-    case 'ADD_TO_CART': {
-      const { product, quantity, selectedWeight } = action.payload;
+  switch (action.type) {    case 'ADD_TO_CART': {
+      const { product, quantity, selectedWeight, selectedAddOns } = action.payload;
       const itemId = generateCartItemId(product._id, selectedWeight);
       
       // Check if item already exists
@@ -98,7 +110,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         // Update existing item quantity
         newItems = state.items.map((item, index) =>
           index === existingItemIndex
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: item.quantity + quantity, selectedAddOns: selectedAddOns || item.selectedAddOns }
             : item
         );
       } else {
@@ -119,6 +131,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
           quantity,
           selectedWeight,
           weightOptions: product.weightOptions,
+          selectedAddOns: selectedAddOns || [],
         };
         
         newItems = [...state.items, newItem];
@@ -232,6 +245,22 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       };
     }
     
+    case 'UPDATE_CART_ITEM_ADDONS': {
+      const { itemId, addOns } = action.payload;
+      const newItems = state.items.map(item =>
+        item.id === itemId ? { ...item, selectedAddOns: addOns } : item
+      );
+      
+      const { totalItems, totalPrice } = calculateTotals(newItems);
+      
+      return {
+        ...state,
+        items: newItems,
+        totalItems,
+        totalPrice,
+      };
+    }
+    
     default:
       return state;
   }
@@ -285,10 +314,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
     }
   }, [state.wishlist, state.isLoading]);
-
   // Actions
-  const addToCart = (product: any, quantity: number = 1, selectedWeight?: string) => {
-    dispatch({ type: 'ADD_TO_CART', payload: { product, quantity, selectedWeight } });
+  const addToCart = (product: any, quantity: number = 1, selectedWeight?: string, selectedAddOns?: AddOn[]) => {
+    dispatch({ type: 'ADD_TO_CART', payload: { product, quantity, selectedWeight, selectedAddOns } });
   };
 
   const removeFromCart = (itemId: string) => {
@@ -297,6 +325,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const updateQuantity = (itemId: string, quantity: number) => {
     dispatch({ type: 'UPDATE_QUANTITY', payload: { itemId, quantity } });
+  };
+
+  const updateCartItemAddOns = (itemId: string, addOns: AddOn[]) => {
+    dispatch({ type: 'UPDATE_CART_ITEM_ADDONS', payload: { itemId, addOns } });
   };
 
   const clearCart = () => {
@@ -324,10 +356,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const value: CartContextType = {
-    ...state,
-    addToCart,
+    ...state,    addToCart,
     removeFromCart,
     updateQuantity,
+    updateCartItemAddOns,
     clearCart,
     addToWishlist,
     removeFromWishlist,
