@@ -269,3 +269,96 @@ body {
   animation: shake 0.5s ease-in-out;
 }
 
+/* Modal slide animations for mobile app-like experience */
+.modal-slide-up {
+  animation: slideUpModal 0.3s ease-out;
+}
+
+.modal-slide-down {
+  animation: slideDownModal 0.3s ease-out;
+}
+
+@keyframes slideUpModal {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDownModal {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+/* Enhanced modal backdrop animation */
+.modal-backdrop-enter {
+  animation: fadeInBackdrop 0.3s ease-out;
+}
+
+.modal-backdrop-exit {
+  animation: fadeOutBackdrop 0.3s ease-out;
+}
+
+@keyframes fadeInBackdrop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOutBackdrop {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Mobile-first responsive modal animations */
+@media (max-width: 768px) {
+  .modal-mobile-slide {
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .modal-mobile-slide.show {
+    transform: translateY(0);
+  }
+  
+  .modal-mobile-slide.hide {
+    transform: translateY(100%);
+  }
+}
+
+/* Desktop scale animation */
+@media (min-width: 769px) {
+  .modal-desktop-scale {
+    transform: scale(0.95);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .modal-desktop-scale.show {
+    transform: scale(1);
+    opacity: 1;
+  }
+  
+  .modal-desktop-scale.hide {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
