@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { deflate } from 'zlib';
 
 interface BreadcrumbItem {
   label: string;
@@ -12,24 +11,25 @@ interface BreadcrumbProps {
 }
 
 const Breadcrumb = ({ items }: BreadcrumbProps) => {
-
-
   return (
-    <nav className="flex mb-4" aria-label="Breadcrumb">
-      <ol className="flex items-center space-x-2">
+    <nav className="flex mb-2 sm:mb-4" aria-label="Breadcrumb">
+      <ol className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm">
         {items.map((item, index) => (
-          <li key={index} className="flex text-xs items-center">
+          <li key={index} className="flex items-center">
             {index > 0 && (
-              <ChevronRight className="h-4 w-4 text-gray-400 mx-2" />
-            )}
-            {index === items.length - 1 ? (
-              <span className="text-pink-600 text-xs font-medium">
+              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 mx-1 sm:mx-2" />
+            )}            {index === items.length - 1 ? (
+              <span className="text-pink-600 font-medium truncate max-w-24 sm:max-w-none">
+                {item.label}
+              </span>
+            ) : item.href === "/products" ? (
+              <span className="text-gray-400 font-medium truncate max-w-20 sm:max-w-none cursor-not-allowed">
                 {item.label}
               </span>
             ) : (
               <Link
                 href={item.href}
-                className="text-gray-700 hover:text-pink-600 text-xs font-medium transition-colors"
+                className="text-gray-700 hover:text-pink-600 font-medium transition-colors truncate max-w-20 sm:max-w-none"
               >
                 {item.label}
               </Link>

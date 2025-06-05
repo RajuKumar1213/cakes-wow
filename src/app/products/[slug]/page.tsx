@@ -305,7 +305,6 @@ const ProductPage = () => {
       </div>
     );
   }
-
   const breadcrumbItems = [
     { label: "Home", href: "/" },
     {
@@ -313,20 +312,18 @@ const ProductPage = () => {
       href: `/${product.categories[0]?.slug || "products"}`,
     },
     { label: product.name, href: `/products/${product.slug}` },
-  ];  return (
+  ];return (
     <>
-      <Header />
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
-        <div className="max-w-6xl mx-auto px-3 sm:px-6 py-2 sm:py-6">
-          <div className="mb-2 sm:mb-4">
+      <Header />      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
+        <div className="max-w-6xl mx-auto px-2 sm:px-3 lg:px-6 py-1 sm:py-2 lg:py-6">
+          <div className="mb-1 sm:mb-2 lg:mb-4">
             <Breadcrumb items={breadcrumbItems} />
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 p-3 sm:p-6">
-              {/* Product Images */}
-              <div className="space-y-2 sm:space-y-3">
-                <div className="relative h-56 sm:h-72 lg:h-80 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl overflow-hidden group">
+          <div className="bg-white rounded-lg sm:rounded-xl shadow-lg overflow-hidden border border-gray-100">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 lg:gap-6 p-2 sm:p-3 lg:p-6">              {/* Product Images */}
+              <div className="space-y-1.5 sm:space-y-2 lg:space-y-3">
+                <div className="relative h-48 sm:h-56 lg:h-72 xl:h-80 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg sm:rounded-xl overflow-hidden group">
                   <Image
                     src={
                       product.imageUrls[selectedImageIndex] ||
@@ -339,27 +336,24 @@ const ProductPage = () => {
                     sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 45vw"
                     placeholder="blur"
                     blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyLDdemcxqeK/8AUyQkKUSPH/Z"
-                  />
-                  {getDiscountPercentage() > 0 && (
-                    <div className="absolute top-2 left-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-2 py-1 rounded-lg text-xs font-semibold shadow-lg">
+                  />                  {getDiscountPercentage() > 0 && (
+                    <div className="absolute top-1 left-1 sm:top-2 sm:left-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg text-xs font-semibold shadow-lg">
                       {getDiscountPercentage()}% OFF
                     </div>
                   )}
                   {product.isBestseller && (
-                    <div className="absolute top-2 right-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-lg text-xs font-semibold shadow-lg">
+                    <div className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg text-xs font-semibold shadow-lg">
                       ⭐ Bestseller
                     </div>
                   )}
-                </div>
-
-                {/* Thumbnail Images */}
+                </div>                {/* Thumbnail Images */}
                 {product.imageUrls.length > 1 && (
-                  <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+                  <div className="grid grid-cols-4 gap-1 sm:gap-1.5 lg:gap-2">
                     {product.imageUrls.map((image, index) => (
                       <button
                         key={index}
                         onClick={() => setSelectedImageIndex(index)}
-                        className={`relative h-10 sm:h-14 lg:h-16 rounded-lg border-2 overflow-hidden transition-all duration-300 hover:scale-105 ${
+                        className={`relative h-8 sm:h-10 lg:h-14 xl:h-16 rounded-md sm:rounded-lg border-2 overflow-hidden transition-all duration-300 hover:scale-105 ${
                           selectedImageIndex === index
                             ? "border-pink-500 shadow-md"
                             : "border-gray-200 hover:border-gray-300"
@@ -378,11 +372,11 @@ const ProductPage = () => {
                   </div>
                 )}
               </div>              {/* Product Details */}
-              <div className="space-y-3 sm:space-y-4">
-                <div className="space-y-2">
-                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 leading-tight">
+              <div className="space-y-2 sm:space-y-3 lg:space-y-4">
+                <div className="space-y-1 sm:space-y-2">
+                  <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 leading-tight">
                     {product.name}
-                  </h1>                  <div className="flex items-center gap-2 sm:gap-3">
+                  </h1><div className="flex items-center gap-2 sm:gap-3">
                     <div className="flex items-center">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
