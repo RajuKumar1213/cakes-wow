@@ -9,7 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface LoginProps {
   setShowLogin: (show: boolean) => void;
@@ -25,6 +25,21 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const router = useRouter();
+
+  // Prevent background scroll when modal is visible
+  useEffect(() => {
+    if (isVisible) {
+      // Store original overflow style
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      // Prevent scrolling
+      document.body.style.overflow = 'hidden';
+      
+      // Cleanup function to restore scroll
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [isVisible]);
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -119,10 +134,8 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
     <div className={`fixed inset-0 z-50 ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}>
       {/* Modal Backdrop - only visible on larger screens */}
-      <div className="hidden md:block absolute inset-0 bg-black/60" onClick={() => setShowLogin(false)}></div>
-
-      {/* Modal Content */}
-      <div className={`w-full h-full md:absolute md:top-1/2 md:left-1/2 md:transform md:-translate-x-1/2 md:-translate-y-1/2 md:w-md md:h-auto bg-white md:bg-transparent md:rounded-lg md:overflow-hidden flex flex-col ${isVisible ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}`}>
+      <div className="hidden md:block absolute inset-0 bg-black/60" onClick={() => setShowLogin(false)}></div>      {/* Modal Content */}
+      <div className={`w-full h-full md:absolute md:top-1/2 md:left-1/2 md:transform md:-translate-x-1/2 md:-translate-y-1/2 md:w-96 md:h-96 bg-white md:bg-transparent md:rounded-lg md:overflow-hidden flex flex-col ${isVisible ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}`}>
 
         {/* Decorative Background - only on mobile */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none md:hidden">

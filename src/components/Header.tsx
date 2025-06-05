@@ -574,7 +574,7 @@ const Header = () => {
             {/* Sidebar Content */}
             <div className="p-6 flex flex-col space-y-8">
               {/* Login (if no user) */}
-              <button className="flex items-center space-x-3 justify-center w-full py-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
+              <button onClick={() => setShowLogin(true)} className="flex items-center space-x-3 justify-center w-full py-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
                 <LogIn className="w-8 h-8 text-red-500" />
                 <span className="text-2xl font-bold text-red-600">Login</span>
               </button>

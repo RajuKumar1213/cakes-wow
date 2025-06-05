@@ -249,12 +249,27 @@ export default function CheckoutPage() {
   const [isCalendarClosing, setIsCalendarClosing] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-
   // Add-ons state
   const [selectedAddOns, setSelectedAddOns] = useState<any[]>([]);
   const [addOnQuantities, setAddOnQuantities] = useState<{
     [key: string]: number;
   }>({});
+
+  // Prevent background scrolling when any modal is open
+  useEffect(() => {
+    const anyModalOpen = showCalendar || showDateModal || showTimeSlotModal;
+    
+    if (anyModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    // Cleanup function to restore scroll when component unmounts
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showCalendar, showDateModal, showTimeSlotModal]);
 
   // Handle delivery type selection
   const handleDeliveryTypeSelect = (deliveryType: any) => {
