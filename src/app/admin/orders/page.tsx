@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import AdminNavbar from '@/components/AdminNavbar';
 import {
   ArrowLeft,
   Search,
@@ -274,8 +275,7 @@ const OrderDetailsModal = ({ order, onClose }: {
 );
 
 export default function AdminOrders() {
-  const { user, loading } = useAuth();
-  const { showSuccess, showError } = useToast();
+  const { showSuccess } = useToast();
   const router = useRouter();
   
   const [orders, setOrders] = useState<Order[]>([]);
@@ -283,6 +283,7 @@ export default function AdminOrders() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(false);
   // PLACEHOLDER: Mock data - Real order management system to be implemented
   // This will be replaced with actual API calls to fetch orders from database
   useEffect(() => {
@@ -370,11 +371,7 @@ export default function AdminOrders() {
     setFilteredOrders(mockOrders);
   }, []);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
+
 
   useEffect(() => {
     let filtered = orders;
@@ -416,28 +413,12 @@ export default function AdminOrders() {
   }
 
   const statuses = ['all', 'pending', 'confirmed', 'preparing', 'ready', 'out_for_delivery', 'delivered', 'cancelled'];
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => router.push('/admin')}
-                className="text-gray-600 hover:text-gray-800"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <h1 className="text-xl font-semibold text-gray-900">Order Management</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">{filteredOrders.length} orders</span>
-            </div>
-          </div>
-        </div>
-      </header>      {/* Main Content */}
+      {/* Admin Navbar */}
+      <AdminNavbar />
+      
+      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Placeholder Notice */}
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">

@@ -53,12 +53,6 @@ export default function AdminAnalytics() {
   const router = useRouter();
   const [timeRange, setTimeRange] = useState('7d');
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">

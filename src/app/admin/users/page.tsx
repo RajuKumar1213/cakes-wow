@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import AdminNavbar from '@/components/AdminNavbar';
 import {
   Users,
   Search,
@@ -178,7 +179,7 @@ const UserDetailsModal = ({ user, isOpen, onClose }: {
             </button>
           </div>
         </div>
-        
+
         <div className="p-6 space-y-6">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
@@ -187,11 +188,10 @@ const UserDetailsModal = ({ user, isOpen, onClose }: {
             <div>
               <h3 className="text-lg font-semibold">{user.name || 'User'}</h3>
               <p className="text-gray-600">{user.phoneNumber}</p>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                user.status === 'active' ? 'bg-green-100 text-green-800' :
-                user.status === 'banned' ? 'bg-red-100 text-red-800' :
-                'bg-gray-100 text-gray-800'
-              }`}>
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${user.status === 'active' ? 'bg-green-100 text-green-800' :
+                  user.status === 'banned' ? 'bg-red-100 text-red-800' :
+                    'bg-gray-100 text-gray-800'
+                }`}>
                 {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
               </span>
             </div>
@@ -215,9 +215,9 @@ const UserDetailsModal = ({ user, isOpen, onClose }: {
                 <p><span className="text-gray-500">Average Order:</span> ₹{user.totalOrders > 0 ? Math.round(user.totalSpent / user.totalOrders).toLocaleString() : '0'}</p>
                 <p><span className="text-gray-500">Status:</span> {
                   user.totalSpent > 50000 ? 'VIP Customer' :
-                  user.totalSpent > 20000 ? 'Premium Customer' :
-                  user.totalSpent > 5000 ? 'Regular Customer' :
-                  'New Customer'
+                    user.totalSpent > 20000 ? 'Premium Customer' :
+                      user.totalSpent > 5000 ? 'Regular Customer' :
+                        'New Customer'
                 }</p>
               </div>
             </div>
@@ -232,7 +232,7 @@ export default function AdminUsersPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const { showSuccess, showError } = useToast();
-  
+
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -301,20 +301,17 @@ export default function AdminUsersPage() {
     }
   ];
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-      return;
-    }
-    
-    // Load users data
-    setUsers(mockUsers);
-  }, [user, loading, router]);
+  // useEffect(() => {
+
+
+  //   // Load users data
+  //   setUsers(mockUsers);
+  // }, [user, loading, router]);
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.phoneNumber.includes(searchTerm) ||
-                         user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      user.phoneNumber.includes(searchTerm) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -323,14 +320,14 @@ export default function AdminUsersPage() {
   };
 
   const handleBanUser = (userId: string) => {
-    setUsers(users.map(user => 
+    setUsers(users.map(user =>
       user.id === userId ? { ...user, status: 'banned' as const } : user
     ));
     showSuccess('User has been banned', 'User status updated successfully');
   };
 
   const handleActivateUser = (userId: string) => {
-    setUsers(users.map(user => 
+    setUsers(users.map(user =>
       user.id === userId ? { ...user, status: 'active' as const } : user
     ));
     showSuccess('User has been activated', 'User status updated successfully');
@@ -352,30 +349,12 @@ export default function AdminUsersPage() {
   if (!user) {
     return null;
   }
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push('/admin')}
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span>Back to Dashboard</span>
-              </button>
-              <div className="h-6 w-px bg-gray-300"></div>
-              <h1 className="text-xl font-semibold text-gray-900">User Management</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-gray-700">{user?.phoneNumber}</span>
-            </div>
-          </div>
-        </div>
-      </header>      {/* Main Content */}
+      {/* Admin Navbar */}
+      <AdminNavbar />
+      
+      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Placeholder Notice */}
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
@@ -384,7 +363,7 @@ export default function AdminUsersPage() {
             <div>
               <h3 className="font-medium text-blue-900 mb-1">User Management - Demo Mode</h3>
               <p className="text-sm text-blue-700">
-                This page displays sample user data for demonstration purposes. 
+                This page displays sample user data for demonstration purposes.
                 Real user management functionality will be implemented with the authentication system integration.
               </p>
             </div>

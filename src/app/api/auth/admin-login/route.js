@@ -10,6 +10,7 @@ export async function POST(request) {
     
     const { email, password } = await request.json();
 
+
     // Validate input
     if (!email || !password) {
       return NextResponse.json(

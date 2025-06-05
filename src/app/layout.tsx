@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { ToastProvider } from "@/contexts/ToastContext";
+import { CategoriesProvider } from "@/contexts/CategoriesContext";
 import ImagePreloader from "@/components/ImagePreloader";
 
 // Optimized font loading - only load weights we actually use
@@ -44,10 +45,12 @@ export default function RootLayout({
       >
         <AuthProvider>
           <CartProvider>
-            <ToastProvider>
-              <ImagePreloader />
-              {children}
-            </ToastProvider>
+            <CategoriesProvider>
+              <ToastProvider>
+                <ImagePreloader />
+                {children}
+              </ToastProvider>
+            </CategoriesProvider>
           </CartProvider>
         </AuthProvider>
       </body>

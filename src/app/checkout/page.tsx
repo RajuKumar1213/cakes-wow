@@ -708,13 +708,12 @@ export default function CheckoutPage() {
                     <div
                       className={`
                       relative flex items-center justify-center w-8 h-8 md:w-12 md:h-12 rounded-full transition-all duration-200
-                      ${
-                        isCompleted
+                      ${isCompleted
                           ? "bg-green-500 text-white"
                           : isActive
-                          ? "bg-orange-600 text-white"
-                          : "bg-gray-200 text-gray-500"
-                      }
+                            ? "bg-orange-600 text-white"
+                            : "bg-gray-200 text-gray-500"
+                        }
                     `}
                     >
                       {isCompleted ? (
@@ -725,9 +724,8 @@ export default function CheckoutPage() {
                     </div>
                     <div className="mt-1 md:mt-2 text-center">
                       <div
-                        className={`text-xs md:text-sm font-medium ${
-                          isActive ? "text-orange-600" : "text-gray-600"
-                        }`}
+                        className={`text-xs md:text-sm font-medium ${isActive ? "text-orange-600" : "text-gray-600"
+                          }`}
                       >
                         {step.title}
                       </div>
@@ -761,9 +759,8 @@ export default function CheckoutPage() {
               <div className="space-y-3 md:space-y-4 mb-4 md:mb-6">
                 {items.map((item: CartItem) => (
                   <div
-                    key={`${item.productId}-${
-                      item.selectedWeight || "default"
-                    }`}
+                    key={`${item.productId}-${item.selectedWeight || "default"
+                      }`}
                     className="flex items-center space-x-2 md:space-x-3 p-2 md:p-3 bg-gray-50 rounded-lg"
                   >
                     <div className="relative w-12 h-12 md:w-16 md:h-16 rounded-lg overflow-hidden flex-shrink-0">
@@ -854,11 +851,10 @@ export default function CheckoutPage() {
                         (d) => d.id === orderForm.deliveryType
                       )?.price === 0
                         ? "Free"
-                        : `₹${
-                            deliveryTypes.find(
-                              (d) => d.id === orderForm.deliveryType
-                            )?.price || 0
-                          }`}
+                        : `₹${deliveryTypes.find(
+                          (d) => d.id === orderForm.deliveryType
+                        )?.price || 0
+                        }`}
                     </span>
                   </div>
                 )}{" "}
@@ -915,9 +911,8 @@ export default function CheckoutPage() {
                   <div className="space-y-3 md:space-y-4">
                     {items.map((item: CartItem) => (
                       <div
-                        key={`${item.productId}-${
-                          item.selectedWeight || "default"
-                        }`}
+                        key={`${item.productId}-${item.selectedWeight || "default"
+                          }`}
                         className="flex items-center space-x-3 md:space-x-4 p-3 md:p-4 border border-gray-200 rounded-lg"
                       >
                         <div className="relative w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden flex-shrink-0">
@@ -1034,19 +1029,17 @@ export default function CheckoutPage() {
                               onChange={(e) =>
                                 handleInputChange("fullName", e.target.value)
                               }
-                              className={`w-full pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-4 border-2 rounded-lg md:rounded-xl focus:ring-0 focus:border-orange-400 transition-all duration-300 bg-white shadow-sm text-sm md:text-base ${
-                                errors.fullName
+                              className={`w-full pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-4 border-2 rounded-lg md:rounded-xl focus:ring-0 focus:border-orange-400 transition-all duration-300 bg-white shadow-sm text-sm md:text-base ${errors.fullName
                                   ? "border-red-400 bg-red-50"
                                   : "border-gray-200 hover:border-orange-300"
-                              }`}
+                                }`}
                               placeholder="What should we call you?"
                             />
                             <User
-                              className={`absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 transition-colors ${
-                                errors.fullName
+                              className={`absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 transition-colors ${errors.fullName
                                   ? "text-red-400"
                                   : "text-gray-400"
-                              }`}
+                                }`}
                             />
                           </div>
                           {errors.fullName && (
@@ -1073,20 +1066,18 @@ export default function CheckoutPage() {
                                   e.target.value
                                 )
                               }
-                              className={`w-full pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-4 border-2 rounded-lg md:rounded-xl focus:ring-0 focus:border-orange-400 transition-all duration-300 bg-white shadow-sm text-sm md:text-base ${
-                                errors.mobileNumber
+                              className={`w-full pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-4 border-2 rounded-lg md:rounded-xl focus:ring-0 focus:border-orange-400 transition-all duration-300 bg-white shadow-sm text-sm md:text-base ${errors.mobileNumber
                                   ? "border-red-400 bg-red-50"
                                   : "border-gray-200 hover:border-orange-300"
-                              }`}
+                                }`}
                               placeholder="Your contact number"
                               maxLength={10}
                             />
                             <Phone
-                              className={`absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 transition-colors ${
-                                errors.mobileNumber
+                              className={`absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 transition-colors ${errors.mobileNumber
                                   ? "text-red-400"
                                   : "text-gray-400"
-                              }`}
+                                }`}
                             />
                           </div>
                           {errors.mobileNumber && (
@@ -1112,17 +1103,15 @@ export default function CheckoutPage() {
                             onChange={(e) =>
                               handleInputChange("email", e.target.value)
                             }
-                            className={`w-full pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-4 border-2 rounded-lg md:rounded-xl focus:ring-0 focus:border-orange-400 transition-all duration-300 bg-white shadow-sm text-sm md:text-base ${
-                              errors.email
+                            className={`w-full pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-4 border-2 rounded-lg md:rounded-xl focus:ring-0 focus:border-orange-400 transition-all duration-300 bg-white shadow-sm text-sm md:text-base ${errors.email
                                 ? "border-red-400 bg-red-50"
                                 : "border-gray-200 hover:border-orange-300"
-                            }`}
+                              }`}
                             placeholder="Where to send order updates?"
                           />
                           <Mail
-                            className={`absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 transition-colors ${
-                              errors.email ? "text-red-400" : "text-gray-400"
-                            }`}
+                            className={`absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 transition-colors ${errors.email ? "text-red-400" : "text-gray-400"
+                              }`}
                           />
                         </div>
                         {errors.email && (
@@ -1206,13 +1195,12 @@ export default function CheckoutPage() {
                                 <button
                                   type="button"
                                   onClick={() => setShowCalendar(true)}
-                                  className={`w-full pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-4 border-2 rounded-lg md:rounded-xl focus:ring-0 focus:border-blue-400 transition-all duration-300 transform hover:scale-[1.02] bg-white shadow-sm text-left text-sm md:text-base ${
-                                    errors.deliveryDate
+                                  className={`w-full pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-4 border-2 rounded-lg md:rounded-xl focus:ring-0 focus:border-blue-400 transition-all duration-300 transform hover:scale-[1.02] bg-white shadow-sm text-left text-sm md:text-base ${errors.deliveryDate
                                       ? "border-red-400 bg-red-50"
                                       : orderForm.deliveryDate
-                                      ? "border-blue-400 bg-blue-50"
-                                      : "border-gray-200 hover:border-blue-300"
-                                  }`}
+                                        ? "border-blue-400 bg-blue-50"
+                                        : "border-gray-200 hover:border-blue-300"
+                                    }`}
                                 >
                                   {orderForm.deliveryDate ? (
                                     <span className="text-blue-900 font-medium">
@@ -1231,13 +1219,12 @@ export default function CheckoutPage() {
                                   )}
                                 </button>
                                 <Calendar
-                                  className={`absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 transition-colors ${
-                                    errors.deliveryDate
+                                  className={`absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 transition-colors ${errors.deliveryDate
                                       ? "text-red-400"
                                       : orderForm.deliveryDate
-                                      ? "text-blue-500"
-                                      : "text-gray-400"
-                                  }`}
+                                        ? "text-blue-500"
+                                        : "text-gray-400"
+                                    }`}
                                 />
                               </div>
                               {errors.deliveryDate && (
@@ -1264,15 +1251,14 @@ export default function CheckoutPage() {
                                       : setShowCalendar(true)
                                   }
                                   disabled={!orderForm.deliveryDate}
-                                  className={`w-full pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-4 border-2 rounded-lg md:rounded-xl focus:ring-0 transition-all duration-300 transform hover:scale-[1.02] bg-white shadow-sm text-left text-sm md:text-base ${
-                                    !orderForm.deliveryDate
+                                  className={`w-full pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-4 border-2 rounded-lg md:rounded-xl focus:ring-0 transition-all duration-300 transform hover:scale-[1.02] bg-white shadow-sm text-left text-sm md:text-base ${!orderForm.deliveryDate
                                       ? "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
                                       : errors.timeSlot
-                                      ? "border-red-400 bg-red-50"
-                                      : orderForm.timeSlot
-                                      ? "border-blue-400 bg-blue-50"
-                                      : "border-gray-200 hover:border-blue-300"
-                                  }`}
+                                        ? "border-red-400 bg-red-50"
+                                        : orderForm.timeSlot
+                                          ? "border-blue-400 bg-blue-50"
+                                          : "border-gray-200 hover:border-blue-300"
+                                    }`}
                                 >
                                   {!orderForm.deliveryDate ? (
                                     <span className="text-gray-400">
@@ -1289,15 +1275,14 @@ export default function CheckoutPage() {
                                   )}
                                 </button>
                                 <Clock
-                                  className={`absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 transition-colors ${
-                                    !orderForm.deliveryDate
+                                  className={`absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 transition-colors ${!orderForm.deliveryDate
                                       ? "text-gray-300"
                                       : errors.timeSlot
-                                      ? "text-red-400"
-                                      : orderForm.timeSlot
-                                      ? "text-blue-500"
-                                      : "text-gray-400"
-                                  }`}
+                                        ? "text-red-400"
+                                        : orderForm.timeSlot
+                                          ? "text-blue-500"
+                                          : "text-gray-400"
+                                    }`}
                                 />
                               </div>
                               {errors.timeSlot && (
@@ -1338,11 +1323,10 @@ export default function CheckoutPage() {
                             <select
                               value={orderForm.area}
                               onChange={(e) => handleAreaChange(e.target.value)}
-                              className={`w-full pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-4 border-2 rounded-lg md:rounded-xl focus:ring-0 focus:border-green-400 transition-all duration-300 transform focus:scale-[1.02] bg-white shadow-sm appearance-none text-sm md:text-base ${
-                                errors.area
+                              className={`w-full pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-4 border-2 rounded-lg md:rounded-xl focus:ring-0 focus:border-green-400 transition-all duration-300 transform focus:scale-[1.02] bg-white shadow-sm appearance-none text-sm md:text-base ${errors.area
                                   ? "border-red-400 bg-red-50"
                                   : "border-gray-200 hover:border-green-300"
-                              }`}
+                                }`}
                             >
                               <option value="">Choose your area</option>
                               {Object.keys(areaPinMap).map((area) => (
@@ -1352,9 +1336,8 @@ export default function CheckoutPage() {
                               ))}
                             </select>
                             <MapPin
-                              className={`absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 transition-colors ${
-                                errors.area ? "text-red-400" : "text-gray-400"
-                              }`}
+                              className={`absolute left-3 md:left-4 top-1/2 transform -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 transition-colors ${errors.area ? "text-red-400" : "text-gray-400"
+                                }`}
                             />
                             <ChevronRight className="absolute right-3 md:right-4 top-1/2 transform -translate-y-1/2 rotate-90 w-3 h-3 md:w-4 md:h-4 text-gray-400" />
                           </div>
@@ -1405,19 +1388,17 @@ export default function CheckoutPage() {
                                 handleInputChange("fullAddress", e.target.value)
                               }
                               rows={4}
-                              className={`w-full pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-4 border-2 rounded-lg md:rounded-xl focus:ring-0 focus:border-green-400 transition-all duration-300 transform focus:scale-[1.02] bg-white shadow-sm resize-none text-sm md:text-base ${
-                                errors.fullAddress
+                              className={`w-full pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-4 border-2 rounded-lg md:rounded-xl focus:ring-0 focus:border-green-400 transition-all duration-300 transform focus:scale-[1.02] bg-white shadow-sm resize-none text-sm md:text-base ${errors.fullAddress
                                   ? "border-red-400 bg-red-50"
                                   : "border-gray-200 hover:border-green-300"
-                              }`}
+                                }`}
                               placeholder="House/Flat number, Street name, Society name..."
                             />
                             <Home
-                              className={`absolute left-3 md:left-4 top-3 md:top-4 w-3 h-3 md:w-4 md:h-4 transition-colors ${
-                                errors.fullAddress
+                              className={`absolute left-3 md:left-4 top-3 md:top-4 w-3 h-3 md:w-4 md:h-4 transition-colors ${errors.fullAddress
                                   ? "text-red-400"
                                   : "text-gray-400"
-                              }`}
+                                }`}
                             />
                           </div>
                           {errors.fullAddress && (
@@ -1551,10 +1532,9 @@ export default function CheckoutPage() {
                           }
                           className={`
                             relative p-3 md:p-4 border rounded-lg cursor-pointer transition-all duration-200
-                            ${
-                              isSelected
-                                ? "border-orange-500 bg-orange-50 ring-2 ring-orange-200"
-                                : "border-gray-200 hover:border-orange-300"
+                            ${isSelected
+                              ? "border-orange-500 bg-orange-50 ring-2 ring-orange-200"
+                              : "border-gray-200 hover:border-orange-300"
                             }
                           `}
                         >
@@ -1562,11 +1542,10 @@ export default function CheckoutPage() {
                             <div
                               className={`
                               flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-lg mr-3 md:mr-4
-                              ${
-                                isSelected
+                              ${isSelected
                                   ? "bg-orange-600 text-white"
                                   : "bg-gray-100 text-gray-600"
-                              }
+                                }
                             `}
                             >
                               <IconComponent className="w-5 h-5 md:w-6 md:h-6" />
@@ -1596,11 +1575,10 @@ export default function CheckoutPage() {
                             <div
                               className={`
                               w-4 h-4 md:w-5 md:h-5 rounded-full border-2 flex items-center justify-center
-                              ${
-                                isSelected
+                              ${isSelected
                                   ? "border-orange-600 bg-orange-600"
                                   : "border-gray-300"
-                              }
+                                }
                             `}
                             >
                               {isSelected && (
@@ -1729,50 +1707,49 @@ export default function CheckoutPage() {
                 </div>
               )}{" "}
             </div>
-          </div>{" "}          {/* Custom Calendar Modal */}
+          </div>{" "}         
+          {/* Custom Calendar Modal */}
           {showCalendar && (
             <div
-              className={`fixed inset-0 bg-black/60 flex items-end md:items-center justify-center z-50  transition-all duration-300 ${
-                isCalendarClosing ? "opacity-0" : "opacity-100"
-              }`}
+              className={`fixed inset-0 bg-black/60 flex items-end md:items-center justify-center z-50  transition-all duration-300 ${isCalendarClosing ? "opacity-0" : "opacity-100"
+                }`}
             >
               <div
-                className={`w-full max-w-lg transform transition-all duration-300 ease-out ${
-                  isCalendarClosing 
-                    ? 'translate-y-full md:translate-y-0 md:scale-95 md:opacity-0' 
+                className={`w-full max-w-lg transform transition-all duration-300 ease-out ${isCalendarClosing
+                    ? 'translate-y-full md:translate-y-0 md:scale-95 md:opacity-0'
                     : 'translate-y-0 md:scale-100 md:opacity-100'
-                } md:max-h-[85vh]`}
+                  } md:max-h-[85vh]`}
               >
                 <div className="bg-white rounded-t-2xl md:rounded-2xl overflow-hidden shadow-2xl max-h-[90vh] md:max-h-full overflow-y-auto">                  <div className="bg-gradient-to-r from-orange-500 to-red-500 p-3 md:p-4 text-white">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-base md:text-lg font-semibold">
-                          Choose Delivery Date
-                        </h3>
-                        <p className="text-orange-100 text-xs mt-1">
-                          Pick the perfect day for your sweet delivery 🎂
-                        </p>
-                      </div>
-                      <button
-                        onClick={handleCalendarClose}
-                        className="text-white hover:text-orange-100 transition-colors p-2 hover:bg-white hover:bg-opacity-20 rounded-full"
-                      >
-                        <svg
-                          className="w-5 h-5 md:w-6 md:h-6"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-base md:text-lg font-semibold">
+                        Choose Delivery Date
+                      </h3>
+                      <p className="text-orange-100 text-xs mt-1">
+                        Pick the perfect day for your sweet delivery 🎂
+                      </p>
                     </div>
-                  </div>                  <div className="p-3 md:p-4">
+                    <button
+                      onClick={handleCalendarClose}
+                      className="text-white hover:text-orange-100 transition-colors p-2 hover:bg-white hover:bg-opacity-20 rounded-full"
+                    >
+                      <svg
+                        className="w-5 h-5 md:w-6 md:h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>                  <div className="p-3 md:p-4">
                     {/* Month Navigation */}
                     <div className="flex items-center justify-between mb-3 md:mb-4">
                       <button
@@ -1823,22 +1800,20 @@ export default function CheckoutPage() {
                               disabled={isDisabled}
                               className={`
                           relative p-1.5 md:p-2 text-xs rounded-lg transition-all duration-200 transform hover:scale-105
-                          ${
-                            !isCurrentMonth
-                              ? "text-gray-300 hover:text-gray-400"
-                              : isDisabled
-                              ? "text-gray-300 cursor-not-allowed opacity-50"
-                              : isSelected
-                              ? "bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-lg transform scale-105"
-                              : isToday
-                              ? "bg-blue-100 text-blue-600 border-2 border-blue-300 font-semibold"
-                              : "text-gray-700 hover:bg-orange-50 hover:text-orange-600"
-                          }
-                          ${
-                            !isDisabled && isCurrentMonth
-                              ? "hover:shadow-md"
-                              : ""
-                          }
+                          ${!isCurrentMonth
+                                  ? "text-gray-300 hover:text-gray-400"
+                                  : isDisabled
+                                    ? "text-gray-300 cursor-not-allowed opacity-50"
+                                    : isSelected
+                                      ? "bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-lg transform scale-105"
+                                      : isToday
+                                        ? "bg-blue-100 text-blue-600 border-2 border-blue-300 font-semibold"
+                                        : "text-gray-700 hover:bg-orange-50 hover:text-orange-600"
+                                }
+                          ${!isDisabled && isCurrentMonth
+                                  ? "hover:shadow-md"
+                                  : ""
+                                }
                         `}
                             >
                               {date.getDate()}
@@ -1903,9 +1878,8 @@ export default function CheckoutPage() {
           {/* Delivery Type Selection Modal */}
           {showDateModal && (
             <div
-              className={`fixed inset-0 bg-black/60 flex items-end md:items-center justify-center z-50 ${
-                isCalendarClosing ? "opacity-0" : "opacity-100"
-              }`}
+              className={`fixed inset-0 bg-black/60 flex items-end md:items-center justify-center z-50 ${isCalendarClosing ? "opacity-0" : "opacity-100"
+                }`}
             >
               <div className="">
                 <div className="bg-white rounded-t-2xl max-w-md w-full md:max-h-[90vh] overflow-y-auto">
@@ -2011,9 +1985,8 @@ export default function CheckoutPage() {
           {/* Time Slot Selection Modal */}
           {showTimeSlotModal && selectedDeliveryType && (
             <div
-              className={`fixed inset-0 bg-black/60 flex items-end md:items-center justify-center z-50 ${
-                isCalendarClosing ? "opacity-0" : "opacity-100"
-              }`}
+              className={`fixed inset-0 bg-black/60 flex items-end md:items-center justify-center z-50 ${isCalendarClosing ? "opacity-0" : "opacity-100"
+                }`}
             >
               <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
@@ -2056,11 +2029,10 @@ export default function CheckoutPage() {
                           key={index}
                           onClick={() => handleTimeSlotSelect(slot.time)}
                           disabled={!slot.available}
-                          className={`w-full p-4 border-2 rounded-xl transition-all duration-300 transform hover:scale-[1.02] text-left ${
-                            slot.available
+                          className={`w-full p-4 border-2 rounded-xl transition-all duration-300 transform hover:scale-[1.02] text-left ${slot.available
                               ? "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
                               : "border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed"
-                          }`}
+                            }`}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center">

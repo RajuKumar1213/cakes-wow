@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Loader2, CheckCircle, AlertCircle, User, Lock, Mail } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
+import axios from 'axios';
 
 interface AdminInfo {
   email: string;
@@ -29,11 +30,9 @@ export default function AdminSetup() {
 
   const checkAdminStatus = async () => {
     try {
-      const response = await fetch('/api/auth/setup-admin');
-      const data = await response.json();
-      
-      setAdminExists(data.adminExists);
-      setAdminInfo(data.admin);
+      const response = await axios.get('/api/auth/setup-admin');
+      setAdminExists(response.data.adminExists);
+      setAdminInfo(response.data.admin);
     } catch (error) {
       console.error('Error checking admin status:', error);
     } finally {
@@ -91,18 +90,12 @@ export default function AdminSetup() {
     setLoading(true);
     
     try {
-      const response = await fetch('/api/auth/setup-admin', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
-        }),
+      const response = await axios.post('/api/auth/setup-admin', {
+        email: formData.email,
+        password: formData.password
       });
 
-      const data = await response.json();      if (response.ok) {
+      if (response.status === 200) {
         showSuccess('Success', 'Admin account created successfully!');
         setAdminExists(true);
         setAdminInfo({
@@ -111,7 +104,7 @@ export default function AdminSetup() {
         });
         setFormData({ email: '', password: '', confirmPassword: '' });
       } else {
-        showError('Error', data.error || 'Failed to create admin account');
+        showError('Error', response.data.error || 'Failed to create admin account');
       }
     } catch (error) {
       console.error('Setup error:', error);

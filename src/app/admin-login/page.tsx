@@ -3,9 +3,18 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, Shield, Loader2, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useToast } from '@/contexts/ToastContext';
 import Image from 'next/image';
+import axios, { AxiosError } from 'axios';
+
+// Error interfaces
+interface ApiError {
+  message: string;
+}
+
+interface ApiErrorResponse {
+  error: ApiError;
+}
 
 export default function AdminLogin() {
   const router = useRouter();
@@ -53,7 +62,7 @@ export default function AdminLogin() {
       ...prev,
       [name]: value
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name as keyof typeof errors]) {
       setErrors(prev => ({
@@ -65,50 +74,48 @@ export default function AdminLogin() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setLoading(true);
-    
+
     try {
-      const response = await fetch('/api/auth/admin-login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = await axios.post('/api/auth/admin-login', formData);
 
-      const data = await response.json();
-
-      if (response.ok) {
-        showSuccess(  "success", 'Login successful! Redirecting to admin dashboard...');
+      if (response.status === 200) {
+        showSuccess("success", 'Login successful! Redirecting to admin dashboard...');
         setTimeout(() => {
           router.push('/admin');
         }, 1500);
       } else {
-        showError("error", data.error.message || 'Login failed. Please check your credentials.');
+        showError("error", response.data.error || 'Login failed. Please check your credentials.');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
-      showError("error", 'An error occurred. Please try again.');
+
+      if (axios.isAxiosError(error)) {
+        showError("error", error.response?.data?.error || 'Login failed. Please check your credentials.');
+      } else {
+        showError("error", 'An unexpected error occurred.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
+
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-orange-50 flex items-center justify-center p-4">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-rose-600 to-pink-600"></div>
-        <div className="absolute top-0 left-0 w-full h-full" 
-             style={{
-               backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.3) 1px, transparent 0)`,
-               backgroundSize: '20px 20px'
-             }}>
+        <div className="absolute top-0 left-0 w-full h-full"
+          style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.3) 1px, transparent 0)`,
+            backgroundSize: '20px 20px'
+          }}>
         </div>
       </div>
 
@@ -120,7 +127,7 @@ export default function AdminLogin() {
             <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-rose-500 to-pink-600 rounded-2xl shadow-lg mb-4">
               <Shield className="w-10 h-10 text-white" />
             </div>
-            
+
             <div className="space-y-2">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
                 Admin Portal
@@ -147,8 +154,8 @@ export default function AdminLogin() {
                   value={formData.email}
                   onChange={handleInputChange}
                   className={`w-full px-4 py-3 rounded-xl border-2 transition-all duration-200 bg-white/50 backdrop-blur-sm
-                    ${errors.email 
-                      ? 'border-red-300 focus:border-red-500' 
+                    ${errors.email
+                      ? 'border-red-300 focus:border-red-500'
                       : 'border-gray-200 focus:border-rose-500'
                     } focus:outline-none focus:ring-4 focus:ring-rose-500/20`}
                   placeholder="admin@cakeswow.com"
@@ -176,8 +183,8 @@ export default function AdminLogin() {
                   value={formData.password}
                   onChange={handleInputChange}
                   className={`w-full px-4 py-3 pr-12 rounded-xl border-2 transition-all duration-200 bg-white/50 backdrop-blur-sm
-                    ${errors.password 
-                      ? 'border-red-300 focus:border-red-500' 
+                    ${errors.password
+                      ? 'border-red-300 focus:border-red-500'
                       : 'border-gray-200 focus:border-rose-500'
                     } focus:outline-none focus:ring-4 focus:ring-rose-500/20`}
                   placeholder="Enter your password"
@@ -218,13 +225,6 @@ export default function AdminLogin() {
             </button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-sm">
-              <AlertCircle className="w-4 h-4" />
-              Demo: admin@cakeswow.com / admin123
-            </div>
-          </div>
 
           {/* Footer */}
           <div className="text-center pt-4 border-t border-gray-200">

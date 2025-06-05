@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import Loading, { Spinner, PageLoading } from "@/components/Loading";
+import AdminNavbar from "@/components/AdminNavbar";
 import axios from "axios";
 import {
   BarChart3,
@@ -106,18 +107,20 @@ const QuickAction = ({
 );
 
 export default function AdminDashboard() {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
+  
   const router = useRouter();
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(
     null
   );
   const [statsLoading, setStatsLoading] = useState(true);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/admin-login");
-    }
-  }, [user, loading, router]);
+  // useEffect(() => {
+  //   if (!localStorage.getItem("admin_token")) {
+  //     router.push("/admin-login");
+  //   }
+  // }, [ router]);
+
   useEffect(() => {
     const fetchDashboardStats = async () => {
       try {
@@ -161,10 +164,10 @@ export default function AdminDashboard() {
       }
     };
 
-    if (user) {
+
       fetchDashboardStats();
-    }
-  }, [user]);
+  
+  }, []);
 
   if (loading) {
     return (
@@ -174,36 +177,14 @@ export default function AdminDashboard() {
           <p className="text-gray-600">Loading admin dashboard...</p>
         </div>
       </div>
-    );
-  }
+    );  }
 
   // Note: In a real app, you'd check if user has admin role
   // For demo purposes, we'll show the admin panel to any authenticated user
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-orange-600">Bakingo</h1>
-              <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded-full font-medium">
-                Admin
-              </span>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-gray-700">{user?.phoneNumber}</span>
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="text-sm text-gray-600 hover:text-gray-800 px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                User Dashboard
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Navbar */}
+      <AdminNavbar />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -299,18 +280,12 @@ export default function AdminDashboard() {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <QuickAction
-              title="Manage Products"
+              title="Manage Products, Categories and Add-ons"
               description="Add, edit, or remove products from your catalog"
               icon={Package}
               onClick={() => router.push("/admin/products")}
             />
-            <QuickAction
-              title="Manage Categories"
-              description="Organize and manage product categories"
-              icon={FolderOpen}
-              onClick={() => router.push("/admin/categories")}
-              color="purple"
-            />
+        
             <QuickAction
               title="View Orders"
               description="Track and manage customer orders"
@@ -467,10 +442,9 @@ export default function AdminDashboard() {
                 >
                   Add your first category
                 </button>
-              </div>
-            )}
+              </div>            )}
           </div>
-        </div>{" "}
+        </div>
       </main>
     </div>
   );

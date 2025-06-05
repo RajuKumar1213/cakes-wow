@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
-import { useCategories } from "@/hooks/useCategories";
+import { useCategories } from "@/contexts/CategoriesContext";
 import {
   Search,
   MapPin,
@@ -48,7 +48,6 @@ const Header = () => {
     }
   };
 
-  console.log(showLogin)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
