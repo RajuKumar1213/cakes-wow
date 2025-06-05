@@ -4,11 +4,8 @@ import {
   AlertCircle,
   ArrowRight,
   CheckCircle2,
-  Cross,
-  Heart,
   MessageSquare,
   Phone,
-  Sparkles,
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -16,9 +13,10 @@ import { useState } from "react";
 
 interface LoginProps {
   setShowLogin: (show: boolean) => void;
+  isVisible?: boolean;
 }
 
-export default function Login({ setShowLogin }: LoginProps) {
+export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
   const { login } = useAuth();
   const [step, setStep] = useState(1); // 1: phone, 2: otp
   const [phoneNumber, setPhoneNumber] = useState("+91 ");
@@ -27,9 +25,9 @@ export default function Login({ setShowLogin }: LoginProps) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const router = useRouter();
+
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Ensure +91 prefix is always present
     if (value.startsWith("+91 ")) {
       setPhoneNumber(value);
     } else if (value.length < 4) {
@@ -37,8 +35,7 @@ export default function Login({ setShowLogin }: LoginProps) {
     }
   };
 
-  const handlePhoneSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handlePhoneSubmit = async () => {
     setLoading(true);
     setError("");
     setSuccess("");
@@ -53,7 +50,7 @@ export default function Login({ setShowLogin }: LoginProps) {
       });
 
       if (response.status === 200) {
-        setSuccess("OTP sent successfully! Check your phone.");
+        setSuccess("OTP sent successfully!");
         setStep(2);
       } else {
         setError(response.data.error || "Failed to send OTP");
@@ -64,8 +61,8 @@ export default function Login({ setShowLogin }: LoginProps) {
       setLoading(false);
     }
   };
-  const handleOtpSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+
+  const handleOtpSubmit = async () => {
     setLoading(true);
     setError("");
 
@@ -76,10 +73,8 @@ export default function Login({ setShowLogin }: LoginProps) {
       });
 
       if (response.status === 200) {
-        setSuccess("Login successful! Redirecting...");
-        // Update auth context with user data
+        setSuccess("Login successful!");
         login(response.data.user);
-        // Redirect to dashboard or home page
         router.push("/");
       } else {
         setError(response.data.error || "Invalid OTP");
@@ -119,152 +114,116 @@ export default function Login({ setShowLogin }: LoginProps) {
       setLoading(false);
     }
   };
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="w-full max-w-sm">
-        {/* Main Card */}
-        <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
-          {/* Header with Gradient */}
-          <div className="bg-gradient-to-r from-orange-500 via-pink-500 to-orange-600 p-5 text-center relative">
-            {" "}
-            <button
-              onClick={() => setShowLogin(false)}
-              className="absolute cursor-pointer top-3 right-3 p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-            >
-              <X className="w-4 h-4 text-white" />
-            </button>
-            <div className="relative z-10">
-              <h1 className="text-xl font-bold text-white mb-1">
-                {step === 1 ? "Welcome! 🍰" : "Verify Phone 📱"}
-              </h1>
-              <p className="text-white/90 text-sm">
-                {step === 1
-                  ? "Enter your phone to continue"
-                  : `Code sent to ${phoneNumber}`}
-              </p>
-            </div>
-          </div>
 
-          {/* Content Area */}
-          <div className="p-5">
-            {" "}
-            {/* Alert Messages */}
-            {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
-                <p className="text-red-700 text-sm">{error}</p>
+  return (
+    <div className={`fixed inset-0 z-50 ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}>
+      {/* Modal Backdrop - only visible on larger screens */}
+      <div className="hidden md:block absolute inset-0 bg-black/60" onClick={() => setShowLogin(false)}></div>
+
+      {/* Modal Content */}
+      <div className={`w-full h-full md:absolute md:top-1/2 md:left-1/2 md:transform md:-translate-x-1/2 md:-translate-y-1/2 md:w-md md:h-auto bg-white md:bg-transparent md:rounded-lg md:overflow-hidden flex flex-col ${isVisible ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}`}>
+
+        {/* Decorative Background - only on mobile */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none md:hidden">
+          <div className="absolute -top-24 -left-24 w-96 h-96 bg-gradient-to-br from-orange-200/40 via-pink-200/30 to-purple-200/40 rounded-full blur-3xl opacity-50"></div>
+          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-gradient-to-br from-green-200/40 via-blue-200/30 to-indigo-200/40 rounded-full blur-3xl opacity-50"></div>
+        </div>
+
+        {/* Close Button */}
+        <button
+          onClick={() => setShowLogin(false)}
+          className="absolute top-3 right-3 md:top-2 md:right-2 p-2 rounded-full bg-white shadow-md hover:shadow-lg border hover:bg-gray-50 z-10"
+        >
+          <X className="w-4 h-4 text-gray-600" />
+        </button>        {/* Content */}
+        <div className="flex-1 flex flex-col px-6 py-8 md:px-4 md:py-6 relative md:bg-white md:shadow-lg md:rounded-lg">
+          {/* Header - Top section */}
+          <div className="text-center pt-8 md:pt-4 pb-8 md:pb-6">
+            <div className="w-20 h-20 md:w-16 md:h-16 mx-auto bg-gradient-to-br from-orange-400 via-pink-500 to-purple-500 rounded-full flex items-center justify-center shadow-xl mb-4 md:mb-3 border-4 border-white/20">
+              <span className="text-3xl md:text-2xl">🍰</span>
+            </div>
+            <h1 className="text-3xl md:text-xl font-bold text-gray-900 mb-3 md:mb-2 tracking-tight">
+              {step === 1 ? "Welcome Back!" : "Verify Phone"}
+            </h1>
+            <p className="text-gray-600 text-lg md:text-sm font-medium">
+              {step === 1
+                ? "Enter your phone to continue"
+                : `Code sent to ${phoneNumber}`}
+            </p>
+          </div>          {/* Alert Messages */}
+          {error && (
+            <div className="mb-6 md:mb-4 p-4 md:p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 shadow-sm">
+              <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+              <p className="text-red-700 text-sm font-medium">{error}</p>
+            </div>
+          )}
+          {success && (
+            <div className="mb-6 md:mb-4 p-4 md:p-3 bg-green-50 border border-green-200 rounded-xl flex items-center gap-3 shadow-sm">
+              <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+              <p className="text-green-700 text-sm font-medium">{success}</p>
+            </div>
+          )}
+
+          {/* Main Input Section - Centered in top portion */}
+          <div className="flex-1 flex flex-col  max-w-sm mx-auto w-full">
+            {/* Step 1: Phone Number Input */}
+            {step === 1 && (
+              <div className="space-y-6 md:space-y-4">
+                <div className="text-center">
+                  <label htmlFor="phone" className="text-gray-700 text-base md:text-sm font-semibold mb-4 md:mb-3 flex items-center justify-center gap-2">
+                    <div className="p-2 bg-gradient-to-br from-orange-100 to-pink-100 rounded-lg">
+                      <Phone className="w-5 h-5 text-orange-600" />
+                    </div>
+                    Phone Number
+                  </label>
+                  <input
+                    id="phone"
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={handlePhoneChange}
+                    placeholder="+91 98765 43210"
+                    className="w-full px-6 py-4 md:px-4 md:py-3 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 text-lg md:text-base  font-medium focus:outline-none focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 shadow-sm hover:shadow-md transition-all duration-300"
+                    required
+                  />
+                  <p className="mt-3 md:mt-2 text-gray-500 text-sm text-center font-medium">
+                    📱 We'll send you a verification code
+                  </p>
+                </div>
               </div>
             )}
-            {success && (
-              <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
-                <p className="text-green-700 text-sm">{success}</p>
-              </div>
-            )}{" "}
-            {/* Step 1: Phone Number */}
-            {step === 1 && (
-              <form onSubmit={handlePhoneSubmit} className="space-y-4">
-                <div className="group">
-                  <label
-                    htmlFor="phone"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-orange-500" />
-                      Phone Number *
-                    </div>
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="phone"
-                      type="tel"
-                      value={phoneNumber}
-                      onChange={handlePhoneChange}
-                      placeholder="+91 98765 43210"
-                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-orange-400 bg-white outline-none transition-all duration-300 hover:border-orange-300 font-medium"
-                      required
-                    />
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  </div>
-                  <p className="mt-1 text-xs text-gray-500 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-yellow-500" />
-                    We'll send you a verification code
-                  </p>
-                </div>
 
-                <button
-                  type="submit"
-                  disabled={loading || phoneNumber.length < 8}
-                  className="w-full bg-gradient-to-r from-orange-500 to-pink-500 text-white py-3 px-4 rounded-lg font-semibold hover:from-orange-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Sending...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Send OTP</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-              </form>
-            )}{" "}
-            {/* Step 2: OTP Verification */}
+            {/* Step 2: OTP Input */}
             {step === 2 && (
-              <form onSubmit={handleOtpSubmit} className="space-y-4">
-                <div className="group">
-                  <label
-                    htmlFor="otp"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="w-4 h-4 text-orange-500" />
-                      Verification Code *
+              <div className="space-y-6 md:space-y-4">
+                <div className="text-center">
+                  <label htmlFor="otp" className="text-gray-700 text-base md:text-sm font-semibold mb-4 md:mb-3 flex items-center justify-center gap-2">
+                    <div className="p-2 bg-gradient-to-br from-green-100 to-blue-100 rounded-lg">
+                      <MessageSquare className="w-5 h-5 text-green-600" />
                     </div>
+                    Verification Code
                   </label>
-                  <div className="relative">
-                    <input
-                      id="otp"
-                      type="text"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      placeholder="• • • • • •"
-                      maxLength={6}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-orange-400 bg-white outline-none transition-all duration-300 hover:border-orange-300 text-center text-lg font-mono tracking-widest"
-                      required
-                    />
-                  </div>
-                  <p className="mt-1 text-xs text-gray-500 text-center">
-                    Enter the 6-digit code
+                  <input
+                    id="otp"
+                    type="text"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="• • • • • •"
+                    maxLength={6}
+                    className="w-full px-6 py-4 md:px-4 md:py-3 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 text-2xl md:text-xl text-center font-mono tracking-[0.3em] focus:outline-none focus:ring-4 focus:ring-green-500/20 focus:border-green-500 shadow-sm hover:shadow-md transition-all duration-300"
+                    required
+                  />
+                  <p className="mt-3 md:mt-2 text-gray-500 text-sm text-center font-medium">
+                    📨 Enter the 6-digit code
                   </p>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={loading || otp.length !== 6}
-                  className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 px-4 rounded-lg font-semibold hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Verifying...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Verify & Login</span>
-                      <CheckCircle2 className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-
-                {/* Resend and Back options */}
-                <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+                {/* Back and Resend options */}
+                <div className="flex items-center justify-between pt-2">
                   <button
                     type="button"
                     onClick={handleBackToPhone}
-                    className="text-xs text-gray-600 hover:text-orange-600 transition-colors"
+                    className="text-gray-600 hover:text-gray-900 flex items-center gap-2 text-sm font-medium hover:bg-gray-100 px-3 py-2 rounded-lg transition-all duration-200"
                   >
                     ← Change Phone
                   </button>
@@ -272,26 +231,63 @@ export default function Login({ setShowLogin }: LoginProps) {
                     type="button"
                     onClick={handleResendOtp}
                     disabled={loading}
-                    className="text-xs text-orange-600 hover:text-orange-700 font-medium transition-colors disabled:opacity-50"
+                    className="text-orange-600 hover:text-orange-700 font-semibold text-sm disabled:opacity-50 hover:bg-orange-50 px-3 py-2 rounded-lg transition-all duration-200"
                   >
                     Resend OTP
                   </button>
                 </div>
-              </form>
-            )}{" "}
+              </div>
+            )}
           </div>
 
-          {/* Footer */}
-          <div className="px-5 py-3 bg-gray-50 border-t border-gray-100">
-            <p className="text-xs text-gray-500 text-center">
+          {/* Button Section - Bottom */}
+          <div className="pt-8 md:pt-6 pb-4 md:pb-2">
+            <div className="max-w-sm mx-auto w-full">
+              {step === 1 ? (
+                <button
+                  onClick={handlePhoneSubmit}
+                  disabled={loading || phoneNumber.length < 8}
+                  className="w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white py-4 md:py-3 px-6 rounded-xl text-lg md:text-base font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Sending...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Send OTP</span>
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={handleOtpSubmit}
+                  disabled={loading || otp.length !== 6}
+                  className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white py-4 md:py-3 px-6 rounded-xl text-lg md:text-base font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Verifying...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Verify & Login</span>
+                      <CheckCircle2 className="w-5 h-5" />
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>          {/* Footer */}
+          <div className="text-center pb-2">
+            <p className="text-gray-500 text-xs font-medium">
               🍰 By continuing, you agree to our{" "}
-              <span className="text-orange-600 hover:underline cursor-pointer">
-                Terms
-              </span>{" "}
+              <span className="text-gray-700 hover:text-orange-600 cursor-pointer font-semibold transition-colors duration-200">Terms</span>{" "}
               and{" "}
-              <span className="text-orange-600 hover:underline cursor-pointer">
-                Privacy Policy
-              </span>
+              <span className="text-gray-700 hover:text-orange-600 cursor-pointer font-semibold transition-colors duration-200">Privacy Policy</span>
             </p>
           </div>
         </div>
@@ -299,3 +295,5 @@ export default function Login({ setShowLogin }: LoginProps) {
     </div>
   );
 }
+
+

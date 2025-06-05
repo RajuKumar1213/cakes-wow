@@ -530,7 +530,7 @@ const Header = () => {
                 </>
               ) : (
                 <button
-                  onClick={() => router.push("/login")}
+                  onClick={() => setShowLogin(true)}
                   className="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
                 >
                   <User className="w-5 h-5 text-gray-600" />
@@ -593,7 +593,7 @@ const Header = () => {
         </div>
       )}
 
-      {showLogin && <Login setShowLogin={setShowLogin} />}
+      {showLogin && <Login setShowLogin={setShowLogin} isVisible={showLogin} />}
     </>
   );
 };
