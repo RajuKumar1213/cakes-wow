@@ -7,7 +7,7 @@ import { z } from "zod";
 import { useToast } from "../contexts/ToastContext";
 import axios from "axios";
 
-// Base schema without images
+// Base schema without images for form validation
 const baseProductSchema = z.object({
   name: z.string().min(1, "Product name is required").max(100, "Name too long"),
   description: z.string().min(10, "Description must be at least 10 characters"),
@@ -49,17 +49,8 @@ const baseProductSchema = z.object({
   metaTitle: z.string().optional(),
   metaDescription: z.string().optional(),
   sortOrder: z.number().min(0).optional(),
-  images: z.array(z.any()).optional(),
+  // Remove images from form schema - we'll handle them separately
 });
-
-// Form validation schema with conditional image validation
-const createProductSchema = (isEditing: boolean, hasExistingImages: boolean) => {
-  return baseProductSchema.extend({
-    images: isEditing && hasExistingImages 
-      ? z.array(z.any()).optional() 
-      : z.array(z.any()).min(1, "At least one image is required").optional(),
-  });
-};
 
 type ProductFormData = z.infer<typeof baseProductSchema>;
 
@@ -91,12 +82,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");  // Determine if editing and has existing images
   const isEditing = !!product;
-  const hasExistingImages = !!(product?.imageUrls && product.imageUrls.length > 0);
-  
-  // Create schema dynamically but use a base schema for form initialization
-  const productSchema = useMemo(() => {
-    return createProductSchema(isEditing, hasExistingImages);
-  }, [isEditing, hasExistingImages]);  const {
+  const hasExistingImages = !!(product?.imageUrls && product.imageUrls.length > 0); const {
     register,
     handleSubmit,
     control,
@@ -105,29 +91,38 @@ const ProductForm: React.FC<ProductFormProps> = ({
     trigger,
     getValues,
     formState: { errors, isValid },
-    reset,  } = useForm<ProductFormData>({
-    resolver: zodResolver(baseProductSchema),
-    mode: "onChange",
-    defaultValues: {      isAvailable: true,
-      isBestseller: false,
-      isFeatured: false,
-      stockQuantity: 100,
-      minimumOrderQuantity: 1,
-      sortOrder: 0,
-      categories: [],
-      tags: [],
-      weightOptions: [{ weight: "", price: 0, discountedPrice: 0 }],
-      ingredients: [],
-      allergens: [],
-      nutritionalInfo: {
-        calories: 0,
-        protein: "",
-        carbs: "",
-        fat: "",
+    reset, } = useForm<ProductFormData>({
+      resolver: zodResolver(baseProductSchema),
+      mode: "onChange",
+      defaultValues: {
+        name: "",
+        description: "",
+        shortDescription: "",
+        price: 0,
+        discountedPrice: 0,
+        isAvailable: true,
+        isBestseller: false,
+        isFeatured: false,
+        stockQuantity: 100,
+        minimumOrderQuantity: 1,
+        sortOrder: 0,
+        categories: [],
+        tags: [],
+        weightOptions: [{ weight: "", price: 0, discountedPrice: 0 }],
+        ingredients: [],
+        allergens: [],
+        preparationTime: "",
+        nutritionalInfo: {
+          calories: 0,
+          protein: "",
+          carbs: "",
+          fat: "",
+        },
+        metaTitle: "",
+        metaDescription: "",
+        // Remove images from form default values since we handle them separately
       },
-      images: [],
-    },
-  });
+    });
   useEffect(() => {
     if (product) {
       // Set form values
@@ -146,7 +141,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       setValue(
         "weightOptions",
         product.weightOptions || [{ weight: "", price: 0, discountedPrice: 0 }]
-      );      setValue(
+      ); setValue(
         "isAvailable",
         product.isAvailable !== undefined ? product.isAvailable : true
       );
@@ -185,48 +180,125 @@ const ProductForm: React.FC<ProductFormProps> = ({
         // so we'll handle this case differently in form submission
       }
     }
-  }, [product, setValue]);  const onSubmit = async (data: ProductFormData) => {
-    console.log("=== ONSUBMIT FUNCTION CALLED ===");
-    console.log("Form submitted with data:", data);
-    console.log("Form validation errors:", errors);
-    console.log("Is editing:", isEditing);
-    console.log("Has existing images:", hasExistingImages);
-    console.log("Image files:", imageFiles);
-    console.log("Image previews:", imagePreviews);
-    
-    // Manual validation for images
-    const currentSchema = createProductSchema(isEditing, hasExistingImages);
+  }, [product, setValue]); const onSubmit = async (data: ProductFormData) => {
     try {
-      await currentSchema.parseAsync(data);
-      console.log("Schema validation passed!");
-    } catch (error) {
-      console.log("Schema validation failed:", error);
-      setIsSubmitting(false);
-      return;
-    }
-    
-    setIsSubmitting(true);
-    try {
-      const formData = new FormData(); // Add basic fields
-      formData.append("name", data.name);
-      formData.append("description", data.description);
-      if (data.shortDescription)
-        formData.append("shortDescription", data.shortDescription);
-      if (data.price) formData.append("price", data.price.toString());
-      if (data.discountedPrice)
-        formData.append("discountedPrice", data.discountedPrice.toString());
+      console.log("=== ONSUBMIT FUNCTION CALLED ===");
 
-      // Add array fields - send each item separately for backend to use getAll()
-      data.categories.forEach((categoryId) => {
+      // First, create a safe data object by extracting only the fields we need
+      // This prevents any React Hook Form internal properties from causing circular references
+      const safeData = {
+        name: data.name || "",
+        description: data.description || "",
+        shortDescription: data.shortDescription || "",
+        price: data.price || 0,
+        discountedPrice: data.discountedPrice || 0,
+        categories: Array.isArray(data.categories) ? [...data.categories] : [],
+        tags: Array.isArray(data.tags) ? [...data.tags] : [],
+        weightOptions: Array.isArray(data.weightOptions) ? data.weightOptions.map(opt => ({
+          weight: opt.weight || "",
+          price: opt.price || 0,
+          discountedPrice: opt.discountedPrice || 0
+        })) : [],
+        isAvailable: Boolean(data.isAvailable),
+        isBestseller: Boolean(data.isBestseller),
+        isFeatured: Boolean(data.isFeatured),
+        stockQuantity: data.stockQuantity || 0,
+        minimumOrderQuantity: data.minimumOrderQuantity || 1,
+        preparationTime: data.preparationTime || "",
+        sortOrder: data.sortOrder || 0,
+        ingredients: Array.isArray(data.ingredients) ? [...data.ingredients] : [],
+        allergens: Array.isArray(data.allergens) ? [...data.allergens] : [],
+        nutritionalInfo: data.nutritionalInfo ? {
+          calories: data.nutritionalInfo.calories || 0,
+          protein: data.nutritionalInfo.protein || "",
+          carbs: data.nutritionalInfo.carbs || "",
+          fat: data.nutritionalInfo.fat || ""
+        } : {},
+        metaTitle: data.metaTitle || "",
+        metaDescription: data.metaDescription || "",
+        imageFilesCount: imageFiles.length,
+        imagePreviewsCount: imagePreviews.length
+      };
+      // Now safely serialize the cleaned data
+      let cleanData;
+      try {
+        cleanData = JSON.parse(JSON.stringify(safeData));
+        console.log("✅ Data serialization successful");
+      } catch (serializationError) {
+        console.error("❌ Serialization failed, using fallback approach");
+        // Fallback: create clean data manually without JSON.parse/stringify
+        cleanData = {
+          name: String(safeData.name),
+          description: String(safeData.description),
+          shortDescription: String(safeData.shortDescription),
+          price: Number(safeData.price),
+          discountedPrice: Number(safeData.discountedPrice),
+          categories: [...safeData.categories],
+          tags: [...safeData.tags],
+          weightOptions: safeData.weightOptions.map(opt => ({
+            weight: String(opt.weight),
+            price: Number(opt.price),
+            discountedPrice: Number(opt.discountedPrice)
+          })),
+          isAvailable: Boolean(safeData.isAvailable),
+          isBestseller: Boolean(safeData.isBestseller),
+          isFeatured: Boolean(safeData.isFeatured),
+          stockQuantity: Number(safeData.stockQuantity),
+          minimumOrderQuantity: Number(safeData.minimumOrderQuantity),
+          preparationTime: String(safeData.preparationTime),
+          sortOrder: Number(safeData.sortOrder),
+          ingredients: [...safeData.ingredients],
+          allergens: [...safeData.allergens],
+          nutritionalInfo: {
+            calories: Number(safeData.nutritionalInfo.calories),
+            protein: String(safeData.nutritionalInfo.protein),
+            carbs: String(safeData.nutritionalInfo.carbs),
+            fat: String(safeData.nutritionalInfo.fat)
+          },
+          metaTitle: String(safeData.metaTitle),
+          metaDescription: String(safeData.metaDescription),
+          imageFilesCount: Number(safeData.imageFilesCount),
+          imagePreviewsCount: Number(safeData.imagePreviewsCount)
+        };
+      }
+      console.log("Form submitted with clean data:", cleanData);
+      console.log("Form validation errors count:", Object.keys(errors).length);
+      console.log("Is editing:", isEditing);
+      console.log("Has existing images:", hasExistingImages);
+      console.log("Image files count:", imageFiles.length);
+      console.log("Image previews count:", imagePreviews.length);
+
+      // Simple image validation without schema to avoid any circular reference issues
+      if (!isEditing || !hasExistingImages) {
+        // For new products or products without existing images, require at least one image
+        if (imageFiles.length === 0) {
+          showError("Images Required", "Please upload at least one image");
+          return;
+        }
+      }
+      console.log("Image validation passed!");
+
+      setIsSubmitting(true);
+      const formData = new FormData();
+
+      // Add basic fields using cleanData to avoid any circular references
+      formData.append("name", cleanData.name);
+      formData.append("description", cleanData.description);
+      if (cleanData.shortDescription)
+        formData.append("shortDescription", cleanData.shortDescription);
+      if (cleanData.price) formData.append("price", cleanData.price.toString());
+      if (cleanData.discountedPrice)
+        formData.append("discountedPrice", cleanData.discountedPrice.toString());      // Add array fields - send each item separately for backend to use getAll()
+      cleanData.categories.forEach((categoryId: string) => {
         formData.append("categories", categoryId);
       });
 
-      (data.tags || []).forEach((tag) => {
+      cleanData.tags.forEach((tag: string) => {
         formData.append("tags", tag);
       });
 
       // Send weight options as indexed fields
-      data.weightOptions.forEach((option, index) => {
+      cleanData.weightOptions.forEach((option: any, index: number) => {
         formData.append(`weightOptions[${index}][weight]`, option.weight);
         formData.append(
           `weightOptions[${index}][price]`,
@@ -240,49 +312,55 @@ const ProductForm: React.FC<ProductFormProps> = ({
         }
       });
 
-      data.ingredients.forEach((ingredient) => {
+      cleanData.ingredients.forEach((ingredient: string) => {
         formData.append("ingredients", ingredient);
       });
 
-      (data.allergens || []).forEach((allergen) => {
+      cleanData.allergens.forEach((allergen: string) => {
         formData.append("allergens", allergen);
-      });      // Add boolean fields
-      formData.append("isAvailable", data.isAvailable.toString());
-      formData.append("isBestseller", data.isBestseller.toString());
-      formData.append("isFeatured", data.isFeatured.toString());
+      });// Add boolean fields
+      formData.append("isAvailable", cleanData.isAvailable.toString());
+      formData.append("isBestseller", cleanData.isBestseller.toString());
+      formData.append("isFeatured", cleanData.isFeatured.toString());
 
       // Add numeric fields
-      formData.append("stockQuantity", data.stockQuantity.toString());
+      formData.append("stockQuantity", cleanData.stockQuantity.toString());
       formData.append(
         "minimumOrderQuantity",
-        data.minimumOrderQuantity.toString()
+        cleanData.minimumOrderQuantity.toString()
       );
-      formData.append("preparationTime", data.preparationTime);
-      if (data.sortOrder !== undefined)
-        formData.append("sortOrder", data.sortOrder.toString());
+      formData.append("preparationTime", cleanData.preparationTime);
+      if (cleanData.sortOrder !== undefined)
+        formData.append("sortOrder", cleanData.sortOrder.toString());
 
       // Add nutritional info if provided
-      if (data.nutritionalInfo) {
+      if (cleanData.nutritionalInfo) {
         formData.append(
           "nutritionalInfo",
-          JSON.stringify(data.nutritionalInfo)
+          JSON.stringify(cleanData.nutritionalInfo)
         );
       }
 
       // Add SEO fields
-      if (data.metaTitle) formData.append("metaTitle", data.metaTitle);
-      if (data.metaDescription)
-        formData.append("metaDescription", data.metaDescription); // Handle images - both new uploads and existing URLs
+      if (cleanData.metaTitle) formData.append("metaTitle", cleanData.metaTitle);
+      if (cleanData.metaDescription)
+        formData.append("metaDescription", cleanData.metaDescription);// Handle images - both new uploads and existing URLs
       if (imageFiles.length > 0) {
-        imageFiles.forEach((file) => {
-          formData.append("images", file);
+        imageFiles.forEach((file, index) => {
+          // Ensure we're only appending actual File objects
+          if (file instanceof File) {
+            formData.append("images", file);
+          }
         });
       }
 
       // For existing products, always include existing image URLs
-      if (product && product.imageUrls && product.imageUrls.length > 0) {
-        product.imageUrls.forEach((url: string | Blob) => {
-          formData.append("imageUrls", url);
+      if (product && product.imageUrls && Array.isArray(product.imageUrls) && product.imageUrls.length > 0) {
+        product.imageUrls.forEach((url: string) => {
+          // Ensure we're only appending strings, not objects
+          if (typeof url === 'string') {
+            formData.append("imageUrls", url);
+          }
         });
       }
 
@@ -324,13 +402,25 @@ const ProductForm: React.FC<ProductFormProps> = ({
         }
       }
     } catch (error) {
-      console.error("Error submitting product:", error);
+      // Enhanced error logging to prevent circular reference issues
+      console.error("Error submitting product - Type:", typeof error);
+
+      if (error instanceof Error) {
+        console.error("Error name:", error.name);
+        console.error("Error message:", error.message);
+        console.error("Error stack (first 500 chars):", error.stack?.substring(0, 500));
+      } else {
+        console.error("Unknown error type:", String(error));
+      }
 
       if (axios.isAxiosError(error)) {
-        showError(
-          "Error",
-          error.response?.data?.error || "Failed to submit form"
-        );
+        const errorMessage = error.response?.data?.error ||
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to submit form";
+        showError("Error", errorMessage);
+      } else if (error instanceof Error) {
+        showError("Error", error.message);
       } else {
         showError("Error", "Failed to submit form");
       }
@@ -388,23 +478,19 @@ const ProductForm: React.FC<ProductFormProps> = ({
     }
 
     const newFiles = [...imageFiles, ...files];
-    setImageFiles(newFiles);
-
-    // Create previews
+    setImageFiles(newFiles);    // Create previews
     const newPreviews = files.map((file) => URL.createObjectURL(file));
     setImagePreviews((prev) => [...prev, ...newPreviews]);
 
-    // Update form value
-    setValue("images", newFiles);
-  };
-
-  const removeImage = (index: number) => {
+    // Note: We don't set form values for images since we handle them separately
+    // This prevents any circular reference issues with File objects
+  }; const removeImage = (index: number) => {
     const newFiles = imageFiles.filter((_, i) => i !== index);
     const newPreviews = imagePreviews.filter((_, i) => i !== index);
 
     setImageFiles(newFiles);
     setImagePreviews(newPreviews);
-    setValue("images", newFiles);
+    // Note: We don't set form values for images since we handle them separately
   };
 
   const addWeightOption = () => {
@@ -941,16 +1027,10 @@ const ProductForm: React.FC<ProductFormProps> = ({
                         </svg>
                         <p className="mt-2 text-sm text-gray-600">
                           Click to upload images or drag and drop
-                        </p>
-                        <p className="text-xs text-gray-500">
+                        </p>                        <p className="text-xs text-gray-500">
                           PNG, JPG up to 5 images
                         </p>
                       </button>
-                      {errors.images && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors.images.message}
-                        </p>
-                      )}
                     </div>
 
                     {imagePreviews.length > 0 && (
@@ -1095,11 +1175,10 @@ const ProductForm: React.FC<ProductFormProps> = ({
                                 className="sr-only"
                               />
                               <div
-                                className={`w-6 h-6 rounded-lg border-2 transition-all duration-200 ${
-                                  field.value
-                                    ? "bg-gradient-to-r from-green-400 to-green-500 border-green-500"
-                                    : "border-gray-300 group-hover:border-green-400"
-                                }`}
+                                className={`w-6 h-6 rounded-lg border-2 transition-all duration-200 ${field.value
+                                  ? "bg-gradient-to-r from-green-400 to-green-500 border-green-500"
+                                  : "border-gray-300 group-hover:border-green-400"
+                                  }`}
                               >
                                 {field.value && (
                                   <svg
@@ -1136,11 +1215,10 @@ const ProductForm: React.FC<ProductFormProps> = ({
                                 className="sr-only"
                               />
                               <div
-                                className={`w-6 h-6 rounded-lg border-2 transition-all duration-200 ${
-                                  field.value
-                                    ? "bg-gradient-to-r from-purple-400 to-pink-500 border-pink-500"
-                                    : "border-gray-300 group-hover:border-pink-400"
-                                }`}
+                                className={`w-6 h-6 rounded-lg border-2 transition-all duration-200 ${field.value
+                                  ? "bg-gradient-to-r from-purple-400 to-pink-500 border-pink-500"
+                                  : "border-gray-300 group-hover:border-pink-400"
+                                  }`}
                               >
                                 {field.value && (
                                   <svg
@@ -1177,11 +1255,10 @@ const ProductForm: React.FC<ProductFormProps> = ({
                                 className="sr-only"
                               />
                               <div
-                                className={`w-6 h-6 rounded-lg border-2 transition-all duration-200 ${
-                                  field.value
-                                    ? "bg-gradient-to-r from-blue-400 to-indigo-500 border-indigo-500"
-                                    : "border-gray-300 group-hover:border-indigo-400"
-                                }`}
+                                className={`w-6 h-6 rounded-lg border-2 transition-all duration-200 ${field.value
+                                  ? "bg-gradient-to-r from-blue-400 to-indigo-500 border-indigo-500"
+                                  : "border-gray-300 group-hover:border-indigo-400"
+                                  }`}
                               >
                                 {field.value && (
                                   <svg
@@ -1447,22 +1524,45 @@ const ProductForm: React.FC<ProductFormProps> = ({
               <div className="text-xs text-yellow-700 space-y-1">
                 <p>Form Valid: {isValid ? 'Yes' : 'No'}</p>
                 <p>Has Errors: {Object.keys(errors).length > 0 ? 'Yes' : 'No'}</p>
-                <p>Errors: {JSON.stringify(errors, null, 2)}</p>
+                {/* <p>Errors: {JSON.stringify(errors, null, 2)}</p> */}
                 <p>Is Editing: {isEditing ? 'Yes' : 'No'}</p>
                 <p>Has Existing Images: {hasExistingImages ? 'Yes' : 'No'}</p>
                 <p>Image Files Count: {imageFiles.length}</p>
                 <p>Image Previews Count: {imagePreviews.length}</p>
               </div>
               <button
-                type="button"
-                onClick={() => {
-                  console.log("Manual debug trigger:");
-                  console.log("Form data:", getValues());
-                  console.log("Form errors:", errors);
-                  console.log("Is valid:", isValid);
-                  console.log("Is editing:", isEditing);
-                  console.log("Has existing images:", hasExistingImages);
-                  trigger(); // Manually trigger validation
+                type="button" onClick={() => {
+                  console.log("=== MANUAL DEBUG TRIGGER ===");
+                  try {
+                    const currentValues = getValues();
+                    console.log("Form data keys:", Object.keys(currentValues));
+                    console.log("Form errors keys:", Object.keys(errors));
+                    console.log("Is valid:", isValid);
+                    console.log("Is editing:", isEditing);
+                    console.log("Has existing images:", hasExistingImages);
+
+                    // Safe logging of form values
+                    const safeValues = {
+                      name: currentValues.name || "",
+                      description: currentValues.description?.substring(0, 50) + "..." || "",
+                      categoriesCount: Array.isArray(currentValues.categories) ? currentValues.categories.length : 0,
+                      tagsCount: Array.isArray(currentValues.tags) ? currentValues.tags.length : 0,
+                      weightOptionsCount: Array.isArray(currentValues.weightOptions) ? currentValues.weightOptions.length : 0,
+                      ingredientsCount: Array.isArray(currentValues.ingredients) ? currentValues.ingredients.length : 0,
+                      price: currentValues.price || 0,
+                      isAvailable: currentValues.isAvailable,
+                      stockQuantity: currentValues.stockQuantity || 0
+                    };
+                    console.log("Safe form values:", safeValues);
+
+                    trigger(); // Manually trigger validation
+                  } catch (debugError) {
+                    if (debugError instanceof Error) {
+                      console.error("Debug error:", debugError.message);
+                    } else {
+                      console.error("Debug error:", debugError);
+                    }
+                  }
                 }}
                 className="mt-2 px-4 py-2 bg-yellow-600 text-white rounded text-xs"
               >
@@ -1493,7 +1593,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 className="px-8 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
               >
                 Cancel
-              </button>              <button
+              </button>
+              <button
                 type="submit"
                 disabled={isSubmitting}
                 onClick={async (e) => {
@@ -1505,12 +1606,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
                   console.log("Has existing images:", hasExistingImages);
                   console.log("Image files count:", imageFiles.length);
                   console.log("Image previews count:", imagePreviews.length);
-                  
+
                   // Force validation
                   const isFormValid = await trigger();
                   console.log("Manual validation result:", isFormValid);
                   console.log("Errors after validation:", errors);
-                  
+
                   if (!isFormValid) {
                     console.log("Form is invalid, preventing submission");
                     e.preventDefault();

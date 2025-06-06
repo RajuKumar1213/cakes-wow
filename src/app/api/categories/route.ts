@@ -39,8 +39,10 @@ interface ApiResponse<T> {
 
 export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse<CategoryDocument[] | GroupedCategories>>> {
   try {
-    await dbConnect();    const { searchParams } = new URL(request.url);
-    const format = searchParams.get("format");    const categories = await Category.find({ isActive: true })
+    await dbConnect();    
+    const { searchParams } = new URL(request.url);
+    const format = searchParams.get("format");
+    const categories = await Category.find({ isActive: true })
       .sort({ sortOrder: 1, createdAt: 1, name: 1 })
       .lean();
 

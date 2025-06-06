@@ -74,7 +74,7 @@ const ProductPage = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [selectedWeight, setSelectedWeight] = useState<string>("");  const [quantity, setQuantity] = useState(1);
+  const [selectedWeight, setSelectedWeight] = useState<string>(""); const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const [selectedAddOns, setSelectedAddOns] = useState<AddOn[]>([]);
   const [showAddOnModal, setShowAddOnModal] = useState(false);
@@ -146,7 +146,7 @@ const ProductPage = () => {
       return weightOption?.discountedPrice ? weightOption.price : null;
     }
     return product?.discountedPrice ? product.price : null;
-  };  const getDiscountPercentage = () => {
+  }; const getDiscountPercentage = () => {
     const currentPrice = getCurrentPrice();
     const originalPrice = getOriginalPrice();
 
@@ -167,7 +167,7 @@ const ProductPage = () => {
         `${quantity}x ${product.name} (${selectedWeight}) added to your cart`,
         "cart"
       );
-      
+
       // Show add-on modal after successful cart addition
       setShowAddOnModal(true);
     } catch (error) {
@@ -199,9 +199,9 @@ const ProductPage = () => {
         "heart"
       );
     }
-  };  const handleAddOnToggle = (addOnId: string, addOn: AddOn) => {
+  }; const handleAddOnToggle = (addOnId: string, addOn: AddOn) => {
     const isSelected = selectedAddOns.some(selected => selected._id === addOn._id);
-    
+
     if (isSelected) {
       setSelectedAddOns(prev => prev.filter(selected => selected._id !== addOn._id));
     } else {
@@ -227,7 +227,7 @@ const ProductPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
-        <div className="max-w-6xl mx-auto px-3 sm:px-6 py-3 sm:py-6">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
           {/* Breadcrumb skeleton */}
           <div className="mb-2 sm:mb-4">
             <div className="flex items-center space-x-1.5 animate-pulse">
@@ -239,19 +239,30 @@ const ProductPage = () => {
             </div>
           </div>
           <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-3 sm:p-6 animate-pulse">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
-              {/* Image skeleton */}
-              <div className="space-y-2 sm:space-y-3">
-                <div className="h-56 sm:h-72 lg:h-80 bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl"></div>
-                <div className="grid grid-cols-4 gap-1 sm:gap-2">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 lg:gap-8">              {/* Image skeleton */}
+              <div className="flex gap-3 lg:gap-4">
+                {/* Thumbnail skeleton - Left Side */}
+                <div className="hidden sm:flex flex-col gap-2 lg:gap-3">
                   {[...Array(4)].map((_, i) => (
                     <div
                       key={i}
-                      className="h-10 sm:h-14 lg:h-16 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg"
+                      className="w-16 h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg"
                     ></div>
                   ))}
                 </div>
-              </div>
+                {/* Main image skeleton */}
+                <div className="flex-1">
+                  <div className="aspect-square bg-gradient-to-br from-gray-200 to-gray-300 rounded-xl"></div>
+                  {/* Mobile thumbnail skeleton */}
+                  <div className="grid grid-cols-4 gap-1 sm:gap-2 mt-2 sm:hidden">
+                    {[...Array(4)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="aspect-square bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg"
+                      ></div>
+                    ))}
+                  </div>
+                </div>              </div>
 
               {/* Content skeleton */}
               <div className="space-y-3 sm:space-y-4">
@@ -312,192 +323,224 @@ const ProductPage = () => {
       href: `/${product.categories[0]?.slug || "products"}`,
     },
     { label: product.name, href: `/products/${product.slug}` },
-  ];return (
+  ]; return (
     <>
-      <Header />      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
-        <div className="max-w-6xl mx-auto px-2 sm:px-3 lg:px-6 py-1 sm:py-2 lg:py-6">
+      <Header />
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
+        <div className="max-w-7xl mx-auto px-2 sm:px-3 lg:px-8 py-1 sm:py-2 lg:py-6">
           <div className="mb-1 sm:mb-2 lg:mb-4">
             <Breadcrumb items={breadcrumbItems} />
           </div>
 
           <div className="bg-white rounded-lg sm:rounded-xl shadow-lg overflow-hidden border border-gray-100">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 lg:gap-6 p-2 sm:p-3 lg:p-6">              {/* Product Images */}
-              <div className="space-y-1.5 sm:space-y-2 lg:space-y-3">
-                <div className="relative h-48 sm:h-56 lg:h-72 xl:h-80 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg sm:rounded-xl overflow-hidden group">
-                  <Image
-                    src={
-                      product.imageUrls[selectedImageIndex] ||
-                      "/placeholder-cake.jpg"
-                    }
-                    alt={product.name}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    priority={selectedImageIndex === 0}
-                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 45vw"
-                    placeholder="blur"
-                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyLDdemcxqeK/8AUyQkKUSPH/Z"
-                  />                  {getDiscountPercentage() > 0 && (
-                    <div className="absolute top-1 left-1 sm:top-2 sm:left-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg text-xs font-semibold shadow-lg">
-                      {getDiscountPercentage()}% OFF
-                    </div>
-                  )}
-                  {product.isBestseller && (
-                    <div className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-lg text-xs font-semibold shadow-lg">
-                      ⭐ Bestseller
-                    </div>
-                  )}
-                </div>                {/* Thumbnail Images */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 lg:gap-8 p-2 sm:p-3 lg:p-8">                {/* Product Images */}                <div className="flex gap-2 lg:gap-3">
+                {/* Thumbnail Images - Left Side */}
                 {product.imageUrls.length > 1 && (
-                  <div className="grid grid-cols-4 gap-1 sm:gap-1.5 lg:gap-2">
+                  <div className="hidden sm:flex flex-col gap-1.5 lg:gap-2">
                     {product.imageUrls.map((image, index) => (
                       <button
                         key={index}
                         onClick={() => setSelectedImageIndex(index)}
-                        className={`relative h-8 sm:h-10 lg:h-14 xl:h-16 rounded-md sm:rounded-lg border-2 overflow-hidden transition-all duration-300 hover:scale-105 ${
-                          selectedImageIndex === index
-                            ? "border-pink-500 shadow-md"
-                            : "border-gray-200 hover:border-gray-300"
-                        }`}
+                        className={`relative w-14 h-14 lg:w-16 lg:h-16 rounded-md border-2 overflow-hidden transition-all duration-300 hover:scale-105 ${selectedImageIndex === index
+                          ? "border-pink-500 shadow-md"
+                          : "border-gray-200 hover:border-gray-300"
+                          }`}
                       >
                         <Image
                           src={image}
                           alt={`${product.name} ${index + 1}`}
                           fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 25vw, (max-width: 1024px) 12vw, 10vw"
+                          className="object-contain p-0.5"
+                          sizes="64px"
                           loading="lazy"
                         />
                       </button>
                     ))}
                   </div>
                 )}
+                
+                {/* Main Image */}
+                <div className="flex-1">
+                  <div className="relative aspect-square w-full bg-gray-50 rounded-lg sm:rounded-xl overflow-hidden">
+                    <Image
+                      src={
+                        product.imageUrls[selectedImageIndex] ||
+                        "/placeholder-cake.jpg"
+                      }
+                      alt={product.name}
+                      fill
+                      className="object-contain p-2"
+                      priority={selectedImageIndex === 0}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 45vw"
+                      placeholder="blur"
+                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyLDdemcxqeK/8AUyQkKUSPH/Z"
+                    />
+                    {getDiscountPercentage() > 0 && (
+                      <div className="absolute top-2 left-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-2 py-1 rounded-lg text-xs font-bold shadow-lg">
+                        {getDiscountPercentage()}% OFF
+                      </div>
+                    )}
+                    {product.isBestseller && (
+                      <div className="absolute top-2 right-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-lg text-xs font-bold shadow-lg">
+                        ⭐ Bestseller
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Mobile Thumbnail Images - Below Main Image */}
+                  {product.imageUrls.length > 1 && (
+                    <div className="grid grid-cols-4 gap-1 sm:gap-1.5 mt-2 sm:hidden">
+                      {product.imageUrls.map((image, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedImageIndex(index)}
+                          className={`relative aspect-square rounded-md border-2 overflow-hidden transition-all duration-300 hover:scale-105 ${selectedImageIndex === index
+                            ? "border-pink-500 shadow-md"
+                            : "border-gray-200 hover:border-gray-300"
+                            }`}
+                        >
+                          <Image
+                            src={image}
+                            alt={`${product.name} ${index + 1}`}
+                            fill
+                            className="object-contain p-1"
+                            sizes="25vw"
+                            loading="lazy"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>              {/* Product Details */}
-              <div className="space-y-2 sm:space-y-3 lg:space-y-4">
-                <div className="space-y-1 sm:space-y-2">
-                  <h1 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 leading-tight">
+              <div className="space-y-3 lg:space-y-4">
+                <div className="space-y-2">
+                  <h1 className="text-xl lg:text-2xl font-bold text-gray-900 leading-tight">
                     {product.name}
-                  </h1><div className="flex items-center gap-2 sm:gap-3">
+                  </h1>
+                  <div className="flex items-center gap-2">
                     <div className="flex items-center">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star
                           key={star}
-                          className={`w-4 h-4 sm:w-5 sm:h-5 ${
-                            star <= product.rating
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "text-gray-300"
-                          }`}
+                          className={`w-4 h-4 ${star <= product.rating
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-300"
+                            }`}
                         />
                       ))}
                     </div>
-                    <span className="text-sm sm:text-base font-medium text-gray-900">
+                    <span className="text-sm font-medium text-gray-900">
                       {product.rating}
                     </span>
-                    <span className="text-xs sm:text-sm text-gray-500">
+                    <span className="text-xs text-gray-500">
                       ({product.reviewCount} reviews)
                     </span>
                     {product.isBestseller && (
-                      <span className="bg-gradient-to-r from-yellow-100 to-orange-100 text-orange-800 px-2 py-1 rounded-lg text-xs font-semibold">
+                      <span className="bg-gradient-to-r from-yellow-100 to-orange-100 text-orange-800 px-2 py-0.5 rounded-lg text-xs font-semibold">
                         ⭐ Bestseller
                       </span>
                     )}
                   </div>
 
-                  <p className="text-sm sm:text-base text-gray-600 leading-relaxed line-clamp-3">
+                  <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">
                     {product.shortDescription}
                   </p>
                 </div>
+                
                 {/* Pricing */}
-                <div className="flex items-baseline gap-2 sm:gap-3">
-                  <span className="text-2xl sm:text-3xl font-bold text-pink-600">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl lg:text-3xl font-bold text-pink-600">
                     ₹{getCurrentPrice()}
                   </span>
                   {getOriginalPrice() && (
-                    <span className="text-lg sm:text-xl text-gray-500 line-through">
+                    <span className="text-lg text-gray-500 line-through">
                       ₹{getOriginalPrice()}
                     </span>
                   )}
                   {getDiscountPercentage() > 0 && (
-                    <span className="text-sm sm:text-base text-green-600 font-semibold bg-green-50 px-2 py-1 rounded-lg">
+                    <span className="text-sm text-green-600 font-semibold bg-green-50 px-2 py-1 rounded-lg">
                       Save {getDiscountPercentage()}%
                     </span>
                   )}
                 </div>                {/* Weight Options */}
                 {product.weightOptions.length > 0 && (
                   <div className="space-y-2">
-                    <label className="text-sm sm:text-base font-semibold text-gray-900 block">
+                    <label className="text-sm font-semibold text-gray-900 block">
                       Select Weight
                     </label>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 gap-2">
                       {product.weightOptions.map((option) => (
                         <button
                           key={option.weight}
                           onClick={() => setSelectedWeight(option.weight)}
-                          className={`p-2 sm:p-3 rounded-xl border-2 text-center transition-all duration-300 hover:scale-105 ${
-                            selectedWeight === option.weight
-                              ? "border-pink-500 bg-pink-50 text-pink-600 shadow-md"
-                              : "border-gray-200 hover:border-gray-300 text-gray-700"
-                          }`}
+                          className={`p-2 rounded-lg border-2 text-center transition-all duration-300 hover:scale-105 ${selectedWeight === option.weight
+                            ? "border-pink-500 bg-pink-50 text-pink-600 shadow-md"
+                            : "border-gray-200 hover:border-gray-300 text-gray-700"
+                            }`}
                         >
-                          <div className="text-xs sm:text-sm font-semibold">
+                          <div className="text-xs font-semibold">
                             {option.weight}
                           </div>
-                          <div className="text-xs sm:text-sm font-bold text-gray-900">
+                          <div className="text-xs font-bold text-gray-900">
                             ₹{option.discountedPrice || option.price}
                           </div>
                         </button>
                       ))}
                     </div>
                   </div>
-                )}{" "}                {/* Quantity and Add to Cart */}
-                <div className="space-y-3 sm:space-y-4">
+                )}
+
+                {/* Quantity and Add to Cart */}
+                <div className="space-y-3">
                   <div className="space-y-2">
-                    <label className="text-sm sm:text-base font-semibold text-gray-900 block">
+                    <label className="text-sm font-semibold text-gray-900 block">
                       Quantity
                     </label>
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => handleQuantityChange("decrease")}
-                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-gray-300 flex items-center justify-center hover:border-pink-500 hover:bg-pink-50 transition-all disabled:opacity-50"
+                        className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center hover:border-pink-500 hover:bg-pink-50 transition-all disabled:opacity-50"
                         disabled={quantity <= 1}
                       >
-                        <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <Minus className="w-3 h-3" />
                       </button>
-                      <span className="text-lg sm:text-xl font-bold w-8 text-center">
+                      <span className="text-lg font-bold w-8 text-center">
                         {quantity}
                       </span>
                       <button
                         onClick={() => handleQuantityChange("increase")}
-                        className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-gray-300 flex items-center justify-center hover:border-pink-500 hover:bg-pink-50 transition-all"
+                        className="w-8 h-8 rounded-full border-2 border-gray-300 flex items-center justify-center hover:border-pink-500 hover:bg-pink-50 transition-all"
                       >
-                        <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <Plus className="w-3 h-3" />
                       </button>
                     </div>
                   </div>                  {/* Action Buttons */}
-                  <div className="space-y-2 sm:space-y-3">
+                  <div className="space-y-2">
                     {isInCart(product?._id || "") ? (
-                      <div className="w-full sm:flex-1 flex space-x-2">
+                      <div className="flex space-x-2">
                         <button
                           onClick={handleAddToCart}
                           disabled={addingToCart}
-                          className="flex-1 bg-gradient-to-r from-pink-500 to-pink-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center space-x-2 text-sm sm:text-base"
+                          className="flex-1 bg-gradient-to-r from-pink-500 to-pink-600 text-white px-4 py-2.5 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center space-x-2 text-sm"
                         >
                           {addingToCart ? (
                             <>
-                              <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white"></div>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                               <span>Adding...</span>
                             </>
                           ) : (
                             <>
-                              <Check className="h-4 w-4 sm:h-5 sm:w-5" />
+                              <Check className="h-4 w-4" />
                               <span>Added to Cart</span>
                             </>
                           )}
                         </button>
                         <button
                           onClick={goToCart}
-                          className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-2 text-sm sm:text-base"
+                          className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white px-4 py-2.5 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center space-x-2 text-sm"
                         >
-                          <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
+                          <ShoppingCart className="h-4 w-4" />
                           <span>View Cart</span>
                         </button>
                       </div>
@@ -505,7 +548,7 @@ const ProductPage = () => {
                       <button
                         onClick={handleAddToCart}
                         disabled={addingToCart}
-                        className="w-full bg-gradient-to-r from-pink-500 to-pink-600 text-white py-2.5 sm:py-3 px-6 rounded-xl font-semibold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                        className="w-full bg-gradient-to-r from-pink-500 to-pink-600 text-white py-2.5 px-6 rounded-xl font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                       >
                         {addingToCart ? (
                           <div className="flex items-center justify-center gap-2">
@@ -514,7 +557,7 @@ const ProductPage = () => {
                           </div>
                         ) : (
                           <>
-                            <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 inline mr-2" />
+                            <ShoppingCart className="w-4 h-4 inline mr-2" />
                             Add to Cart - ₹{(getCurrentPrice() * quantity)}
                           </>
                         )}
@@ -524,11 +567,10 @@ const ProductPage = () => {
                     <div className="flex space-x-2">
                       <button
                         onClick={handleWishlistToggle}
-                        className={`flex-1 p-2.5 sm:p-3 border-2 rounded-xl transition-all duration-300 hover:scale-105 ${
-                          isInWishlist(product?._id || "")
-                            ? "border-pink-500 bg-pink-50 text-pink-600"
-                            : "border-gray-300 hover:border-pink-300 hover:bg-pink-50"
-                        }`}
+                        className={`flex-1 p-2.5 border-2 rounded-xl transition-all duration-300 hover:scale-105 ${isInWishlist(product?._id || "")
+                          ? "border-pink-500 bg-pink-50 text-pink-600"
+                          : "border-gray-300 hover:border-pink-300 hover:bg-pink-50"
+                          }`}
                         title={
                           isInWishlist(product?._id || "")
                             ? "Remove from wishlist"
@@ -536,26 +578,25 @@ const ProductPage = () => {
                         }
                       >
                         <Heart
-                          className={`h-4 w-4 sm:h-5 sm:w-5 mx-auto ${
-                            isInWishlist(product?._id || "")
-                              ? "fill-current"
-                              : ""
-                          }`}
+                          className={`h-4 w-4 mx-auto ${isInWishlist(product?._id || "")
+                            ? "fill-current"
+                            : ""
+                            }`}
                         />
                       </button>
-                      <button className="flex-1 p-2.5 sm:p-3 border-2 border-gray-300 rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-all duration-300 hover:scale-105">
-                        <Share2 className="h-4 w-4 sm:h-5 sm:w-5 mx-auto" />
+                      <button className="flex-1 p-2.5 border-2 border-gray-300 rounded-xl hover:border-gray-400 hover:bg-gray-50 transition-all duration-300 hover:scale-105">
+                        <Share2 className="h-4 w-4 mx-auto" />
                       </button>
                     </div>
                   </div>                  {/* Delivery Info */}
-                  <div className="bg-gradient-to-r from-green-50 to-blue-50 p-3 sm:p-4 rounded-xl border border-green-200">
-                    <div className="flex items-start gap-2 sm:gap-3">
-                      <div className="flex-shrink-0 w-5 h-5 text-green-600 mt-0.5">🚚</div>
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 p-3 rounded-xl border border-green-200">
+                    <div className="flex items-start gap-2">
+                      <div className="flex-shrink-0 w-4 h-4 text-green-600 mt-0.5">🚚</div>
                       <div>
-                        <h3 className="font-semibold text-sm sm:text-base text-green-800">
+                        <h3 className="font-semibold text-sm text-green-800">
                           Delivery Information
                         </h3>
-                        <p className="text-xs sm:text-sm text-green-700 mt-1">
+                        <p className="text-xs text-green-700 mt-1">
                           ⏰ {product.preparationTime} • 🆓 Free delivery on orders above ₹500
                         </p>
                       </div>
@@ -565,14 +606,14 @@ const ProductPage = () => {
                   {/* Tags */}
                   {product.tags.length > 0 && (
                     <div className="space-y-2">
-                      <label className="text-sm sm:text-base font-semibold text-gray-900 block">
+                      <label className="text-sm font-semibold text-gray-900 block">
                         Tags
                       </label>
-                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                      <div className="flex flex-wrap gap-1.5">
                         {product.tags.map((tag, index) => (
                           <span
                             key={index}
-                            className="bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium"
+                            className="bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs font-medium"
                           >
                             #{tag}
                           </span>
@@ -589,22 +630,20 @@ const ProductPage = () => {
               <div className="flex border-b border-gray-200">
                 <button
                   onClick={() => setActiveTab("description")}
-                  className={`px-4 py-2 text-sm font-medium ${
-                    activeTab === "description"
-                      ? "text-pink-600 border-b-2 border-pink-600"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  className={`px-4 py-2 text-sm font-medium ${activeTab === "description"
+                    ? "text-pink-600 border-b-2 border-pink-600"
+                    : "text-gray-500 hover:text-gray-700"
+                    }`}
                 >
                   Description
                 </button>
                 {product.ingredients.length > 0 && (
                   <button
                     onClick={() => setActiveTab("ingredients")}
-                    className={`px-4 py-2 text-sm font-medium ${
-                      activeTab === "ingredients"
-                        ? "text-pink-600 border-b-2 border-pink-600"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
+                    className={`px-4 py-2 text-sm font-medium ${activeTab === "ingredients"
+                      ? "text-pink-600 border-b-2 border-pink-600"
+                      : "text-gray-500 hover:text-gray-700"
+                      }`}
                   >
                     Ingredients
                   </button>
@@ -612,22 +651,20 @@ const ProductPage = () => {
                 {product.nutritionalInfo && (
                   <button
                     onClick={() => setActiveTab("nutrition")}
-                    className={`px-4 py-2 text-sm font-medium ${
-                      activeTab === "nutrition"
-                        ? "text-pink-600 border-b-2 border-pink-600"
-                        : "text-gray-500 hover:text-gray-700"
-                    }`}
+                    className={`px-4 py-2 text-sm font-medium ${activeTab === "nutrition"
+                      ? "text-pink-600 border-b-2 border-pink-600"
+                      : "text-gray-500 hover:text-gray-700"
+                      }`}
                   >
                     Nutritional Info
                   </button>
                 )}
                 <button
                   onClick={() => setActiveTab("reviews")}
-                  className={`px-4 py-2 text-sm font-medium ${
-                    activeTab === "reviews"
-                      ? "text-pink-600 border-b-2 border-pink-600"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
+                  className={`px-4 py-2 text-sm font-medium ${activeTab === "reviews"
+                    ? "text-pink-600 border-b-2 border-pink-600"
+                    : "text-gray-500 hover:text-gray-700"
+                    }`}
                 >
                   Reviews ({product.reviewCount})
                 </button>
@@ -776,7 +813,7 @@ const ProductPage = () => {
             )} */}          </div>
         </div>
       </div>
-      
+
       {/* Add-On Modal */}
       <AddOnModal
         isOpen={showAddOnModal}
@@ -785,7 +822,7 @@ const ProductPage = () => {
         onContinue={handleModalContinue}
         productName={product?.name}
       />
-      
+
       <Footer />
     </>
   );

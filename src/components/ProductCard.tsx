@@ -81,10 +81,13 @@ const ProductCard = ({
   const { showSuccess } = useToast();
   const [addingToCart, setAddingToCart] = useState(false);
 
-  const discountPercentage = discountedPrice
-    ? Math.round(((price - discountedPrice) / price) * 100)
-    : 0;
+  // Price display logic: use base price if available, otherwise use first weight option price
+  const displayPrice = price || (weightOptions && weightOptions.length > 0 ? weightOptions[0].price : 0);
+  const displayDiscountedPrice = discountedPrice || (weightOptions && weightOptions.length > 0 ? weightOptions[0].discountedPrice : undefined);
 
+  const discountPercentage = displayDiscountedPrice
+    ? Math.round(((displayPrice - displayDiscountedPrice) / displayPrice) * 100)
+    : 0;
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation
     e.stopPropagation();
@@ -96,10 +99,10 @@ const ProductCard = ({
         name,
         slug,
         imageUrls,
-        price,
-        discountedPrice,
+        price: displayPrice,
+        discountedPrice: displayDiscountedPrice,
         weightOptions: weightOptions || [
-          { weight: "1kg", price, discountedPrice },
+          { weight: "1kg", price: displayPrice, discountedPrice: displayDiscountedPrice },
         ],
       };
       addToCart(product, 1);
@@ -132,8 +135,8 @@ const ProductCard = ({
         name,
         slug,
         imageUrls,
-        price,
-        discountedPrice,
+        price: displayPrice,
+        discountedPrice: displayDiscountedPrice,
         categories,
       };
       addToWishlist(product);
@@ -151,13 +154,12 @@ const ProductCard = ({
       <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100 overflow-hidden">
         <Link href={`/products/${slug}`}>
           <div className="flex p-3 gap-3">
-            {/* Image */}
-            <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 rounded-lg overflow-hidden">
+            {/* Image */}            <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-white border border-gray-100">
               <Image
                 src={imageUrls[0] || "/placeholder-cake.jpg"}
                 alt={name}
                 fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                className="object-contain p-1 hover:scale-110 transition-transform duration-300"
                 sizes="80px"
                 placeholder="blur"
                 blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
@@ -174,7 +176,7 @@ const ProductCard = ({
               <h3 className="font-semibold text-gray-800 text-sm sm:text-base mb-1 truncate hover:text-pink-600 transition-colors">
                 {name}
               </h3>
-              
+
               <div className="flex items-center mb-2 gap-2">
                 <div className="flex items-center text-yellow-400 bg-yellow-50 px-1.5 py-0.5 rounded">
                   <Star className="w-3 h-3 fill-current" />
@@ -188,16 +190,14 @@ const ProductCard = ({
                     Bestseller
                   </span>
                 )}
-              </div>
-
-              <div className="flex items-center justify-between">
+              </div>              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-base sm:text-lg font-bold text-gray-900">
-                    ₹{discountedPrice || price}
+                    ₹{displayDiscountedPrice || displayPrice}
                   </span>
-                  {discountedPrice && (
+                  {displayDiscountedPrice && (
                     <span className="text-sm text-gray-400 line-through">
-                      ₹{price}
+                      ₹{displayPrice}
                     </span>
                   )}
                 </div>
@@ -216,14 +216,13 @@ const ProductCard = ({
                       <><Plus className="h-3 w-3" /> Add</>
                     )}
                   </button>
-                  
+
                   <button
                     onClick={handleWishlistToggle}
-                    className={`p-1.5 rounded transition-colors ${
-                      isInWishlist(_id)
+                    className={`p-1.5 rounded transition-colors ${isInWishlist(_id)
                         ? "bg-pink-100 text-pink-600"
                         : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
+                      }`}
                   >
                     <Heart className={`h-3 w-3 ${isInWishlist(_id) ? "fill-current" : ""}`} />
                   </button>
@@ -238,26 +237,30 @@ const ProductCard = ({
 
   // Grid view layout (existing code with mobile optimizations)
   return (
-    <div className="bg-white rounded-lg sm:rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 group border border-gray-100 overflow-hidden">
-      <Link href={`/products/${slug}`}>
-        <div className="relative h-52 md:h-65 overflow-hidden">
-          <Image
-            src={imageUrls[0] || "/placeholder-cake.jpg"}
-            alt={name}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300 brightness-105 saturate-110"
-            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-            priority
-            placeholder="blur"
-            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-          />
-          {discountPercentage > 0 && (
-            <div className="absolute top-0 right-0 bg-red-500 text-white px-2 sm:px-3 py-1 rounded-bl-2xl sm:rounded-bl-3xl text-xs font-bold shadow-md">
-              {discountPercentage}% OFF
-            </div>
-          )}
-        </div>
-      </Link>
+    <div className="bg-white rounded-lg sm:rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 group border border-gray-100 overflow-hidden">     
+     <Link href={`/products/${slug}`}>
+      <div className="relative h-52 md:h-64 bg-white border-b border-gray-100">
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="relative w-full h-full">
+            <Image
+              src={imageUrls[0] || "/placeholder-cake.jpg"}
+              alt={name}
+              fill
+              className="object-cover hover:scale-105 transition-transform duration-300"
+              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+              priority
+              placeholder="blur"
+              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+            />
+          </div>
+        </div>          
+        {discountPercentage > 0 && (
+          <div className="absolute top-2 right-2 bg-red-500 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10">
+            {discountPercentage}% OFF
+          </div>
+        )}
+      </div>
+    </Link>
 
       <div className="p-2 sm:p-3">
         <Link href={`/products/${slug}`}>
@@ -272,15 +275,14 @@ const ProductCard = ({
             </span>
           </div>
           <span className="text-xs text-gray-500 ml-1 sm:ml-2">({reviewCount})</span>
-        </div>
-        <div className="flex items-center justify-between mb-2 sm:mb-3">
+        </div>        <div className="flex items-center justify-between mb-2 sm:mb-3">
           <div className="flex items-center space-x-1 sm:space-x-2">
             <span className="text-sm sm:text-base font-bold text-gray-900">
-              ₹{discountedPrice || price}
+              ₹{displayDiscountedPrice || displayPrice}
             </span>
-            {discountedPrice && (
+            {displayDiscountedPrice && (
               <span className="text-xs text-gray-400 line-through">
-                ₹{price}
+                ₹{displayPrice}
               </span>
             )}
           </div>
@@ -319,13 +321,11 @@ const ProductCard = ({
           {flag !== "bestseller" && (
             <button
               onClick={handleWishlistToggle}
-              className={`p-1.5 sm:p-2 rounded-lg transition-colors duration-300 ${
-                flag === "bestseller" ? "flex-1" : ""
-              } ${
-                isInWishlist(_id)
+              className={`p-1.5 sm:p-2 rounded-lg transition-colors duration-300 ${flag === "bestseller" ? "flex-1" : ""
+                } ${isInWishlist(_id)
                   ? "bg-pink-100 text-pink-600"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
+                }`}
               title={
                 isInWishlist(_id) ? "Remove from wishlist" : "Add to wishlist"
               }
