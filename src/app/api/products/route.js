@@ -16,6 +16,23 @@ import {
   validateWeightOptions,
 } from "@/lib/productUtils";
 
+// Check if Cloudinary environment variables are configured
+function checkCloudinaryConfig() {
+  const missingVars = [];
+  if (!process.env.CLOUDINARY_CLOUD_NAME) missingVars.push('CLOUDINARY_CLOUD_NAME');
+  if (!process.env.CLOUDINARY_API_KEY) missingVars.push('CLOUDINARY_API_KEY');
+  if (!process.env.CLOUDINARY_API_SECRET) missingVars.push('CLOUDINARY_API_SECRET');
+  
+  if (missingVars.length > 0) {
+    console.error('Missing Cloudinary environment variables:', missingVars);
+    return {
+      error: `Cloudinary configuration incomplete. Missing: ${missingVars.join(', ')}. Please check your Vercel environment variables.`,
+      missingVars
+    };
+  }
+  return null;
+}
+
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -192,8 +209,7 @@ export async function POST(request) {
         weight: formData.get(`weightOptions[${index}][weight]`),
         price: parseFloat(formData.get(`weightOptions[${index}][price]`)),
       });
-      index++;
-    }    // Validate required fields
+      index++;    }    // Validate required fields
     if (!name || !categories.length || weightOptions.length === 0) {
       return NextResponse.json(
         { error: "Name, categories, and weight options are required" },
@@ -201,9 +217,20 @@ export async function POST(request) {
       );
     }
 
+    // Check Cloudinary configuration before processing images
+    const imageFiles = formData.getAll("images");
+    if (imageFiles.length > 0) {
+      const configError = checkCloudinaryConfig();
+      if (configError) {
+        return NextResponse.json(
+          { error: configError.error },
+          { status: 500 }
+        );
+      }
+    }
+
     // Process image uploads
     const imageUrls = [...existingImageUrls];
-    const imageFiles = formData.getAll("images");
 
     for (const imageFile of imageFiles) {
       if (imageFile && imageFile.size > 0) {
@@ -424,9 +451,7 @@ export async function PATCH(request) {
     const validatedPrice = validatePrice(price);
     const validatedDiscountedPrice = discountedPrice
       ? validatePrice(discountedPrice)
-      : null;
-
-    // Validate discount price
+      : null;    // Validate discount price
     if (
       validatedDiscountedPrice &&
       validatedDiscountedPrice >= validatedPrice
@@ -437,9 +462,20 @@ export async function PATCH(request) {
       );
     }
 
+    // Check Cloudinary configuration before processing images
+    const imageFiles = formData.getAll("images");
+    if (imageFiles.length > 0) {
+      const configError = checkCloudinaryConfig();
+      if (configError) {
+        return NextResponse.json(
+          { error: configError.error },
+          { status: 500 }
+        );
+      }
+    }
+
     // Process image uploads
     const imageUrls = [...existingImageUrls];
-    const imageFiles = formData.getAll("images");
 
     for (const imageFile of imageFiles) {
       if (imageFile && imageFile.size > 0) {

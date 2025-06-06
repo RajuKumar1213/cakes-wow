@@ -35,6 +35,16 @@ const uploadBufferToCloudinary = async (buffer: Buffer, filename: string) => {
   try {
     if (!buffer) return null;
 
+    // Check if Cloudinary is properly configured
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      console.error('Cloudinary configuration missing:', {
+        cloud_name: !!process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: !!process.env.CLOUDINARY_API_KEY,
+        api_secret: !!process.env.CLOUDINARY_API_SECRET
+      });
+      throw new Error('Cloudinary environment variables are not configured properly');
+    }
+
     return new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
         {
