@@ -27,6 +27,17 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Cakeswow - Premium Cakes & Desserts",
   description: "Order fresh, delicious cakes and desserts online. Best quality ingredients, beautiful designs, doorstep delivery.",
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', type: 'image/x-icon' },
+      { url: '/favicon-32.png', type: 'image/png', sizes: '32x32' },
+      { url: '/favicon-16.png', type: 'image/png', sizes: '16x16' }
+    ],
+    apple: '/favicon.svg',
+    shortcut: '/favicon.ico',
+  },
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
@@ -38,7 +49,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         {/* Next.js Google Fonts handles font optimization automatically */}
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <meta name="theme-color" content="#DC2626" />
       </head>
       <body
         className={`${poppins.variable} ${inter.variable} font-inter antialiased`}
