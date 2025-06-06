@@ -31,7 +31,7 @@ const BestSeller = () => {
       try {
         setLoading(true);
         const response = await fetch(
-          "/api/products?isBestseller=true&limit=6&sortBy=reviewCount&sortOrder=desc"
+          "/api/products?isBestseller=true&limit=8&sortBy=reviewCount&sortOrder=asc"
         );
 
         if (!response.ok) {

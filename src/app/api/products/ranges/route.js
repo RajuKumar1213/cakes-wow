@@ -19,21 +19,30 @@ export async function GET(request) {
       if (categoryDoc) {
         filters.categories = categoryDoc._id;
       }
-    }
-
-    // Get price range
+    }    // Get price range - consider both base prices and weight option prices
     const priceStats = await Product.aggregate([
       { $match: filters },
       {
+        $addFields: {
+          allPrices: {
+            $concatArrays: [
+              { $cond: [{ $gt: ["$price", 0] }, ["$price"], []] },
+              "$weightOptions.price"
+            ]
+          }
+        }
+      },
+      { $unwind: "$allPrices" },
+      {
         $group: {
           _id: null,
-          minPrice: { $min: "$price" },
-          maxPrice: { $max: "$price" }
+          minPrice: { $min: "$allPrices" },
+          maxPrice: { $max: "$allPrices" }
         }
       }
     ]);
 
-    // Get weight options
+    // Get weight options and tags
     const weightStats = await Product.aggregate([
       { $match: filters },
       { $unwind: "$weightOptions" },
@@ -46,15 +55,26 @@ export async function GET(request) {
       { $sort: { count: -1 } }
     ]);
 
-    // Default ranges if no products found
+    // Get available tags
+    const tagStats = await Product.aggregate([
+      { $match: filters },
+      { $unwind: "$tags" },
+      {
+        $group: {
+          _id: "$tags",
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { count: -1 } }
+    ]);    // Default ranges if no products found
     const defaultPriceRange = { minPrice: 0, maxPrice: 5000 };
     const priceRange = priceStats.length > 0 ? priceStats[0] : defaultPriceRange;
 
     // Format weight options
-    const weightOptions = weightStats.map(w => ({
-      weight: w._id,
-      count: w.count
-    }));
+    const weightOptions = weightStats.map(w => w._id).sort();
+    
+    // Format tags
+    const tags = tagStats.map(t => t._id).sort();
 
     return NextResponse.json({
       success: true,
@@ -63,7 +83,8 @@ export async function GET(request) {
           min: Math.floor(priceRange.minPrice),
           max: Math.ceil(priceRange.maxPrice)
         },
-        weightOptions
+        weights: weightOptions,
+        tags: tags
       }
     });
   } catch (error) {

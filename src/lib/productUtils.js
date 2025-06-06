@@ -80,17 +80,50 @@ export function createProductFilters(params) {
   if (params.category) {
     filters.categories = params.category;
   }
-
-  // Price range filter
+  // Price range filter - handle both base price and weight option prices
   if (params.minPrice || params.maxPrice) {
-    filters.price = {};
+    const priceFilter = [];
+    
+    // Filter for base price
+    const basePriceFilter = {};
     if (params.minPrice) {
-      filters.price.$gte = parseFloat(params.minPrice);
+      basePriceFilter.$gte = parseFloat(params.minPrice);
     }
     if (params.maxPrice) {
-      filters.price.$lte = parseFloat(params.maxPrice);
+      basePriceFilter.$lte = parseFloat(params.maxPrice);
     }
-  }  // Tag filter
+    
+    if (Object.keys(basePriceFilter).length > 0) {
+      priceFilter.push({ 
+        $and: [
+          { price: { $gt: 0 } }, // Has a base price
+          { price: basePriceFilter }
+        ]
+      });
+    }
+    
+    // Filter for weight option prices
+    const weightPriceFilter = {};
+    if (params.minPrice) {
+      weightPriceFilter.$gte = parseFloat(params.minPrice);
+    }
+    if (params.maxPrice) {
+      weightPriceFilter.$lte = parseFloat(params.maxPrice);
+    }
+    
+    if (Object.keys(weightPriceFilter).length > 0) {
+      priceFilter.push({
+        $and: [
+          { $or: [{ price: { $eq: 0 } }, { price: { $exists: false } }] }, // No base price
+          { 'weightOptions.price': weightPriceFilter }
+        ]
+      });
+    }
+    
+    if (priceFilter.length > 0) {
+      filters.$or = priceFilter;
+    }
+  }// Tag filter
   if (params.tags && params.tags.length > 0) {
     const tagArray = Array.isArray(params.tags) ? params.tags : [params.tags];
     const filteredTags = tagArray.filter(tag => tag && tag.trim().length > 0);

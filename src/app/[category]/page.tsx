@@ -54,20 +54,31 @@ const CategoryPage = () => {
   const { showError } = useToast();  const [category, setCategory] = useState<Category | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterLoading, setFilterLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);  const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("popularity");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [priceInputs, setPriceInputs] = useState({ min: 0, max: 5000 });
-  
-  // Filter states
+    // Filter states
   const [priceRange, setPriceRange] = useState([0, 5000]);
   const [selectedWeights, setSelectedWeights] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-
+  const [availableWeights, setAvailableWeights] = useState<string[]>([]);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
   // Sync price inputs with slider
   useEffect(() => {
     setPriceInputs({ min: priceRange[0], max: priceRange[1] });
   }, [priceRange]);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Prevent background scrolling when filters modal is open on mobile
   useEffect(() => {
@@ -86,14 +97,71 @@ const CategoryPage = () => {
   const breadcrumbItems = [
     { label: "Home", href: "/" },
     { label: category?.name || "Category", href: `/${categorySlug}` },
-  ];
-  useEffect(() => {
-    const fetchCategoryAndProducts = async () => {
-      try {
+  ];  // Function to build API query parameters from filter state
+  const buildApiParams = () => {
+    const params = new URLSearchParams();
+    
+    // Add category
+    params.append('category', categorySlug);
+    
+    // Add price range - only add if significantly different from defaults
+    if (priceRange[0] > 100) { // Only filter if minimum price is meaningfully above 0
+      params.append('minPrice', priceRange[0].toString());
+    }
+    if (priceRange[1] < 4900) { // Only filter if maximum price is meaningfully below max
+      params.append('maxPrice', priceRange[1].toString());
+    }
+    
+    // Add weight filters
+    selectedWeights.forEach(weight => {
+      params.append('weights', weight);
+    });
+    
+    // Add tag filters
+    selectedTags.forEach(tag => {
+      params.append('tags', tag);
+    });
+      // Add search query
+    if (debouncedSearchQuery.trim()) {
+      params.append('search', debouncedSearchQuery.trim());
+    }
+    
+    // Add sorting
+    if (sortBy === 'price_low') {
+      params.append('sortBy', 'price');
+      params.append('sortOrder', 'asc');
+    } else if (sortBy === 'price_high') {
+      params.append('sortBy', 'price');
+      params.append('sortOrder', 'desc');
+    } else if (sortBy === 'rating') {
+      params.append('sortBy', 'rating');
+      params.append('sortOrder', 'desc');
+    } else if (sortBy === 'name') {
+      params.append('sortBy', 'name');
+      params.append('sortOrder', 'asc');
+    } else if (sortBy === 'newest') {
+      params.append('sortBy', 'createdAt');
+      params.append('sortOrder', 'desc');
+    } else { // popularity
+      params.append('sortBy', 'rating');
+      params.append('sortOrder', 'desc');
+    }
+    
+    // Add pagination
+    params.append('limit', '24');
+    
+    return params.toString();
+  };const fetchCategoryAndProducts = async (isFilterChange = false) => {
+    try {
+      if (isFilterChange) {
+        setFilterLoading(true);
+      } else {
         setLoading(true);
-        setError(null); // Clear any previous errors
-        
-        // Fetch category details
+      }
+      setError(null);
+      
+      // Fetch category details (only once)
+      if (!category) {
         const categoryResponse = await axios.get(`/api/categories/${categorySlug}`);
         if (categoryResponse.data.success) {
           setCategory(categoryResponse.data.data);
@@ -101,33 +169,75 @@ const CategoryPage = () => {
           setError("Category not found");
           return;
         }
-
-        // Fetch products for this category
-        const productsResponse = await axios.get(`/api/products?category=${categorySlug}`);
-        if (productsResponse.data.success) {
-          setProducts(productsResponse.data.data.products || []);
-        }
-      } catch (error: any) {
-        console.error("Error fetching category data:", error);
-        
-        // Set error state to prevent infinite loop
-        if (error.response?.status === 404) {
-          setError("Category not found");
-        } else {
-          setError("Failed to load category data");
-        }
-        
-        // Don't show toast error to prevent infinite loops
-        // showError("Error", "Failed to load category data");
-      } finally {
-        setLoading(false);
       }
-    };
 
-    if (categorySlug && !error) { // Only fetch if no error state
-      fetchCategoryAndProducts();
+      // Fetch products with filters
+      const apiParams = buildApiParams();
+      const productsResponse = await axios.get(`/api/products?${apiParams}`);
+      
+      if (productsResponse.data.success) {
+        setProducts(productsResponse.data.data.products || []);
+      }
+    } catch (error: any) {
+      console.error("Error fetching category data:", error);
+      
+      if (error.response?.status === 404) {
+        setError("Category not found");
+      } else {
+        setError("Failed to load category data");
+      }
+    } finally {
+      setLoading(false);
+      setFilterLoading(false);
     }
-  }, [categorySlug]); // Removed showError from dependencies to prevent infinite loop
+  };
+
+  // Fetch available filter options for the category
+  const fetchFilterOptions = async () => {
+    try {
+      const response = await axios.get(`/api/products/ranges?category=${categorySlug}`);
+      if (response.data.success) {
+        const { data } = response.data;
+        setAvailableWeights(data.weights || []);
+        setAvailableTags(data.tags || []);
+        
+        // Update price range if we get actual min/max from API
+        if (data.priceRange) {
+          const maxPrice = Math.ceil(data.priceRange.max / 100) * 100; // Round up to nearest 100
+          setPriceRange([0, maxPrice]);
+          setPriceInputs({ min: 0, max: maxPrice });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching filter options:", error);
+      // Fallback: extract from current products
+      const weights = Array.from(
+        new Set(
+          products.flatMap(product => 
+            product.weightOptions?.map(option => option.weight) || []
+          )
+        )
+      ).sort();
+      setAvailableWeights(weights);
+      
+      const tags = Array.from(
+        new Set(products.flatMap(product => product.tags || []))
+      ).sort();
+      setAvailableTags(tags);
+    }
+  };
+  // Initial load of category
+  useEffect(() => {
+    if (categorySlug && !error) {
+      fetchCategoryAndProducts();
+      fetchFilterOptions();
+    }
+  }, [categorySlug]);// Fetch products when filters change
+  useEffect(() => {
+    if (category) { // Only fetch if category is already loaded
+      fetchCategoryAndProducts(true);
+    }
+  }, [priceRange, selectedWeights, selectedTags, debouncedSearchQuery, sortBy]);
 
   const sortOptions = [
     { value: "popularity", label: "Popularity" },
@@ -136,88 +246,9 @@ const CategoryPage = () => {
     { value: "rating", label: "Rating" },
     { value: "newest", label: "Newest First" },
     { value: "name", label: "Name A-Z" },
-  ];  const getFilteredAndSortedProducts = () => {
-    // Ensure products is an array
-    if (!Array.isArray(products)) {
-      return [];
-    }
-    
-    let filtered = products.filter(product => {
-      // Search filter
-      if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-        return false;
-      }
-
-      // Price filter
-      const productPrice = product.discountedPrice || product.price;
-      if (productPrice < priceRange[0] || productPrice > priceRange[1]) {
-        return false;
-      }
-
-      // Weight filter
-      if (selectedWeights.length > 0) {
-        const hasMatchingWeight = product.weightOptions?.some(option => 
-          selectedWeights.includes(option.weight)
-        );
-        if (!hasMatchingWeight) {
-          return false;
-        }
-      }
-
-      // Tags filter
-      if (selectedTags.length > 0) {
-        const hasMatchingTag = selectedTags.some(tag => 
-          product.tags.some(productTag => 
-            productTag.toLowerCase().includes(tag.toLowerCase())
-          )
-        );
-        if (!hasMatchingTag) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-
-    // Sort products
-    switch (sortBy) {
-      case "price_low":
-        filtered.sort((a, b) => (a.discountedPrice || a.price) - (b.discountedPrice || b.price));
-        break;
-      case "price_high":
-        filtered.sort((a, b) => (b.discountedPrice || b.price) - (a.discountedPrice || a.price));
-        break;
-      case "rating":
-        filtered.sort((a, b) => b.rating - a.rating);
-        break;
-      case "name":
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case "newest":
-        // Assuming newer products have higher IDs
-        filtered.sort((a, b) => b._id.localeCompare(a._id));
-        break;      default: // popularity
-        filtered.sort((a, b) => {
-          // Sort by bestseller first, then by rating
-          if (a.isBestseller && !b.isBestseller) return -1;
-          if (!a.isBestseller && b.isBestseller) return 1;
-          return b.rating - a.rating;
-        });
-    }
-
-    return filtered;
-  };
-
-  const filteredProducts = getFilteredAndSortedProducts();
-
-  // Get unique weights from all products for filter options
-  const availableWeights = Array.from(
-    new Set(
-      products.flatMap(product => 
-        product.weightOptions?.map(option => option.weight) || []
-      )
-    )
-  ).sort();  if (loading) {
+  ];  // Since we're using API-based filtering, we don't need client-side filtering
+  // The products array already contains the filtered and sorted products from the API
+  const filteredProducts = products;if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -345,9 +376,7 @@ const CategoryPage = () => {
                       </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Weight Filter */}
+                </div>                {/* Weight Filter */}
                 {availableWeights.length > 0 && (
                   <div className="space-y-4">
                     <h4 className="font-semibold text-gray-900 flex items-center gap-2">
@@ -379,6 +408,39 @@ const CategoryPage = () => {
                             />
                             <span className="text-sm font-medium">{weight}</span>
                           </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tags Filter */}
+                {availableTags.length > 0 && (
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                      Tags
+                    </h4>
+                    <div className="bg-gray-50 p-4 rounded-xl">
+                      <div className="flex flex-wrap gap-2">
+                        {availableTags.slice(0, 10).map((tag) => (
+                          <button
+                            key={tag}
+                            onClick={() => {
+                              if (selectedTags.includes(tag)) {
+                                setSelectedTags(selectedTags.filter(t => t !== tag));
+                              } else {
+                                setSelectedTags([...selectedTags, tag]);
+                              }
+                            }}
+                            className={`px-3 py-2 rounded-full text-sm font-medium border-2 transition-all duration-200 ${
+                              selectedTags.includes(tag)
+                                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                : 'border-gray-200 bg-white hover:border-blue-300 text-gray-700'
+                            }`}
+                          >
+                            {tag}
+                          </button>
                         ))}
                       </div>
                     </div>
@@ -457,14 +519,24 @@ const CategoryPage = () => {
                   </div>
                 </div>                {/* Products Grid */}
                 {filteredProducts.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
-                    {filteredProducts.map((product) => (
-                      <ProductCardWrapper 
-                        key={product._id} 
-                        product={product} 
-                        viewMode="grid"
-                      />
-                    ))}
+                  <div className="relative">
+                    {filterLoading && (
+                      <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-xl">
+                        <div className="text-center">
+                          <Loading size="lg" />
+                          <p className="text-sm text-gray-600 mt-2">Applying filters...</p>
+                        </div>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
+                      {filteredProducts.map((product) => (
+                        <ProductCardWrapper 
+                          key={product._id} 
+                          product={product} 
+                          viewMode="grid"
+                        />
+                      ))}
+                    </div>
                   </div>
                 ) : (
                   <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
@@ -567,9 +639,7 @@ const CategoryPage = () => {
                       </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Weight Filter */}
+                </div>                {/* Weight Filter */}
                 {availableWeights.length > 0 && (
                   <div className="space-y-4">
                     <h4 className="font-semibold text-gray-900 flex items-center gap-2">
@@ -601,6 +671,39 @@ const CategoryPage = () => {
                             />
                             <span className="text-sm font-medium">{weight}</span>
                           </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tags Filter */}
+                {availableTags.length > 0 && (
+                  <div className="space-y-4">
+                    <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                      Tags
+                    </h4>
+                    <div className="bg-gray-50 p-4 rounded-xl">
+                      <div className="flex flex-wrap gap-2">
+                        {availableTags.slice(0, 8).map((tag) => (
+                          <button
+                            key={tag}
+                            onClick={() => {
+                              if (selectedTags.includes(tag)) {
+                                setSelectedTags(selectedTags.filter(t => t !== tag));
+                              } else {
+                                setSelectedTags([...selectedTags, tag]);
+                              }
+                            }}
+                            className={`px-3 py-2 rounded-full text-sm font-medium border-2 transition-all duration-200 ${
+                              selectedTags.includes(tag)
+                                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                : 'border-gray-200 bg-white hover:border-blue-300 text-gray-700'
+                            }`}
+                          >
+                            {tag}
+                          </button>
                         ))}
                       </div>
                     </div>
