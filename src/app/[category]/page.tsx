@@ -10,8 +10,8 @@ import Breadcrumb from "@/components/Breadcrumb";
 import Loading from "@/components/Loading";
 import DualRangeSlider from "@/components/ui/DualRangeSlider";
 import { useToast } from "@/contexts/ToastContext";
-import { 
-  Filter, 
+import {
+  Filter,
   Search,
   X,
   SlidersHorizontal,
@@ -51,16 +51,17 @@ const CategoryPage = () => {
   const params = useParams();
   const router = useRouter();
   const categorySlug = params.category as string;
-  const { showError } = useToast();  const [category, setCategory] = useState<Category | null>(null);
+  const { showError } = useToast(); 
+  const [category, setCategory] = useState<Category | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterLoading, setFilterLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);  const [showFilters, setShowFilters] = useState(false);
+  const [error, setError] = useState<string | null>(null); const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("popularity");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [priceInputs, setPriceInputs] = useState({ min: 0, max: 5000 });
-    // Filter states
+  // Filter states
   const [priceRange, setPriceRange] = useState([0, 5000]);
   const [selectedWeights, setSelectedWeights] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -100,10 +101,10 @@ const CategoryPage = () => {
   ];  // Function to build API query parameters from filter state
   const buildApiParams = () => {
     const params = new URLSearchParams();
-    
+
     // Add category
     params.append('category', categorySlug);
-    
+
     // Add price range - only add if significantly different from defaults
     if (priceRange[0] > 100) { // Only filter if minimum price is meaningfully above 0
       params.append('minPrice', priceRange[0].toString());
@@ -111,21 +112,21 @@ const CategoryPage = () => {
     if (priceRange[1] < 4900) { // Only filter if maximum price is meaningfully below max
       params.append('maxPrice', priceRange[1].toString());
     }
-    
+
     // Add weight filters
     selectedWeights.forEach(weight => {
       params.append('weights', weight);
     });
-    
+
     // Add tag filters
     selectedTags.forEach(tag => {
       params.append('tags', tag);
     });
-      // Add search query
+    // Add search query
     if (debouncedSearchQuery.trim()) {
       params.append('search', debouncedSearchQuery.trim());
     }
-    
+
     // Add sorting
     if (sortBy === 'price_low') {
       params.append('sortBy', 'price');
@@ -146,12 +147,14 @@ const CategoryPage = () => {
       params.append('sortBy', 'rating');
       params.append('sortOrder', 'desc');
     }
-    
+
     // Add pagination
     params.append('limit', '24');
-    
+
     return params.toString();
-  };const fetchCategoryAndProducts = async (isFilterChange = false) => {
+  };
+
+  const fetchCategoryAndProducts = async (isFilterChange = false) => {
     try {
       if (isFilterChange) {
         setFilterLoading(true);
@@ -159,7 +162,7 @@ const CategoryPage = () => {
         setLoading(true);
       }
       setError(null);
-      
+
       // Fetch category details (only once)
       if (!category) {
         const categoryResponse = await axios.get(`/api/categories/${categorySlug}`);
@@ -174,13 +177,13 @@ const CategoryPage = () => {
       // Fetch products with filters
       const apiParams = buildApiParams();
       const productsResponse = await axios.get(`/api/products?${apiParams}`);
-      
+
       if (productsResponse.data.success) {
         setProducts(productsResponse.data.data.products || []);
       }
     } catch (error: any) {
       console.error("Error fetching category data:", error);
-      
+
       if (error.response?.status === 404) {
         setError("Category not found");
       } else {
@@ -200,7 +203,7 @@ const CategoryPage = () => {
         const { data } = response.data;
         setAvailableWeights(data.weights || []);
         setAvailableTags(data.tags || []);
-        
+
         // Update price range if we get actual min/max from API
         if (data.priceRange) {
           const maxPrice = Math.ceil(data.priceRange.max / 100) * 100; // Round up to nearest 100
@@ -213,13 +216,13 @@ const CategoryPage = () => {
       // Fallback: extract from current products
       const weights = Array.from(
         new Set(
-          products.flatMap(product => 
+          products.flatMap(product =>
             product.weightOptions?.map(option => option.weight) || []
           )
         )
       ).sort();
       setAvailableWeights(weights);
-      
+
       const tags = Array.from(
         new Set(products.flatMap(product => product.tags || []))
       ).sort();
@@ -248,7 +251,7 @@ const CategoryPage = () => {
     { value: "name", label: "Name A-Z" },
   ];  // Since we're using API-based filtering, we don't need client-side filtering
   // The products array already contains the filtered and sorted products from the API
-  const filteredProducts = products;if (loading) {
+  const filteredProducts = products; if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -274,8 +277,8 @@ const CategoryPage = () => {
             {error || "Category Not Found"}
           </h1>
           <p className="text-gray-600 mb-4">
-            {error === "Category not found" 
-              ? "The category you're looking for doesn't exist." 
+            {error === "Category not found"
+              ? "The category you're looking for doesn't exist."
               : "There was an error loading the category. Please try again later."}
           </p>
           <button
@@ -308,7 +311,7 @@ const CategoryPage = () => {
                   <h3 className="text-lg font-bold text-gray-900">Filters</h3>
                   <Sparkles className="h-4 w-4 text-pink-500" />
                 </div>
-                
+
                 {/* Search */}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -335,7 +338,7 @@ const CategoryPage = () => {
                       <span className="text-gray-400">to</span>
                       <span className="px-2 py-1 bg-white rounded-lg border">₹{priceRange[1]}</span>
                     </div>
-                    
+
                     <DualRangeSlider
                       min={0}
                       max={5000}
@@ -344,7 +347,7 @@ const CategoryPage = () => {
                       onChange={(value) => setPriceRange(value)}
                       className="my-4"
                     />
-                    
+
                     <div className="flex gap-2">
                       <div className="flex-1">
                         <label className="text-xs text-gray-500 mb-1 block">Min Price</label>
@@ -386,13 +389,12 @@ const CategoryPage = () => {
                     <div className="bg-gray-50 p-4 rounded-xl">
                       <div className="grid grid-cols-2 gap-2">
                         {availableWeights.map((weight) => (
-                          <label 
-                            key={weight} 
-                            className={`flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                              selectedWeights.includes(weight)
-                                ? 'border-pink-500 bg-pink-50 text-pink-700'
-                                : 'border-gray-200 bg-white hover:border-pink-300 hover:bg-pink-25'
-                            }`}
+                          <label
+                            key={weight}
+                            className={`flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 ${selectedWeights.includes(weight)
+                              ? 'border-pink-500 bg-pink-50 text-pink-700'
+                              : 'border-gray-200 bg-white hover:border-pink-300 hover:bg-pink-25'
+                              }`}
                           >
                             <input
                               type="checkbox"
@@ -433,11 +435,10 @@ const CategoryPage = () => {
                                 setSelectedTags([...selectedTags, tag]);
                               }
                             }}
-                            className={`px-3 py-2 rounded-full text-sm font-medium border-2 transition-all duration-200 ${
-                              selectedTags.includes(tag)
-                                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                : 'border-gray-200 bg-white hover:border-blue-300 text-gray-700'
-                            }`}
+                            className={`px-3 py-2 rounded-full text-sm font-medium border-2 transition-all duration-200 ${selectedTags.includes(tag)
+                              ? 'border-blue-500 bg-blue-50 text-blue-700'
+                              : 'border-gray-200 bg-white hover:border-blue-300 text-gray-700'
+                              }`}
                           >
                             {tag}
                           </button>
@@ -476,7 +477,7 @@ const CategoryPage = () => {
                     Filters
                   </button>
                 </div>
-                
+
                 {/* Mobile Search */}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -502,7 +503,7 @@ const CategoryPage = () => {
                         in {category?.name} category
                       </p>
                     </div>
-                      <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3">
                       {/* Sort Dropdown */}
                       <select
                         value={sortBy}
@@ -528,11 +529,11 @@ const CategoryPage = () => {
                         </div>
                       </div>
                     )}
-                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-2 md:gap-4">
                       {filteredProducts.map((product) => (
-                        <ProductCardWrapper 
-                          key={product._id} 
-                          product={product} 
+                        <ProductCardWrapper
+                          key={product._id}
+                          product={product}
                           viewMode="grid"
                         />
                       ))}
@@ -598,7 +599,7 @@ const CategoryPage = () => {
                       <span className="text-gray-400">to</span>
                       <span className="px-2 py-1 bg-white rounded-lg border">₹{priceRange[1]}</span>
                     </div>
-                    
+
                     <DualRangeSlider
                       min={0}
                       max={5000}
@@ -607,7 +608,7 @@ const CategoryPage = () => {
                       onChange={(value) => setPriceRange(value)}
                       className="my-4"
                     />
-                    
+
                     <div className="flex gap-2">
                       <div className="flex-1">
                         <label className="text-xs text-gray-500 mb-1 block">Min Price</label>
@@ -649,13 +650,12 @@ const CategoryPage = () => {
                     <div className="bg-gray-50 p-4 rounded-xl">
                       <div className="grid grid-cols-2 gap-2">
                         {availableWeights.map((weight) => (
-                          <label 
-                            key={weight} 
-                            className={`flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
-                              selectedWeights.includes(weight)
-                                ? 'border-pink-500 bg-pink-50 text-pink-700'
-                                : 'border-gray-200 bg-white hover:border-pink-300'
-                            }`}
+                          <label
+                            key={weight}
+                            className={`flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 ${selectedWeights.includes(weight)
+                              ? 'border-pink-500 bg-pink-50 text-pink-700'
+                              : 'border-gray-200 bg-white hover:border-pink-300'
+                              }`}
                           >
                             <input
                               type="checkbox"
@@ -696,11 +696,10 @@ const CategoryPage = () => {
                                 setSelectedTags([...selectedTags, tag]);
                               }
                             }}
-                            className={`px-3 py-2 rounded-full text-sm font-medium border-2 transition-all duration-200 ${
-                              selectedTags.includes(tag)
-                                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                : 'border-gray-200 bg-white hover:border-blue-300 text-gray-700'
-                            }`}
+                            className={`px-3 py-2 rounded-full text-sm font-medium border-2 transition-all duration-200 ${selectedTags.includes(tag)
+                              ? 'border-blue-500 bg-blue-50 text-blue-700'
+                              : 'border-gray-200 bg-white hover:border-blue-300 text-gray-700'
+                              }`}
                           >
                             {tag}
                           </button>
