@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Product from "@/models/Product.models";
 import Category from "@/models/Category.models";
-import { uploadOnCloudinary } from "@/helpers/uploadOnCloudinary";
+import { uploadOnCloudinary, uploadBufferToCloudinary } from "@/helpers/uploadOnCloudinary";
 import fs from "fs";
 import path from "path";
 import {
@@ -193,32 +193,13 @@ export async function POST(request) {
         price: parseFloat(formData.get(`weightOptions[${index}][price]`)),
       });
       index++;
-    }
-
-    // Validate required fields
+    }    // Validate required fields
     if (!name || !categories.length || weightOptions.length === 0) {
       return NextResponse.json(
         { error: "Name, categories, and weight options are required" },
         { status: 400 }
       );
     }
-
-    // Validate price
-    // const validatedPrice = validatePrice(price);
-    // const validatedDiscountedPrice = discountedPrice
-    //   ? validatePrice(discountedPrice)
-    //   : null;
-
-    // Validate discount price
-    // if (
-    //   validatedDiscountedPrice &&
-    //   validatedDiscountedPrice >= validatedPrice
-    // ) {
-    //   return NextResponse.json(
-    //     { error: "Discounted price must be less than regular price" },
-    //     { status: 400 }
-    //   );
-    // }
 
     // Process image uploads
     const imageUrls = [...existingImageUrls];
@@ -243,37 +224,22 @@ export async function POST(request) {
             );
           }
 
-          // Convert file to buffer and save temporarily
+          // Convert file to buffer
           const bytes = await imageFile.arrayBuffer();
           const buffer = Buffer.from(bytes);
 
-          // Create temp file path
-          const tempDir = "./public/temp";
-          const uniqueSuffix =
-            Date.now() + "-" + Math.round(Math.random() * 1e9);
+          // Generate unique filename
+          const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
           const ext = path.extname(imageFile.name);
           const baseName = path.basename(imageFile.name, ext);
           const fileName = `${baseName}-${uniqueSuffix}${ext}`;
-          const tempFilePath = path.join(tempDir, fileName);
 
-          // Ensure temp directory exists
-          if (!fs.existsSync(tempDir)) {
-            fs.mkdirSync(tempDir, { recursive: true });
-          }
-
-          // Write file to temp location
-          fs.writeFileSync(tempFilePath, buffer);
-
-          // Upload to cloudinary
-          const cloudinaryResponse = await uploadOnCloudinary(tempFilePath);
+          // Upload directly to cloudinary from buffer (Vercel-compatible)
+          const cloudinaryResponse = await uploadBufferToCloudinary(buffer, fileName);
 
           if (cloudinaryResponse && cloudinaryResponse.secure_url) {
             imageUrls.push(cloudinaryResponse.secure_url);
           } else {
-            // Clean up temp file if cloudinary upload failed
-            if (fs.existsSync(tempFilePath)) {
-              fs.unlinkSync(tempFilePath);
-            }
             return NextResponse.json(
               { error: "Failed to upload image to cloud storage" },
               { status: 500 }
@@ -282,7 +248,7 @@ export async function POST(request) {
         } catch (uploadError) {
           console.error("Image upload error:", uploadError);
           return NextResponse.json(
-            { error: "Failed to process image upload" },
+            { error: `Failed to process image upload: ${uploadError.message}` },
             { status: 500 }
           );
         }
@@ -492,48 +458,30 @@ export async function PATCH(request) {
               { error: "Each image must be less than 5MB" },
               { status: 400 }
             );
-          }
-
-          // Convert file to buffer and save temporarily
+          }          // Convert file to buffer
           const bytes = await imageFile.arrayBuffer();
           const buffer = Buffer.from(bytes);
 
-          // Create temp file path
-          const tempDir = "./public/temp";
-          const uniqueSuffix =
-            Date.now() + "-" + Math.round(Math.random() * 1e9);
+          // Generate unique filename
+          const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
           const ext = path.extname(imageFile.name);
           const baseName = path.basename(imageFile.name, ext);
           const fileName = `${baseName}-${uniqueSuffix}${ext}`;
-          const tempFilePath = path.join(tempDir, fileName);
 
-          // Ensure temp directory exists
-          if (!fs.existsSync(tempDir)) {
-            fs.mkdirSync(tempDir, { recursive: true });
-          }
-
-          // Write file to temp location
-          fs.writeFileSync(tempFilePath, buffer);
-
-          // Upload to cloudinary
-          const cloudinaryResponse = await uploadOnCloudinary(tempFilePath);
+          // Upload directly to cloudinary from buffer (Vercel-compatible)
+          const cloudinaryResponse = await uploadBufferToCloudinary(buffer, fileName);
 
           if (cloudinaryResponse && cloudinaryResponse.secure_url) {
             imageUrls.push(cloudinaryResponse.secure_url);
           } else {
-            // Clean up temp file if cloudinary upload failed
-            if (fs.existsSync(tempFilePath)) {
-              fs.unlinkSync(tempFilePath);
-            }
             return NextResponse.json(
               { error: "Failed to upload image to cloud storage" },
               { status: 500 }
             );
-          }
-        } catch (uploadError) {
+          }        } catch (uploadError) {
           console.error("Image upload error:", uploadError);
           return NextResponse.json(
-            { error: "Failed to process image upload" },
+            { error: `Failed to process image upload: ${uploadError.message}` },
             { status: 500 }
           );
         }
