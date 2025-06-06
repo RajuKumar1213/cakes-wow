@@ -25,19 +25,26 @@ const DualRangeSlider: React.FC<DualRangeSliderProps> = ({
   const getPercentage = (val: number) => {
     return Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
   };
-
-  const handleMouseDown = (thumb: 'min' | 'max') => (e: React.MouseEvent) => {
+  const handleStart = (thumb: 'min' | 'max') => (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(thumb);
   };
 
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
+  const getClientX = (e: MouseEvent | TouchEvent): number => {
+    if ('touches' in e) {
+      return e.touches[0]?.clientX || 0;
+    }
+    return e.clientX;
+  };
+
+  const handleMove = useCallback(
+    (e: MouseEvent | TouchEvent) => {
       if (!isDragging || !trackRef.current) return;
 
       const rect = trackRef.current.getBoundingClientRect();
-      const percentage = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+      const clientX = getClientX(e);
+      const percentage = Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100));
       const newValue = min + (percentage / 100) * (max - min);
       const steppedValue = Math.round(newValue / step) * step;
       const clampedValue = Math.max(min, Math.min(max, steppedValue));
@@ -51,31 +58,38 @@ const DualRangeSlider: React.FC<DualRangeSliderProps> = ({
     [isDragging, min, max, step, value, onChange]
   );
 
-  const handleMouseUp = useCallback(() => {
+  const handleEnd = useCallback(() => {
     setIsDragging(null);
   }, []);
 
   React.useEffect(() => {
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      // Mouse events
+      document.addEventListener('mousemove', handleMove);
+      document.addEventListener('mouseup', handleEnd);
+      
+      // Touch events for mobile
+      document.addEventListener('touchmove', handleMove, { passive: false });
+      document.addEventListener('touchend', handleEnd);
+      
       return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('mousemove', handleMove);
+        document.removeEventListener('mouseup', handleEnd);
+        document.removeEventListener('touchmove', handleMove);
+        document.removeEventListener('touchend', handleEnd);
       };
     }
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }, [isDragging, handleMove, handleEnd]);
 
   const minPercentage = getPercentage(value[0]);
   const maxPercentage = getPercentage(value[1]);
-
   return (
-    <div className={`relative w-full py-4 ${className}`}>
+    <div className={`relative w-full py-4 select-none ${className}`}>
       {/* Track container with proper overflow hidden */}
-      <div className="relative w-full h-2 px-2">
+      <div className="relative w-full h-2 px-2 touch-none">
         <div
           ref={trackRef}
-          className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden"
+          className="relative w-full h-2 bg-gray-200 rounded-full overflow-hidden cursor-pointer"
         >
           {/* Active range */}
           <div
@@ -86,29 +100,30 @@ const DualRangeSlider: React.FC<DualRangeSliderProps> = ({
             }}
           />
         </div>
-        
-        {/* Min thumb - positioned absolutely within the track container */}
+          {/* Min thumb - positioned absolutely within the track container */}
         <button
           type="button"
-          className={`absolute top-1/2 w-5 h-5 bg-white border-2 border-pink-500 rounded-full transform -translate-y-1/2 -translate-x-1/2 shadow-lg transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-opacity-50 z-20 ${
+          className={`absolute top-1/2 w-5 h-5 bg-white border-2 border-pink-500 rounded-full transform -translate-y-1/2 -translate-x-1/2 shadow-lg transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-opacity-50 z-20 touch-none select-none ${
             isDragging === 'min' ? 'scale-110 border-pink-600 shadow-xl' : ''
           }`}
           style={{ 
             left: `calc(${minPercentage}% + 8px)`, // 8px offset for padding
           }}
-          onMouseDown={handleMouseDown('min')}
+          onMouseDown={handleStart('min')}
+          onTouchStart={handleStart('min')}
         />
         
         {/* Max thumb - positioned absolutely within the track container */}
         <button
           type="button"
-          className={`absolute top-1/2 w-5 h-5 bg-white border-2 border-purple-500 rounded-full transform -translate-y-1/2 -translate-x-1/2 shadow-lg transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 z-20 ${
+          className={`absolute top-1/2 w-5 h-5 bg-white border-2 border-purple-500 rounded-full transform -translate-y-1/2 -translate-x-1/2 shadow-lg transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 z-20 touch-none select-none ${
             isDragging === 'max' ? 'scale-110 border-purple-600 shadow-xl' : ''
           }`}
           style={{ 
             left: `calc(${maxPercentage}% + 8px)`, // 8px offset for padding
           }}
-          onMouseDown={handleMouseDown('max')}
+          onMouseDown={handleStart('max')}
+          onTouchStart={handleStart('max')}
         />
       </div>
     </div>

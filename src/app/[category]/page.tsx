@@ -103,13 +103,11 @@ const CategoryPage = () => {
     const params = new URLSearchParams();
 
     // Add category
-    params.append('category', categorySlug);
-
-    // Add price range - only add if significantly different from defaults
-    if (priceRange[0] > 100) { // Only filter if minimum price is meaningfully above 0
+    params.append('category', categorySlug);    // Add price range - only add if meaningfully different from full range
+    if (priceRange[0] > 0) { // Add minPrice if greater than 0
       params.append('minPrice', priceRange[0].toString());
     }
-    if (priceRange[1] < 4900) { // Only filter if maximum price is meaningfully below max
+    if (priceRange[1] < 5000) { // Add maxPrice if less than 5000
       params.append('maxPrice', priceRange[1].toString());
     }
 
