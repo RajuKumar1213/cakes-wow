@@ -33,7 +33,7 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
       const originalStyle = window.getComputedStyle(document.body).overflow;
       // Prevent scrolling
       document.body.style.overflow = 'hidden';
-      
+
       // Cleanup function to restore scroll
       return () => {
         document.body.style.overflow = originalStyle;
@@ -70,13 +70,12 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
       } else {
         setError(response.data.error || "Failed to send OTP");
       }
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (error) {
+      setError("Network error. Please try again." + " " + (error instanceof Error ? error.message : ""));
     } finally {
       setLoading(false);
     }
   };
-
   const handleOtpSubmit = async () => {
     setLoading(true);
     setError("");
@@ -90,7 +89,10 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
       if (response.status === 200) {
         setSuccess("Login successful!");
         login(response.data.user);
-        router.push("/");
+
+        // Close modal first, then redirect
+        setShowLogin(false);
+
       } else {
         setError(response.data.error || "Invalid OTP");
       }
@@ -134,8 +136,9 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
     <div className={`fixed inset-0 z-50 ${isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}>
       {/* Modal Backdrop - only visible on larger screens */}
-      <div className="hidden md:block absolute inset-0 bg-black/60" onClick={() => setShowLogin(false)}></div>      {/* Modal Content */}
-      <div className={`w-full h-full md:absolute md:top-1/2 md:left-1/2 md:transform md:-translate-x-1/2 md:-translate-y-1/2 md:w-96 md:h-96 bg-white md:bg-transparent md:rounded-lg md:overflow-hidden flex flex-col ${isVisible ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}`}>
+      <div className="hidden md:block absolute inset-0 bg-black/60" onClick={() => setShowLogin(false)}></div>
+      {/* Modal Content */}
+      <div className={`w-full h-full md:absolute md:top-1/2 md:left-1/2 md:transform md:-translate-x-1/2 md:-translate-y-1/2 md:w-[26rem] md:h-auto md:max-h-[85vh] bg-white md:bg-transparent md:rounded-lg md:overflow-visible flex flex-col ${isVisible ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}`}>
 
         {/* Decorative Background - only on mobile */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none md:hidden">
@@ -150,21 +153,20 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
         >
           <X className="w-4 h-4 text-gray-600" />
         </button>        {/* Content */}
-        <div className="flex-1 flex flex-col px-6 py-8 md:px-4 md:py-6 relative md:bg-white md:shadow-lg md:rounded-lg">
-          {/* Header - Top section */}
-          <div className="text-center pt-8 md:pt-4 pb-8 md:pb-6">
-            <div className="w-20 h-20 md:w-16 md:h-16 mx-auto bg-gradient-to-br from-orange-400 via-pink-500 to-purple-500 rounded-full flex items-center justify-center shadow-xl mb-4 md:mb-3 border-4 border-white/20">
-              <span className="text-3xl md:text-2xl">🍰</span>
+        <div className="flex-1 flex flex-col px-6 py-8 md:px-6 md:py-5 relative md:bg-white md:shadow-lg md:rounded-lg md:min-h-[30rem]">          {/* Header - Top section */}
+          <div className="text-center pt-8 md:pt-3 pb-8 md:pb-4">
+            <div className="w-20 h-20 md:hidden mx-auto bg-gradient-to-br from-orange-400 via-pink-500 to-purple-500 rounded-full flex items-center justify-center shadow-xl mb-4 border-4 border-white/20">
+              <span className="text-3xl">🍰</span>
             </div>
-            <h1 className="text-3xl md:text-xl font-bold text-gray-900 mb-3 md:mb-2 tracking-tight">
+            <h1 className="text-3xl md:text-lg font-bold text-gray-900 mb-3 md:mb-1 tracking-tight">
               {step === 1 ? "Welcome Back!" : "Verify Phone"}
             </h1>
-            <p className="text-gray-600 text-lg md:text-sm font-medium">
+            <p className="text-gray-600 text-lg md:text-xs font-medium">
               {step === 1
                 ? "Enter your phone to continue"
                 : `Code sent to ${phoneNumber}`}
             </p>
-          </div>          {/* Alert Messages */}
+          </div>{/* Alert Messages */}
           {error && (
             <div className="mb-6 md:mb-4 p-4 md:p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 shadow-sm">
               <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
@@ -177,9 +179,8 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
               <p className="text-green-700 text-sm font-medium">{success}</p>
             </div>
           )}
-
           {/* Main Input Section - Centered in top portion */}
-          <div className="flex-1 flex flex-col  max-w-sm mx-auto w-full">
+          <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
             {/* Step 1: Phone Number Input */}
             {step === 1 && (
               <div className="space-y-6 md:space-y-4">
@@ -205,7 +206,6 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
                 </div>
               </div>
             )}
-
             {/* Step 2: OTP Input */}
             {step === 2 && (
               <div className="space-y-6 md:space-y-4">
@@ -223,7 +223,7 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
                     onChange={(e) => setOtp(e.target.value)}
                     placeholder="• • • • • •"
                     maxLength={6}
-                    className="w-full px-6 py-4 md:px-4 md:py-3 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 text-2xl md:text-xl text-center font-mono tracking-[0.3em] focus:outline-none focus:ring-4 focus:ring-green-500/20 focus:border-green-500 shadow-sm hover:shadow-md transition-all duration-300"
+                    className="w-full px-6 py-4 md:px-4 md:py-3 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 text-2xl md:text-lg text-center font-mono tracking-[0.3em] focus:outline-none focus:ring-4 focus:ring-green-500/20 focus:border-green-500 shadow-sm hover:shadow-md transition-all duration-300"
                     required
                   />
                   <p className="mt-3 md:mt-2 text-gray-500 text-sm text-center font-medium">
@@ -232,7 +232,7 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
                 </div>
 
                 {/* Back and Resend options */}
-                <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center justify-between pt-2 md:pt-3">
                   <button
                     type="button"
                     onClick={handleBackToPhone}
@@ -252,9 +252,8 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
               </div>
             )}
           </div>
-
           {/* Button Section - Bottom */}
-          <div className="pt-8 md:pt-6 pb-4 md:pb-2">
+          <div className="pt-8 md:pt-4 pb-4 md:pb-2">
             <div className="max-w-sm mx-auto w-full">
               {step === 1 ? (
                 <button

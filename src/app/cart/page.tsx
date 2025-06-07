@@ -1,17 +1,17 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import Image from 'next/image';
 import Link from 'next/link';
-import { 
-  Minus, 
-  Plus, 
-  X, 
-  ShoppingBag, 
-  ArrowLeft, 
-  Shield, 
-  CreditCard, 
+import {
+  Minus,
+  Plus,
+  X,
+  ShoppingBag,
+  ArrowLeft,
+  Shield,
+  CreditCard,
   Heart,
   Star,
   Gift,
@@ -22,6 +22,9 @@ import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AddOns from '@/components/AddOns';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import Login from '@/components/Login';
 
 const trustFeatures = [
   {
@@ -41,18 +44,21 @@ const trustFeatures = [
   }
 ];
 
-export default function CartPage() {  
-  const { 
-    items, 
-    totalItems, 
-    totalPrice, 
-    updateQuantity, 
-    removeFromCart, 
+export default function CartPage() {
+  const {
+    items,
+    totalItems,
+    totalPrice,
+    updateQuantity,
+    removeFromCart,
     clearCart,
   } = useCart();
-  // Load selected add-ons from localStorage
+
+  const { user } = useAuth();
+  const router = useRouter();
+  const [showLogin, setShowLogin] = useState(false);
   const [selectedAddOns, setSelectedAddOns] = React.useState<any[]>([]);
-  const [addOnQuantities, setAddOnQuantities] = React.useState<{[key: string]: number}>({});
+  const [addOnQuantities, setAddOnQuantities] = React.useState<{ [key: string]: number }>({});
   // Function to load add-ons from localStorage
   const loadAddOnsFromStorage = React.useCallback(() => {
     try {
@@ -62,7 +68,7 @@ export default function CartPage() {
         setSelectedAddOns(addOns);
         // Initialize quantities to 1 for each add-on that doesn't have a quantity yet
         setAddOnQuantities(prev => {
-          const quantities: {[key: string]: number} = { ...prev };
+          const quantities: { [key: string]: number } = { ...prev };
           addOns.forEach((addOn: any) => {
             if (!quantities[addOn._id]) {
               quantities[addOn._id] = 1;
@@ -110,7 +116,7 @@ export default function CartPage() {
       const updatedAddOns = selectedAddOns.filter(addOn => addOn._id !== addOnId);
       setSelectedAddOns(updatedAddOns);
       localStorage.setItem('bakingo-selected-addons', JSON.stringify(updatedAddOns));
-      
+
       const newQuantities = { ...addOnQuantities };
       delete newQuantities[addOnId];
       setAddOnQuantities(newQuantities);
@@ -129,54 +135,57 @@ export default function CartPage() {
     }, 0);
   };
 
-  if (items.length === 0) {
-    return (      <>
-        <Header />
-        <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-8 md:py-12">
-          <div className="max-w-5xl mx-auto px-4">
-            <div className="bg-white rounded-2xl shadow-xl p-6 md:p-12 text-center">
-              <div className="relative mb-6 md:mb-8">                <div className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ShoppingBag className="w-10 h-10 md:w-12 md:h-12 text-orange-600" />
-                </div>
-                <div className="absolute -top-2 -right-2 w-6 h-6 md:w-8 md:h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs md:text-sm font-bold">0</span>
-                </div>
-              </div>
-              
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-3 md:mb-4">
-                Your Cart is Empty
-              </h2>
-              <p className="text-gray-600 mb-6 md:mb-8 text-base md:text-lg">
-                Discover our delicious collection of fresh cakes and treats!
-              </p>              <Link href="/">
-                <Button className="bg-orange-600 hover:bg-orange-700 text-white px-6 md:px-8 py-3 md:py-4 text-base md:text-lg rounded">
-                  <ArrowLeft className="w-4 h-4 md:w-5 md:h-5 mr-2 md:mr-3" />
-                  Start Shopping
-                </Button>
-              </Link>
 
-              {/* Trust Features */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-8 md:mt-12 pt-6 md:pt-8 border-t border-gray-200">
-                {trustFeatures.map((feature, index) => (
-                  <div key={index} className="flex flex-col items-center text-center">                    <div className="w-10 h-10 md:w-12 md:h-12 bg-orange-600 rounded-full flex items-center justify-center mb-2 md:mb-3">
-                      <feature.icon className="w-5 h-5 md:w-6 md:h-6 text-white" />
-                    </div>
-                    <h3 className="font-semibold text-gray-800 mb-1 text-sm md:text-base">{feature.title}</h3>
-                    <p className="text-xs md:text-sm text-gray-600">{feature.description}</p>
-                  </div>
-                ))}
+
+  if (items.length === 0) {
+    return (<>
+      <Header />
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-8 md:py-12">
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 md:p-12 text-center">
+            <div className="relative mb-6 md:mb-8">                <div className="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-br from-orange-100 to-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ShoppingBag className="w-10 h-10 md:w-12 md:h-12 text-orange-600" />
+            </div>
+              <div className="absolute -top-2 -right-2 w-6 h-6 md:w-8 md:h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs md:text-sm font-bold">0</span>
               </div>
+            </div>
+
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-3 md:mb-4">
+              Your Cart is Empty
+            </h2>
+            <p className="text-gray-600 mb-6 md:mb-8 text-base md:text-lg">
+              Discover our delicious collection of fresh cakes and treats!
+            </p>              <Link href="/">
+              <Button className="bg-orange-600 hover:bg-orange-700 text-white px-6 md:px-8 py-3 md:py-4 text-base md:text-lg rounded">
+                <ArrowLeft className="w-4 h-4 md:w-5 md:h-5 mr-2 md:mr-3" />
+                Start Shopping
+              </Button>
+            </Link>
+
+            {/* Trust Features */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-8 md:mt-12 pt-6 md:pt-8 border-t border-gray-200">
+              {trustFeatures.map((feature, index) => (
+                <div key={index} className="flex flex-col items-center text-center">                    <div className="w-10 h-10 md:w-12 md:h-12 bg-orange-600 rounded-full flex items-center justify-center mb-2 md:mb-3">
+                  <feature.icon className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                </div>
+                  <h3 className="font-semibold text-gray-800 mb-1 text-sm md:text-base">{feature.title}</h3>
+                  <p className="text-xs md:text-sm text-gray-600">{feature.description}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
-        <Footer />
-      </>
+      </div>
+      <Footer />
+    </>
     );
   }
 
   return (
     <>
-      <Header />      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-4 md:py-8 pb-20 md:pb-8">
+      <Header />
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-4 md:py-8 pb-20 md:pb-8">
         <div className="max-w-5xl mx-auto px-2 md:px-4">          {/* Header Section */}
           <div className="flex items-center justify-between mb-4 md:mb-6">
             <div>
@@ -217,7 +226,7 @@ export default function CartPage() {
                 <div className="bg-orange-600 text-white p-3 md:p-4">
                   <h2 className="text-base md:text-lg font-semibold">Your Items</h2>
                 </div>
-                
+
                 <div className="divide-y divide-gray-100">
                   {items.map((item) => (
                     <div key={item.id} className="p-3 md:p-4 hover:bg-gray-50 transition-colors">
@@ -241,7 +250,7 @@ export default function CartPage() {
                               {item.name}
                             </h3>
                           </Link>
-                          
+
                           <div className="flex items-center gap-2 md:gap-3 mb-2">
                             <span className="bg-gray-100 px-2 py-0.5 md:py-1 rounded-full text-xs text-gray-600">
                               {item.weight}
@@ -340,7 +349,8 @@ export default function CartPage() {
                     </div>
                   ))}
                 </div>
-              </div>              {/* Add-ons Section - Show selected add-ons from localStorage */}
+              </div>
+              {/* Add-ons Section - Show selected add-ons from localStorage */}
               {selectedAddOns.length > 0 && (
                 <div className="bg-white rounded shadow-xl overflow-hidden">
                   <div className="bg-orange-600 text-white p-3 md:p-4">
@@ -350,7 +360,7 @@ export default function CartPage() {
                     </h2>
                     <p className="text-orange-100 mt-1 text-xs md:text-sm">Extra special touches for your order</p>
                   </div>
-                  
+
                   <div className="p-3 md:p-4">
                     <div className="space-y-2 md:space-y-3">
                       {selectedAddOns.map((addOn) => (
@@ -376,7 +386,7 @@ export default function CartPage() {
                               </div>
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-2 md:gap-3">
                             {/* Quantity Controls */}
                             <div className="flex items-center bg-white rounded border">
@@ -396,7 +406,7 @@ export default function CartPage() {
                                 <Plus className="w-3 h-3" />
                               </button>
                             </div>
-                            
+
                             {/* Total Price */}
                             <span className="font-semibold text-orange-600 text-xs md:text-sm min-w-[2.5rem] md:min-w-[3rem] text-right">
                               ₹{(addOn.price * (addOnQuantities[addOn._id] || 1))}
@@ -404,7 +414,8 @@ export default function CartPage() {
                           </div>
                         </div>
                       ))}
-                    </div>                    <div className="mt-3 md:mt-4 pt-2 md:pt-3 border-t border-orange-200">
+                    </div>
+                    <div className="mt-3 md:mt-4 pt-2 md:pt-3 border-t border-orange-200">
                       <div className="flex justify-between items-center font-bold text-sm md:text-base">
                         <span className="text-gray-800">Add-ons Total:</span>
                         <span className="text-orange-600">₹{getAddOnsTotal()}</span>
@@ -423,10 +434,10 @@ export default function CartPage() {
                   </h2>
                   <p className="text-pink-100 mt-1 text-xs md:text-sm">Make your order extra special with these add-ons</p>
                 </div>
-                
+
                 <div className="p-2 md:p-4">
-                  <AddOns 
-                    showTitle={false} 
+                  <AddOns
+                    showTitle={false}
                     layout='flat'
                     maxItems={6}
                   />
@@ -438,21 +449,21 @@ export default function CartPage() {
                 <div className="bg-orange-600 text-white p-4">
                   <h2 className="text-lg font-semibold">Order Summary</h2>
                 </div>
-                
+
                 <div className="p-4">
                   <div className="space-y-3 mb-4">
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600 text-sm">Subtotal ({totalItems} items)</span>
                       <span className="font-semibold text-sm">₹{totalPrice.toFixed(2)}</span>
                     </div>
-                    
+
                     {selectedAddOns.length > 0 && (
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600 text-sm">Add-ons ({selectedAddOns.length} items)</span>
                         <span className="font-semibold text-sm">₹{getAddOnsTotal().toFixed(2)}</span>
                       </div>
                     )}
-                    
+
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600 text-sm">Delivery</span>
                       <div className="text-right">
@@ -465,7 +476,7 @@ export default function CartPage() {
                       <span className="text-gray-600 text-sm">Taxes & Fees</span>
                       <span className="font-semibold text-sm">₹0</span>
                     </div>
-                    
+
                     <div className="border-t pt-3">
                       <div className="flex justify-between text-lg font-bold">
                         <span>Total</span>
@@ -478,12 +489,12 @@ export default function CartPage() {
                   </div>
 
                   <div className="space-y-2 mb-4">
-                    <Link href="/checkout">
-                      <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 text-base rounded">
-                        Proceed to Checkout
-                      </Button>
-                    </Link>
-                    
+
+                    <Button onClick={() => !user ? setShowLogin(true) : router.push('/checkout')} className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 text-base rounded">
+                      Proceed to Checkout
+                    </Button>
+
+
                     <Link href="/">
                       <Button variant="outline" className="w-full py-2 rounded border-gray-300 hover:bg-gray-50 text-sm">
                         <ArrowLeft className="w-4 h-4 mr-2" />
@@ -520,7 +531,8 @@ export default function CartPage() {
                   </div>
 
                   {/* Contact Info */}
-                  <div className="mt-4 text-center">                    <p className="text-sm text-gray-600">
+                  <div className="mt-4 text-center">
+                    <p className="text-sm text-gray-600">
                       Need help? Call us at{' '}
                       <a href="tel:+911234567890" className="text-orange-600 font-semibold hover:underline">
                         +91 12345 67890
@@ -544,15 +556,19 @@ export default function CartPage() {
                   <div className="text-xs text-gray-500">+ {selectedAddOns.length} add-ons</div>
                 )}
               </div>
-              <Link href="/checkout" className="flex-shrink-0">
-                <Button className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 text-sm md:text-base rounded-lg">
-                  Checkout
-                </Button>
-              </Link>
+
+              <Button onClick={() => !user ? setShowLogin(true) : router.push('/checkout')} className="flex-shrink-0 bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 text-sm md:text-base rounded-lg">
+                Checkout
+              </Button>
+
             </div>
           </div>
         </div>
       </div>
+
+      {showLogin && (
+        <Login setShowLogin={setShowLogin} isVisible={showLogin} />
+      )}
       <Footer />
     </>
   );

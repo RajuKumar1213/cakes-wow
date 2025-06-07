@@ -49,14 +49,18 @@ export async function POST(request) {
       phoneNumber,
       otp
     });
-    await otpDoc.save();
-
-    // Send OTP via SMS
-    const smsResult = await sendOTP(phoneNumber, otp);
+    await otpDoc.save();    // Send OTP via WhatsApp
+    const whatsappResult = await sendOTP(phoneNumber, otp);
     
-    if (!smsResult.success) {
+    if (!whatsappResult.success) {
+      // If WhatsApp sending fails, clean up the saved OTP
+      await Otp.deleteMany({ phoneNumber });
+      
       return NextResponse.json(
-        { error: 'Failed to send OTP. Please try again.' },
+        { 
+          error: 'Failed to send OTP via WhatsApp. Please try again.',
+          details: whatsappResult.error 
+        },
         { status: 500 }
       );
     }

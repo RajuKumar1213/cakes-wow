@@ -18,6 +18,23 @@ const UserSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
+  },
+  name: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  email: {
+    type: String,
+    trim: true,
+    lowercase: true,
+    unique: true,
+    sparse: true // Allows multiple users with no email
+  },
+  address : {
+    type: String,
+    trim: true,
+    default: ''
   }
 });
 
