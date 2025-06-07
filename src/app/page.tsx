@@ -220,14 +220,14 @@ export default function Home() {
             </h2>
             <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-2 md:p-10 shadow-xl border border-white/20">
               <p className="font-inter text-gray-700 leading-relaxed mb-8 text-lg">
-                Bakingo is an FSSAI-certified bakery where every dessert tells a
+                Cakes Wow is an FSSAI-certified bakery where every dessert tells a
                 story! Our bakery came to light intending to make your remarkable
                 occasions even sweeter and more memorable. We bake perfection with
                 quality ingredients into impeccable cakes, pastries, brownies,
                 cupcakes, and much more. We specialise in delivering exuberant
                 smiles to our customers in around 30 cities across India,
                 including Delhi, Mumbai, Bengaluru, Hyderabad, Ahmedabad, Chennai,
-                Kolkata, Pune, and so forth. Bakingo is a haven for dessert lovers
+                Kolkata, Pune, and so forth. Cakes Wow is a haven for dessert lovers
                 who want to indulge in scrumptious treats and fill their
                 celebrations with cherished memories.
               </p>
