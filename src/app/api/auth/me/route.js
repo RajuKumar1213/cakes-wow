@@ -34,15 +34,16 @@ export async function GET() {
         { error: 'User not found' },
         { status: 404 }
       );
-    }
-
-    return NextResponse.json({
+    }    return NextResponse.json({
       user: {
         id: user._id,
         phoneNumber: user.phoneNumber,
+        name: user.name || '',
+        email: user.email || '',
         isVerified: user.isVerified,
         createdAt: user.createdAt,
-        updatedAt: user.updatedAt
+        updatedAt: user.updatedAt,
+        address: user.address || []
       }
     });
 

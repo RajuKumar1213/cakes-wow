@@ -1,5 +1,52 @@
 import mongoose from 'mongoose';
 
+const AddressSchema = new mongoose.Schema({
+  receiverName: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  prefix: {
+    type: String,
+    required: true,
+    enum: ['Mr.', 'Ms.', 'Mrs.', 'Dr.'],
+    default: 'Mr.'
+  },
+  city: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  pinCode: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  fullAddress: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  phoneNumber: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  alternatePhoneNumber: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  addressType: {
+    type: String,
+    required: true,
+    enum: ['Home', 'Office', 'Others'],
+    default: 'Home'
+  }
+}, {
+  timestamps: true
+});
+
 const UserSchema = new mongoose.Schema({
   phoneNumber: {
     type: String,
@@ -31,10 +78,9 @@ const UserSchema = new mongoose.Schema({
     unique: true,
     sparse: true // Allows multiple users with no email
   },
-  address : {
-    type: String,
-    trim: true,
-    default: ''
+  address: {
+    type: [AddressSchema],
+    default: []
   }
 });
 
@@ -44,4 +90,9 @@ UserSchema.pre('save', function(next) {
   next();
 });
 
-export default mongoose.models.User || mongoose.model('User', UserSchema);
+// Clear existing model if it exists to avoid conflicts
+if (mongoose.models.User) {
+  delete mongoose.models.User;
+}
+
+export default mongoose.model('User', UserSchema);

@@ -8,8 +8,9 @@ const JWT_SECRET = new TextEncoder().encode(
 
 // Define protected routes
 const protectedRoutes = ['/dashboard'];
-const adminProtectedRoutes = ['/admin', '/admin-setup']; // Admin routes that require admin_token
+const adminProtectedRoutes = ['/admin']; // Admin routes that require admin_token
 const adminAuthRoutes = ['/admin-login']; // Admin login route
+const adminSetupRoutes = ['/admin-setup']; // Admin setup route (accessible without token)
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -30,17 +31,20 @@ export async function middleware(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some(route => 
     pathname.startsWith(route)
   );
-  
-  // Check if the route is an admin protected route
+    // Check if the route is an admin protected route
   const isAdminProtectedRoute = adminProtectedRoutes.some(route => 
     pathname.startsWith(route)
   );
   
+  // Check if the route is an admin setup route
+  const isAdminSetupRoute = adminSetupRoutes.some(route => 
+    pathname.startsWith(route)
+  );
 
   // Check if the route is an admin auth route (admin-login)
   const isAdminAuthRoute = adminAuthRoutes.some(route => 
     pathname.startsWith(route)
-  );  // Verify JWT token if it exists
+  );// Verify JWT token if it exists
   let isValidToken = false;
   let isValidAdminToken = false;
   
@@ -65,9 +69,15 @@ export async function middleware(request: NextRequest) {
       // Admin token is invalid, but don't redirect here, just mark as invalid
       console.log('Invalid admin token:', error);
       isValidAdminToken = false;
-    }
-  }  // Redirect logic with proper checks to prevent loops
-  // 1. Admin protected routes - require admin token
+    }  }  
+  
+  // Early return for admin setup route - allow access without any token validation
+  if (isAdminSetupRoute) {
+    return NextResponse.next();
+  }
+
+  // Redirect logic with proper checks to prevent loops
+  // 1. Admin protected routes - require admin token (excluding admin-setup)
   if (isAdminProtectedRoute && !isValidAdminToken) {
     // Only redirect if not already on admin-login page
     if (pathname !== '/admin-login') {
@@ -78,9 +88,7 @@ export async function middleware(request: NextRequest) {
       return response;
     }
   }
-  
-
-  // 3. Admin already logged in trying to access admin-login
+    // 2. Admin already logged in trying to access admin-login
   if (isAdminAuthRoute && isValidAdminToken) {
     // Only redirect if not already on admin page
     if (pathname !== '/admin') {

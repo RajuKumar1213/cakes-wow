@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, ReactNode, Key } from 'react';
 
 // Types
 export interface AddOn {
@@ -12,6 +12,7 @@ export interface AddOn {
 }
 
 export interface CartItem {
+  _id: Key | null | undefined;
   id: string;
   productId: string;
   name: string;
@@ -132,6 +133,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
           selectedWeight,
           weightOptions: product.weightOptions,
           selectedAddOns: selectedAddOns || [],
+          _id: undefined
         };
         
         newItems = [...state.items, newItem];

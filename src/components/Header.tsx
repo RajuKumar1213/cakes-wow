@@ -196,7 +196,7 @@ const Header = () => {
                 <MapPin className="w-5 h-5 text-red-500" />
                 <div>
                   <div className="text-sm text-gray-500">Deliver to</div>
-                  <div className="font-medium">Select Location</div>
+                  <div className="font-medium">Hyderabad</div>
                 </div>
               </div>{" "}
               {/* Search */}
@@ -299,7 +299,7 @@ const Header = () => {
                       >
                         {" "}
                         <button
-                          className="flex items-center space-x-1 hover:text-red-500 font-medium whitespace-nowrap text-sm px-3 py-2 rounded-md transition-colors duration-200"
+                          className="flex items-center space-x-1 hover:text-red-500 font-medium whitespace-nowrap text-sm px-1 py-2 rounded-md transition-colors duration-200"
                           onClick={(e) => {
                             if (groupedCategories[group].length === 1) {
                               handleCategoryClick(
@@ -317,11 +317,9 @@ const Header = () => {
                         {isDropdownOpen === group.toLowerCase() &&
                           groupedCategories[group].length > 1 && (
                             <div
-                              className={`absolute top-full -left-14 bg-white/95 backdrop-blur-xl shadow-2xl rounded-2xl border border-pink-100/50 overflow-hidden`}
+                              className={`absolute top-full ${group == "Famous Category Cake" ? "-left-80" : "-left-1"} bg-white/95 backdrop-blur-xl shadow-2xl rounded-2xl border border-pink-100/50 overflow-hidden`}
                               style={{
-                                boxShadow:
-                                  "0 20px 40px rgba(0,0,0,0.15), 0 0 20px rgba(236, 72, 153, 0.1)",
-                                marginTop: "4px",
+                                boxShadow: "0 20px 40px rgba(5, 3, 3, 0.15), 0 0 20px rgba(236, 72, 153, 0.1)",
                                 zIndex: 9999,
                               }}
                             >
@@ -330,15 +328,7 @@ const Header = () => {
                                 {Object.keys(categoriesByType).length > 1 ? (
                                   // Multiple types - organize by type with dynamic width
                                   <div
-                                    className="flex flex-row gap-4" // This class might be overridden by style below
-                                    // style={{
-                                    //   display: "grid",
-                                    //   gridTemplateColumns: `repeat(${Math.min(
-                                    //     Object.keys(categoriesByType).length,
-                                    //     5
-                                    //   )}, minmax(10px, max-content))`,
-                                    //   gap: "0rem", // MODIFIED: 1.5rem to 1rem
-                                    // }}
+                                    className="flex flex-row gap-4" // This class 
                                   >
                                     {Object.entries(categoriesByType).map(
                                       (
@@ -352,7 +342,7 @@ const Header = () => {
                                             index % 2 === 0
                                               ? "bg-gradient-to-br from-pink-50/80 to-orange-50/80"
                                               : "bg-gradient-to-br from-white to-pink-50/30"
-                                          }`}
+                                            }`}
                                         >
                                           {" "}
                                           <div className="p-4">

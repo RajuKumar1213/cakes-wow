@@ -71,6 +71,34 @@ const customerInfoSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
+  // New delivery detail fields
+  deliveryOccasion: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  relation: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  senderName: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  messageOnCard: {
+    type: String,
+    trim: true,
+    default: '',
+    maxLength: 200,
+  },
+  specialInstructions: {
+    type: String,
+    trim: true,
+    default: '',
+    maxLength: 150,
+  },
 });
 
 const orderSchema = new mongoose.Schema({
@@ -84,10 +112,24 @@ const orderSchema = new mongoose.Schema({
   customerInfo: {
     type: customerInfoSchema,
     required: true,
-  },
-  totalAmount: {
+  },  totalAmount: {
     type: Number,
     required: true,
+    min: 0,
+  },
+  subtotal: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  deliveryCharge: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  onlineDiscount: {
+    type: Number,
+    default: 0,
     min: 0,
   },
   status: {
@@ -101,11 +143,27 @@ const orderSchema = new mongoose.Schema({
     required: true,
     enum: ['pending', 'paid', 'failed', 'refunded'],
     default: 'pending',
-  },
-  paymentMethod: {
+  },  paymentMethod: {
     type: String,
     enum: ['cash_on_delivery', 'online', 'card'],
     default: 'cash_on_delivery',
+  },
+  // Razorpay payment fields
+  razorpayOrderId: {
+    type: String,
+    default: null,
+  },
+  razorpayPaymentId: {
+    type: String,
+    default: null,
+  },
+  razorpaySignature: {
+    type: String,
+    default: null,
+  },
+  paymentCompletedAt: {
+    type: Date,
+    default: null,
   },
   orderDate: {
     type: Date,

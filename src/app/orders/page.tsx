@@ -43,17 +43,21 @@ interface Order {
   totalAmount: number;
   status: 'pending' | 'confirmed' | 'preparing' | 'out_for_delivery' | 'delivered' | 'cancelled';
   paymentStatus: 'pending' | 'paid' | 'failed';
+  paymentMethod: 'razorpay' | 'cod';
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  paymentCompletedAt?: string;
   orderDate: string;
   notes?: string;
 }
 
 export default function OrdersPage() {
   const { showError } = useToast();
-  
-  const [orders, setOrders] = useState<Order[]>([]);
+    const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [paymentFilter, setPaymentFilter] = useState<string>('all');
 
   useEffect(() => {
     fetchOrders();
@@ -75,7 +79,6 @@ export default function OrdersPage() {
       setLoading(false);
     }
   };
-
   // Filter orders based on search and status
   const filteredOrders = orders.filter(order => {
     const matchesSearch = searchTerm === '' || 
@@ -84,8 +87,9 @@ export default function OrdersPage() {
       order.items.some(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
+    const matchesPayment = paymentFilter === 'all' || order.paymentStatus === paymentFilter;
     
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesStatus && matchesPayment;
   });
 
   if (loading) {
@@ -120,11 +124,9 @@ export default function OrdersPage() {
           
           <h1 className="font-poppins text-2xl sm:text-3xl font-bold text-gray-900 mb-2">My Orders</h1>
           <p className="text-gray-600">Track and manage your cake orders</p>
-        </div>
-
-        {/* Search and Filter */}
+        </div>        {/* Search and Filter */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col lg:flex-row gap-4">
             {/* Search */}
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -151,6 +153,18 @@ export default function OrdersPage() {
               <option value="delivered">Delivered</option>
               <option value="cancelled">Cancelled</option>
             </select>
+
+            {/* Payment Status Filter */}
+            <select
+              value={paymentFilter}
+              onChange={(e) => setPaymentFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+            >
+              <option value="all">All Payments</option>
+              <option value="paid">Paid</option>
+              <option value="pending">Payment Pending</option>
+              <option value="failed">Payment Failed</option>
+            </select>
           </div>
         </div>
 
@@ -160,18 +174,18 @@ export default function OrdersPage() {
             <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-700 mb-2">
               {searchTerm || statusFilter !== 'all' ? 'No orders found' : 'No orders yet'}
-            </h2>
-            <p className="text-gray-500 mb-6">
-              {searchTerm || statusFilter !== 'all' 
+            </h2>            <p className="text-gray-500 mb-6">
+              {searchTerm || statusFilter !== 'all' || paymentFilter !== 'all'
                 ? 'Try adjusting your search or filter criteria.' 
                 : 'Start by ordering some delicious cakes!'
               }
             </p>
-            {searchTerm || statusFilter !== 'all' ? (
+            {searchTerm || statusFilter !== 'all' || paymentFilter !== 'all' ? (
               <button
                 onClick={() => {
                   setSearchTerm('');
                   setStatusFilter('all');
+                  setPaymentFilter('all');
                 }}
                 className="bg-pink-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-pink-700 transition-colors"
               >
@@ -204,11 +218,24 @@ export default function OrdersPage() {
                         {formatDate(order.orderDate)} at {formatTime(order.orderDate)}
                       </div>
                     </div>
-                    
-                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3">
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusInfo.color}`}>
                         {statusInfo.icon} {statusInfo.label}
                       </span>
+                      
+                      {/* Payment Status Badge */}
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        order.paymentStatus === 'paid' 
+                          ? 'bg-green-100 text-green-800' 
+                          : order.paymentStatus === 'failed'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {order.paymentStatus === 'paid' ? '💳 Paid' : 
+                         order.paymentStatus === 'failed' ? '❌ Payment Failed' : 
+                         '⏳ Payment Pending'}
+                      </span>
+                      
                       <Link
                         href={`/order-confirmation/${order.orderId}`}
                         className="inline-flex items-center text-pink-600 hover:text-pink-700 transition-colors"
@@ -243,9 +270,7 @@ export default function OrdersPage() {
                         </div>
                       </div>
                     ))}
-                  </div>
-
-                  {/* Order Footer */}
+                  </div>                  {/* Order Footer */}
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 border-t border-gray-200">
                     <div className="flex items-center text-sm text-gray-600 mb-2 sm:mb-0">
                       <MapPin className="w-4 h-4 mr-1" />
@@ -264,6 +289,27 @@ export default function OrdersPage() {
                     </div>
                   </div>
 
+                  {/* Payment Info */}
+                  {order.paymentMethod && (
+                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">
+                          Payment Method: <span className="font-medium">{order.paymentMethod === 'razorpay' ? 'Online Payment' : 'Cash on Delivery'}</span>
+                        </span>
+                        {order.paymentCompletedAt && (
+                          <span className="text-green-600 text-xs">
+                            Paid on {formatDate(order.paymentCompletedAt)} at {formatTime(order.paymentCompletedAt)}
+                          </span>
+                        )}
+                      </div>
+                      {order.razorpayPaymentId && (
+                        <div className="mt-1 text-xs text-gray-500">
+                          Payment ID: {order.razorpayPaymentId}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Delivery Info */}
                   <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                     <div className="flex items-center text-sm text-blue-800">
@@ -278,13 +324,11 @@ export default function OrdersPage() {
               );
             })}
           </div>
-        )}
-
-        {/* Orders Summary */}
+        )}        {/* Orders Summary */}
         {filteredOrders.length > 0 && (
           <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-center">
               <div className="p-4 bg-gray-50 rounded-lg">
                 <div className="text-2xl font-bold text-gray-900">{filteredOrders.length}</div>
                 <div className="text-sm text-gray-600">Total Orders</div>
@@ -302,6 +346,13 @@ export default function OrdersPage() {
                   {filteredOrders.filter(order => ['confirmed', 'preparing', 'out_for_delivery'].includes(order.status)).length}
                 </div>
                 <div className="text-sm text-blue-700">In Progress</div>
+              </div>
+              
+              <div className="p-4 bg-emerald-50 rounded-lg">
+                <div className="text-2xl font-bold text-emerald-600">
+                  {filteredOrders.filter(order => order.paymentStatus === 'paid').length}
+                </div>
+                <div className="text-sm text-emerald-700">Paid</div>
               </div>
               
               <div className="p-4 bg-pink-50 rounded-lg">

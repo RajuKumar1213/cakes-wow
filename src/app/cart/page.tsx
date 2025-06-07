@@ -58,24 +58,35 @@ export default function CartPage() {
   const router = useRouter();
   const [showLogin, setShowLogin] = useState(false);
   const [selectedAddOns, setSelectedAddOns] = React.useState<any[]>([]);
-  const [addOnQuantities, setAddOnQuantities] = React.useState<{ [key: string]: number }>({});
-  // Function to load add-ons from localStorage
+  const [addOnQuantities, setAddOnQuantities] = React.useState<{ [key: string]: number }>({});  // Function to load add-ons from localStorage
   const loadAddOnsFromStorage = React.useCallback(() => {
+    // Ensure we're on the client side
+    if (typeof window === 'undefined') return;
+    
     try {
       const saved = localStorage.getItem('bakingo-selected-addons');
+      const savedQuantities = localStorage.getItem('bakingo-addon-quantities');
+      
       if (saved) {
         const addOns = JSON.parse(saved);
         setSelectedAddOns(addOns);
+        
+        // Load saved quantities or initialize to 1
+        let quantities: { [key: string]: number } = {};
+        if (savedQuantities) {
+          quantities = JSON.parse(savedQuantities);
+        }
+        
         // Initialize quantities to 1 for each add-on that doesn't have a quantity yet
-        setAddOnQuantities(prev => {
-          const quantities: { [key: string]: number } = { ...prev };
-          addOns.forEach((addOn: any) => {
-            if (!quantities[addOn._id]) {
-              quantities[addOn._id] = 1;
-            }
-          });
-          return quantities;
+        addOns.forEach((addOn: any) => {
+          if (!quantities[addOn._id]) {
+            quantities[addOn._id] = 1;
+          }
         });
+        
+        setAddOnQuantities(quantities);
+        // Save back to localStorage if there were any new quantities initialized
+        localStorage.setItem('bakingo-addon-quantities', JSON.stringify(quantities));
       } else {
         setSelectedAddOns([]);
         setAddOnQuantities({});
@@ -83,20 +94,19 @@ export default function CartPage() {
     } catch (error) {
       console.error('Error loading selected add-ons:', error);
     }
-  }, []);
-
-  React.useEffect(() => {
+  }, []);React.useEffect(() => {
+    // Ensure we're on the client side
+    if (typeof window === 'undefined') return;
+    
     // Load initial data
     loadAddOnsFromStorage();
 
     // Listen for localStorage changes (from other tabs/components)
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'bakingo-selected-addons') {
+      if (e.key === 'bakingo-selected-addons' || e.key === 'bakingo-addon-quantities') {
         loadAddOnsFromStorage();
       }
-    };
-
-    // Listen for custom storage events within the same tab
+    };    // Listen for custom storage events within the same tab
     const handleCustomStorageChange = () => {
       loadAddOnsFromStorage();
     };
@@ -108,9 +118,9 @@ export default function CartPage() {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('addons-updated', handleCustomStorageChange);
     };
-  }, [loadAddOnsFromStorage]);
-
-  const updateAddOnQuantity = (addOnId: string, newQuantity: number) => {
+  }, [loadAddOnsFromStorage]);  const updateAddOnQuantity = (addOnId: string, newQuantity: number) => {
+    if (typeof window === 'undefined') return;
+    
     if (newQuantity <= 0) {
       // Remove add-on if quantity is 0 or less
       const updatedAddOns = selectedAddOns.filter(addOn => addOn._id !== addOnId);
@@ -120,14 +130,19 @@ export default function CartPage() {
       const newQuantities = { ...addOnQuantities };
       delete newQuantities[addOnId];
       setAddOnQuantities(newQuantities);
+      localStorage.setItem('bakingo-addon-quantities', JSON.stringify(newQuantities));
+
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new CustomEvent('addons-updated'));
     } else {
-      setAddOnQuantities(prev => ({
-        ...prev,
+      const newQuantities = {
+        ...addOnQuantities,
         [addOnId]: newQuantity
-      }));
+      };
+      setAddOnQuantities(newQuantities);
+      localStorage.setItem('bakingo-addon-quantities', JSON.stringify(newQuantities));
     }
   };
-
   const getAddOnsTotal = () => {
     return selectedAddOns.reduce((total, addOn) => {
       const quantity = addOnQuantities[addOn._id] || 1;

@@ -53,14 +53,16 @@ const AddOns: React.FC<AddOnsProps> = ({
     } finally {
       setLoading(false);
     }
-  };
-
-  // Load selected add-ons from localStorage on mount
+  };  // Load selected add-ons from localStorage on mount
   useEffect(() => {
+    // Ensure we're on the client side
+    if (typeof window === 'undefined') return;
+    
     try {
       const saved = localStorage.getItem(SELECTED_ADDONS_KEY);
       if (saved) {
-        setSelectedAddOns(JSON.parse(saved));
+        const parsedAddOns = JSON.parse(saved);
+        setSelectedAddOns(parsedAddOns);
       }
     } catch (error) {
       console.error('Error loading selected add-ons:', error);
@@ -68,9 +70,16 @@ const AddOns: React.FC<AddOnsProps> = ({
     
     // Fetch add-ons from API
     fetchAddOns();
-  }, []);
-  // Save to localStorage whenever selectedAddOns changes
+    
+    // Mark as initialized after loading
+    setIsInitialized(true);
+  }, []);  // Save to localStorage whenever selectedAddOns changes (but not on initial mount)
+  const [isInitialized, setIsInitialized] = useState(false);
+  
   useEffect(() => {
+    // Ensure we're on the client side and component is initialized
+    if (typeof window === 'undefined' || !isInitialized) return;
+    
     try {
       localStorage.setItem(SELECTED_ADDONS_KEY, JSON.stringify(selectedAddOns));
       // Dispatch custom event to notify other components
@@ -78,16 +87,15 @@ const AddOns: React.FC<AddOnsProps> = ({
     } catch (error) {
       console.error('Error saving selected add-ons:', error);
     }
-  }, [selectedAddOns]);
+  }, [selectedAddOns, isInitialized]);
 
-  const displayAddOns = maxItems ? addOns.slice(0, maxItems) : addOns;
-
-  const handleAddOnToggle = (addOn: AddOn) => {
+  const displayAddOns = maxItems ? addOns.slice(0, maxItems) : addOns;  const handleAddOnToggle = (addOn: AddOn) => {
     const isSelected = selectedAddOns.some(item => item._id === addOn._id);
     
     if (isSelected) {
       // Remove from selected
-      setSelectedAddOns(prev => prev.filter(item => item._id !== addOn._id));
+      const newSelected = selectedAddOns.filter(item => item._id !== addOn._id);
+      setSelectedAddOns(newSelected);
       showSuccess(
         "Add-on Removed",
         `${addOn.name} removed from your order`,
@@ -95,7 +103,8 @@ const AddOns: React.FC<AddOnsProps> = ({
       );
     } else {
       // Add to selected
-      setSelectedAddOns(prev => [...prev, addOn]);
+      const newSelected = [...selectedAddOns, addOn];
+      setSelectedAddOns(newSelected);
       showSuccess(
         "Add-on Added",
         `${addOn.name} added to your order`,

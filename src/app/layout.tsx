@@ -46,10 +46,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <head>
+    <html lang="en">      <head>
         {/* Next.js Google Fonts handles font optimization automatically */}
         <meta name="theme-color" content="#DC2626" />
+        {/* Razorpay Checkout Script */}
+        <script src="https://checkout.razorpay.com/v1/checkout.js" async></script>
       </head>
       <body
         className={`${poppins.variable} ${inter.variable} font-inter antialiased`}
