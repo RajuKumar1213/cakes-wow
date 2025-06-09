@@ -1,3 +1,5 @@
+// Apply mongoose fix for Vercel deployment
+import "@/lib/mongoose-fix";
 import mongoose from 'mongoose';
 
 const productSchema = new mongoose.Schema({
@@ -10,7 +12,6 @@ const productSchema = new mongoose.Schema({
     required: true,
     unique: true,
     lowercase: true,
-    index: true,
   },
   description: {
     type: String,
@@ -146,10 +147,5 @@ productSchema.virtual('finalPrice').get(function() {
 // Ensure virtuals are included in JSON output
 productSchema.set('toJSON', { virtuals: true });
 productSchema.set('toObject', { virtuals: true });
-
-// Prevent warnings in browser environment
-if (typeof window === 'undefined' && !process.emitWarning) {
-  process.emitWarning = () => {};
-}
 
 export default mongoose.models.Product || mongoose.model('Product', productSchema);

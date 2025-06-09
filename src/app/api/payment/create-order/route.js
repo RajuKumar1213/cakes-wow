@@ -3,6 +3,7 @@ import Razorpay from "razorpay";
 import dbConnect from "@/lib/mongodb";
 import Order from "@/models/Order.models";
 import { generateOrderId } from "@/lib/serverOrderUtils";
+import { generateOrderConfirmationMessage, generateAdminNotificationMessage, sendOrderConfirmationWithOwnerNotification } from "@/lib/whatsapp";
 
 // Initialize Razorpay instance
 const razorpay = new Razorpay({
@@ -115,21 +116,59 @@ export async function POST(request) {
           },
         },
         { status: 200 }
-      );
-    } else {
-      // For COD, just update the payment method and return order details
-      await order.save();
+      );    } else {
+      // For COD, update payment method, confirm order, and send WhatsApp notification
+      order.status = 'confirmed';
+      order.paymentMethod = 'cash_on_delivery';
+      await order.save();      // Generate WhatsApp messages and send order confirmation for COD
+      let notifications = null;
+      try {
+        const customerMessage = generateOrderConfirmationMessage(order);
+        const adminMessage = generateAdminNotificationMessage(order);
+        
+        // Send WATI API order confirmation to customer AND owner notification
+        const whatsappResults = await sendOrderConfirmationWithOwnerNotification(
+          order.customerInfo.mobileNumber,
+          order
+        );
+
+        console.log("📱 WATI API COD Order Confirmation Results:", {
+          customerSuccess: whatsappResults.customer?.success,
+          ownerSuccess: whatsappResults.owner?.success,
+          overallSuccess: whatsappResults.success,
+          orderId: order.orderId,
+          customerImageIncluded: whatsappResults.customer?.imageIncluded,
+          ownerImageIncluded: whatsappResults.owner?.imageIncluded,
+          errors: whatsappResults.errors,
+        });
+        
+        notifications = {
+          customer: {
+            phone: order.customerInfo.mobileNumber,
+            message: customerMessage.replace('✅ Payment completed successfully!', '💰 Payment: Cash on Delivery'),
+          },
+          admin: {
+            message: adminMessage.replace('✅ Payment Status: PAID', '💰 Payment Status: COD'),
+          },
+          whatsapp: whatsappResults,
+        };
+      } catch (notificationError) {
+        console.error('Error preparing COD notifications:', notificationError);
+        // Don't fail the order creation if notification prep fails
+      }
 
       return NextResponse.json(
         {
           success: true,
-          message: "COD order updated successfully",
+          message: "COD order confirmed successfully",
           order: {
             orderId: order.orderId,
             totalAmount: order.totalAmount,
             status: order.status,
             paymentStatus: order.paymentStatus,
+            customerName: order.customerInfo.fullName,
           },
+          notifications,
         },
         { status: 200 }
       );

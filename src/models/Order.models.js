@@ -1,3 +1,5 @@
+// Apply mongoose fix for Vercel deployment
+import "@/lib/mongoose-fix";
 import mongoose from "mongoose";
 
 const orderItemSchema = new mongoose.Schema({
@@ -315,11 +317,6 @@ orderSchema.pre("save", function (next) {
 // Force recreation of the model to ensure schema changes are applied
 if (mongoose.models.Order) {
   delete mongoose.models.Order;
-}
-
-// Prevent warnings in browser environment
-if (typeof window === 'undefined' && !process.emitWarning) {
-  process.emitWarning = () => {};
 }
 
 export default mongoose.model("Order", orderSchema);

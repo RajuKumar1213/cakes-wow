@@ -220,8 +220,8 @@ const ProductCard = ({
                   <button
                     onClick={handleWishlistToggle}
                     className={`p-1.5 rounded transition-colors ${isInWishlist(_id)
-                        ? "bg-pink-100 text-pink-600"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      ? "bg-pink-100 text-pink-600"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                       }`}
                   >
                     <Heart className={`h-3 w-3 ${isInWishlist(_id) ? "fill-current" : ""}`} />
@@ -237,30 +237,30 @@ const ProductCard = ({
 
   // Grid view layout (existing code with mobile optimizations)
   return (
-    <div className="bg-white rounded-lg sm:rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 group border border-gray-100 overflow-hidden">     
-     <Link href={`/products/${slug}`}>
-      <div className="relative h-52 md:h-64 bg-white border-b border-gray-100">
-        <div className="w-full h-full flex items-center justify-center">
-          <div className="relative w-full h-full">
-            <Image
-              src={imageUrls[0] || "/placeholder-cake.jpg"}
-              alt={name}
-              fill
-              className="object-cover hover:scale-105 transition-transform duration-300"
-              sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-              priority
-              placeholder="blur"
-              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-            />
+    <div className="bg-white rounded-lg sm:rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 group border border-gray-100 overflow-hidden">
+      <Link href={`/products/${slug}`}>
+        <div className="relative h-52 md:h-64 bg-white border-b border-gray-100">
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="relative w-full h-full">
+              <Image
+                src={imageUrls[0] || "/placeholder-cake.jpg"}
+                alt={name}
+                fill
+                className="object-cover hover:scale-105 transition-transform duration-300"
+                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                priority
+                placeholder="blur"
+                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+              />
+            </div>
           </div>
-        </div>          
-        {discountPercentage > 0 && (
-          <div className="absolute top-2 right-2 bg-red-500 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10">
-            {discountPercentage}% OFF
-          </div>
-        )}
-      </div>
-    </Link>
+          {discountPercentage > 0 && (
+            <div className="absolute top-2 right-2 bg-red-500 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10">
+              {discountPercentage}% OFF
+            </div>
+          )}
+        </div>
+      </Link>
 
       <div className="p-2 sm:p-3">
         <Link href={`/products/${slug}`}>
@@ -275,7 +275,8 @@ const ProductCard = ({
             </span>
           </div>
           <span className="text-xs text-gray-500 ml-1 sm:ml-2">({reviewCount})</span>
-        </div>        <div className="flex items-center justify-between mb-2 sm:mb-3">
+        </div>        
+        <div className="flex items-center justify-between mb-2 sm:mb-3">
           <div className="flex items-center space-x-1 sm:space-x-2">
             <span className="text-sm sm:text-base font-bold text-gray-900">
               ₹{displayDiscountedPrice || displayPrice}
@@ -287,13 +288,13 @@ const ProductCard = ({
             )}
           </div>
         </div>
-        {flag !== "bestseller" && categories.length > 0 && (
+        {/* {flag !== "bestseller" && categories.length > 0 && (
           <div className="mb-2">
             <span className="text-xs text-pink-600 bg-pink-50 px-2 py-0.5 sm:py-1 rounded-full font-medium">
               {categories[0].name}
             </span>
           </div>
-        )}
+        )} */}
         {/* Action Buttons - mobile optimized */}
         <div className="flex space-x-1 sm:space-x-2">
           {flag !== "bestseller" && (

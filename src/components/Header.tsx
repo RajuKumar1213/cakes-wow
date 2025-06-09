@@ -315,7 +315,7 @@ const Header = () => {
                         {isDropdownOpen === group.toLowerCase() &&
                           groupedCategories[group].length > 1 && (
                             <div
-                              className={`absolute top-full ${group == "Famous Category Cake" ? "-left-80" : "-left-1"} bg-white/95 backdrop-blur-xl shadow-2xl rounded-2xl border border-pink-100/50 overflow-hidden`}
+                              className={`absolute top-full ${group == "Famous Character Cake" ? "-left-80" : "-left-1"} bg-white/95 backdrop-blur-xl shadow-2xl rounded-2xl border border-pink-100/50 overflow-hidden`}
                               style={{
                                 boxShadow: "0 20px 40px rgba(5, 3, 3, 0.15), 0 0 20px rgba(236, 72, 153, 0.1)",
                                 zIndex: 9999,

@@ -35,10 +35,10 @@ const nextConfig = {
   generateEtags: true, // Enable ETags for better caching
   experimental: {
     optimizePackageImports: ['lucide-react'],
-  },
-  // Webpack configuration to prevent emitWarning errors
+  },  // Webpack configuration to prevent emitWarning errors
   webpack: (config, { isServer }) => {
     if (!isServer) {
+      // Prevent Node.js modules from being bundled on the client side
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
@@ -53,8 +53,42 @@ const nextConfig = {
         assert: false,
         os: false,
         path: false,
+        util: false,
+        buffer: false,
+        events: false,
+        child_process: false,
+        cluster: false,
+        dgram: false,
+        dns: false,
+        domain: false,
+        inspector: false,
+        module: false,
+        perf_hooks: false,
+        process: false,
+        punycode: false,
+        querystring: false,
+        readline: false,
+        repl: false,
+        string_decoder: false,
+        sys: false,
+        timers: false,
+        tty: false,
+        v8: false,
+        vm: false,
+        worker_threads: false,
       };
+      
+      // Ensure mongoose and related modules are not bundled on client
+      config.externals = config.externals || [];
+      config.externals.push('mongoose');
     }
+    
+    // Suppress warnings during build
+    config.stats = {
+      ...config.stats,
+      warnings: false,
+    };
+    
     return config;
   },
   // Add headers for better caching

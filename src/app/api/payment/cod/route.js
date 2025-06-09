@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createCODOrder } from '@/lib/cod';
-import { generateOrderConfirmationMessage, generateAdminNotificationMessage } from '@/lib/whatsapp';
+import { generateOrderConfirmationMessage, generateAdminNotificationMessage, sendOrderConfirmationWithOwnerNotification } from '@/lib/whatsapp';
 
 /**
  * POST /api/payment/cod
@@ -27,13 +27,27 @@ export async function POST(request) {
       orderId: order.orderId,
       totalAmount: order.totalAmount,
       customerName: order.customerInfo.fullName,
-    });
-
-    // Generate WhatsApp messages for COD order
+    });    // Generate WhatsApp messages and send order confirmation for COD order
     let notifications = null;
     try {
       const customerMessage = generateOrderConfirmationMessage(order);
       const adminMessage = generateAdminNotificationMessage(order);
+      
+      // Send WATI API order confirmation to customer AND owner notification
+      const whatsappResults = await sendOrderConfirmationWithOwnerNotification(
+        order.customerInfo.mobileNumber,
+        order
+      );
+
+      console.log("📱 WATI API COD Order Confirmation Results:", {
+        customerSuccess: whatsappResults.customer?.success,
+        ownerSuccess: whatsappResults.owner?.success,
+        overallSuccess: whatsappResults.success,
+        orderId: order.orderId,
+        customerImageIncluded: whatsappResults.customer?.imageIncluded,
+        ownerImageIncluded: whatsappResults.owner?.imageIncluded,
+        errors: whatsappResults.errors,
+      });
       
       notifications = {
         customer: {
@@ -43,6 +57,7 @@ export async function POST(request) {
         admin: {
           message: adminMessage.replace('✅ Payment Status: PAID', '💰 Payment Status: COD'),
         },
+        whatsapp: whatsappResults,
       };
     } catch (notificationError) {
       console.error('Error preparing COD notifications:', notificationError);

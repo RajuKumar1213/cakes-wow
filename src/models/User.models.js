@@ -1,3 +1,5 @@
+// Apply mongoose fix for Vercel deployment
+import "@/lib/mongoose-fix";
 import mongoose from 'mongoose';
 
 const AddressSchema = new mongoose.Schema({
@@ -93,11 +95,6 @@ UserSchema.pre('save', function(next) {
 // Clear existing model if it exists to avoid conflicts
 if (mongoose.models.User) {
   delete mongoose.models.User;
-}
-
-// Prevent warnings in browser environment
-if (typeof window === 'undefined' && !process.emitWarning) {
-  process.emitWarning = () => {};
 }
 
 export default mongoose.model('User', UserSchema);

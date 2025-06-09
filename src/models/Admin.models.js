@@ -1,3 +1,5 @@
+// Apply mongoose fix for Vercel deployment
+import "@/lib/mongoose-fix";
 import mongoose from "mongoose";
 
 const adminSchema = new mongoose.Schema({
@@ -74,11 +76,6 @@ adminSchema.pre('insertMany', async function(next, docs) {
     return next(error);
   }  next();
 });
-
-// Prevent warnings in browser environment
-if (typeof window === 'undefined' && !process.emitWarning) {
-  process.emitWarning = () => {};
-}
 
 const Admin = mongoose.models.Admin || mongoose.model("Admin", adminSchema);
 

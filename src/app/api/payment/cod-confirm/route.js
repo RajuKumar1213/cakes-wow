@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Order from '@/models/Order.models';
-import { generateOrderConfirmationMessage, generateAdminNotificationMessage } from '@/lib/whatsapp';
+import { generateOrderConfirmationMessage, generateAdminNotificationMessage, sendOrderConfirmationWithOwnerNotification } from '@/lib/whatsapp';
 
 /**
  * POST /api/payment/cod-confirm
@@ -43,9 +43,7 @@ export async function POST(request) {
       orderId: updatedOrder.orderId,
       status: updatedOrder.status,
       paymentMethod: updatedOrder.paymentMethod,
-    });
-
-    // Generate WhatsApp messages
+    });    // Generate WhatsApp messages and send order confirmation to customer + owner
     let notifications = {
       sms: false,
       whatsapp: false,
@@ -62,6 +60,22 @@ export async function POST(request) {
         adminMessageLength: adminMessage.length,
       });
 
+      // Send WATI API order confirmation to customer AND owner notification
+      const whatsappResults = await sendOrderConfirmationWithOwnerNotification(
+        updatedOrder.customerInfo.mobileNumber,
+        updatedOrder
+      );
+
+      console.log("📱 WATI API COD Order Confirmation Results:", {
+        customerSuccess: whatsappResults.customer?.success,
+        ownerSuccess: whatsappResults.owner?.success,
+        overallSuccess: whatsappResults.success,
+        orderId: updatedOrder.orderId,
+        customerImageIncluded: whatsappResults.customer?.imageIncluded,
+        ownerImageIncluded: whatsappResults.owner?.imageIncluded,
+        errors: whatsappResults.errors,
+      });
+
       notifications = {
         customer: {
           phone: updatedOrder.customerInfo.mobileNumber,
@@ -70,6 +84,7 @@ export async function POST(request) {
         admin: {
           message: adminMessage,
         },
+        whatsapp: whatsappResults,
       };
     } catch (notificationError) {
       console.error('Error preparing notifications for COD order:', notificationError);

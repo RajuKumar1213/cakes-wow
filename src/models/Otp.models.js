@@ -1,3 +1,5 @@
+// Apply mongoose fix for Vercel deployment
+import "@/lib/mongoose-fix";
 import mongoose from 'mongoose';
 
 const OtpSchema = new mongoose.Schema({
@@ -16,10 +18,5 @@ const OtpSchema = new mongoose.Schema({
     expires: 300 // Document expires after 5 minutes (300 seconds)
   }
 });
-
-// Prevent warnings in browser environment
-if (typeof window === 'undefined' && !process.emitWarning) {
-  process.emitWarning = () => {};
-}
 
 export default mongoose.models.Otp || mongoose.model('Otp', OtpSchema);

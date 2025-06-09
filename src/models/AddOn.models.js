@@ -1,3 +1,5 @@
+// Apply mongoose fix for Vercel deployment
+require("../lib/mongoose-fix");
 const mongoose = require('mongoose');
 
 const addOnSchema = new mongoose.Schema({
@@ -25,11 +27,6 @@ const addOnSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
-
-// Prevent warnings in browser environment
-if (typeof window === 'undefined' && !process.emitWarning) {
-  process.emitWarning = () => {};
-}
 
 const AddOn = mongoose.models.AddOn || mongoose.model('AddOn', addOnSchema);
 
