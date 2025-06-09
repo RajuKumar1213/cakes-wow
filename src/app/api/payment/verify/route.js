@@ -1,8 +1,11 @@
-import { NextResponse } from 'next/server';
-import crypto from 'crypto';
-import dbConnect from '@/lib/mongodb';
-import Order from '@/models/Order.models';
-import { generateOrderConfirmationMessage, generateAdminNotificationMessage } from '@/lib/whatsapp';
+import { NextResponse } from "next/server";
+import crypto from "crypto";
+import dbConnect from "@/lib/mongodb";
+import Order from "@/models/Order.models";
+import {
+  generateOrderConfirmationMessage,
+  generateAdminNotificationMessage,
+} from "@/lib/whatsapp";
 
 /**
  * POST /api/payment/verify
@@ -12,14 +15,14 @@ export async function POST(request) {
   try {
     await dbConnect();
 
-    const { 
-      razorpay_payment_id, 
-      razorpay_order_id, 
+    const {
+      razorpay_payment_id,
+      razorpay_order_id,
       razorpay_signature,
-      backend_order_id 
+      backend_order_id,
     } = await request.json();
 
-    console.log('Payment verification request:', {
+    console.log("Payment verification request:", {
       razorpay_payment_id,
       razorpay_order_id,
       razorpay_signature,
@@ -27,9 +30,14 @@ export async function POST(request) {
     });
 
     // Validate required fields
-    if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature || !backend_order_id) {
+    if (
+      !razorpay_payment_id ||
+      !razorpay_order_id ||
+      !razorpay_signature ||
+      !backend_order_id
+    ) {
       return NextResponse.json(
-        { error: 'Missing required payment verification fields' },
+        { error: "Missing required payment verification fields" },
         { status: 400 }
       );
     }
@@ -37,42 +45,40 @@ export async function POST(request) {
     // Find the order in database
     const order = await Order.findById(backend_order_id);
     if (!order) {
-      return NextResponse.json(
-        { error: 'Order not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
     // Verify Razorpay signature
     const key_secret = process.env.RAZORPAY_KEY_SECRET;
     const generated_signature = crypto
-      .createHmac('sha256', key_secret)
+      .createHmac("sha256", key_secret)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-      .digest('hex');
+      .digest("hex");
 
-    console.log('Signature verification:', {
+    console.log("Signature verification:", {
       received_signature: razorpay_signature,
       generated_signature,
       matches: generated_signature === razorpay_signature,
     });
 
     if (generated_signature !== razorpay_signature) {
-      console.error('Payment signature verification failed');
+      console.error("Payment signature verification failed");
       return NextResponse.json(
-        { error: 'Payment verification failed' },
+        { error: "Payment verification failed" },
         { status: 400 }
       );
     }
 
     // Update order with payment details
-    order.paymentStatus = 'paid';
-    order.status = 'confirmed';
+    order.paymentStatus = "paid";
+    order.status = "confirmed";
     order.razorpayPaymentId = razorpay_payment_id;
     order.razorpayOrderId = razorpay_order_id;
     order.razorpaySignature = razorpay_signature;
     order.paymentCompletedAt = new Date();
 
-    const updatedOrder = await order.save();    console.log('Order updated successfully:', {
+    const updatedOrder = await order.save();
+    console.log("Order updated successfully:", {
       orderId: updatedOrder.orderId,
       paymentStatus: updatedOrder.paymentStatus,
       status: updatedOrder.status,
@@ -82,8 +88,8 @@ export async function POST(request) {
     try {
       const customerMessage = generateOrderConfirmationMessage(updatedOrder);
       const adminMessage = generateAdminNotificationMessage(updatedOrder);
-      
-      console.log('WhatsApp notifications prepared:', {
+
+      console.log("WhatsApp notifications prepared:", {
         customerPhone: updatedOrder.customerInfo.mobileNumber,
         customerMessageLength: customerMessage.length,
         adminMessageLength: adminMessage.length,
@@ -100,11 +106,13 @@ export async function POST(request) {
         },
       };
     } catch (notificationError) {
-      console.error('Error preparing notifications:', notificationError);
+      console.error("Error preparing notifications:", notificationError);
       // Don't fail the payment verification if notification prep fails
-    }    return NextResponse.json({
+    }
+
+    return NextResponse.json({
       success: true,
-      message: 'Payment verified successfully',
+      message: "Payment verified successfully",
       order: {
         orderId: updatedOrder.orderId,
         paymentStatus: updatedOrder.paymentStatus,
@@ -116,12 +124,11 @@ export async function POST(request) {
       },
       notifications: updatedOrder.notifications,
     });
-
   } catch (error) {
-    console.error('Payment verification error:', error);
-    
+    console.error("Payment verification error:", error);
+
     return NextResponse.json(
-      { error: 'Payment verification failed' },
+      { error: "Payment verification failed" },
       { status: 500 }
     );
   }

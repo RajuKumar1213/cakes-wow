@@ -9,19 +9,7 @@ import {
   CheckCircle
 } from 'lucide-react';
 
-// Area to PIN code mapping
-export const areaPinMap = {
-  "Rajendra Nagar": "834001",
-  "Ashok Nagar": "834002",
-  Harmu: "834003",
-  Lalpur: "834004",
-  Kanke: "834005",
-  Doranda: "834006",
-  Bariatu: "834007",
-  "Ranchi University": "834008",
-  Hatia: "834009",
-  Namkum: "834010",
-};
+
 
 // Delivery types configuration
 export const deliveryTypes = [

@@ -114,10 +114,79 @@ const CartReviewStepContent: React.FC = () => {
     const deliveryType = getSelectedDeliveryType();
     return deliveryType ? deliveryType.price : 0;
   };
+  // Handle proceed to checkout (create order and go to step 3)
+  const handleProceedToCheckout = async () => {
+    try {
+      // Calculate totals
+      const addOnsTotal = getAddOnsTotal();
+      const deliveryPrice = getDeliveryPrice();
+      const finalTotal = orderSummary.subtotal + addOnsTotal + deliveryPrice + orderSummary.platformFee + orderSummary.gst;      // Prepare order data
+      const orderData = {
+        items: cart.map(item => ({
+          productId: item.productId || item._id,
+          name: item.name,
+          price: item.discountedPrice || item.price,
+          quantity: item.quantity,
+          selectedWeight: item.selectedWeight || '',
+          imageUrl: item.imageUrl || '',
+        })),
+        customerInfo: {
+          fullName: state.orderForm.fullName,
+          mobileNumber: state.orderForm.mobileNumber.replace(/\s+/g, '').replace(/^\+91/, ''), // Clean mobile number
+          email: state.orderForm.email,
+          deliveryDate: state.orderForm.deliveryDate,
+          timeSlot: state.orderForm.timeSlot,
+          area: state.orderForm.area,
+          pinCode: state.orderForm.pinCode,
+          fullAddress: state.orderForm.fullAddress,
+          deliveryOccasion: state.orderForm.deliveryOccasion || '',
+          relation: state.orderForm.relation || '',
+          senderName: state.orderForm.senderName || '',
+          messageOnCard: state.orderForm.messageOnCard || '',
+          specialInstructions: state.orderForm.specialInstructions || '',
+        },
+        totalAmount: finalTotal,
+        subtotal: orderSummary.subtotal,
+        deliveryCharge: deliveryPrice,
+        onlineDiscount: 0, // Will be calculated based on payment method
+        notes: state.orderForm.specialInstructions || '',
+        // Include add-ons in notes for reference
+        selectedAddOns: selectedAddOns,
+        addOnQuantities: addOnQuantities,
+      };
 
-  // Handle proceed to checkout (go to step 3)
-  const handleProceedToCheckout = () => {
-    dispatch({ type: 'SET_STEP', payload: 3 });
+      console.log('Creating order with data:', orderData);
+      console.log('Customer Info:', orderData.customerInfo);
+      console.log('Mobile Number:', orderData.customerInfo.mobileNumber, 'Type:', typeof orderData.customerInfo.mobileNumber);
+
+      // Create order in database
+      const response = await fetch('/api/orders/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create order');
+      }
+
+      const result = await response.json();
+      console.log('Order created successfully:', result);
+
+      // Store order details in context for payment step
+      localStorage.setItem('pending-order', JSON.stringify(result.order));
+
+      // Proceed to payment step
+      dispatch({ type: 'SET_STEP', payload: 3 });
+      
+    } catch (error) {
+      console.error('Failed to create order:', error);
+      // Show error message to user (you might want to add a toast notification here)
+      alert('Failed to create order. Please try again.');
+    }
   };
 
   const orderSummary = calculateOrderSummary(cart, state.orderForm.deliveryType || 'standard');

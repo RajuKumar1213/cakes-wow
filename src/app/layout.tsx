@@ -46,7 +46,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">      <head>
+    <html lang="en">      
+      <head>
         {/* Next.js Google Fonts handles font optimization automatically */}
         <meta name="theme-color" content="#DC2626" />
         {/* Razorpay Checkout Script */}

@@ -63,10 +63,15 @@ const DeliveryDetailsStepContent: React.FC = () => {
     dispatch({ type: 'SET_MODAL', payload: { modal: 'showDateModal', value: false } });
     // Show time slot modal after delivery type selection
     dispatch({ type: 'SET_MODAL', payload: { modal: 'showTimeSlotModal', value: true } });
-  };
-  const handleTimeSlotSelect = (timeSlot: string) => {
+  };  const handleTimeSlotSelect = (timeSlot: string) => {
     updateOrderForm('timeSlot', timeSlot);
     dispatch({ type: 'SET_MODAL', payload: { modal: 'showTimeSlotModal', value: false } });
+  };
+
+  const handleGoBackToDeliveryType = () => {
+    // Close time slot modal and open delivery type modal
+    dispatch({ type: 'SET_MODAL', payload: { modal: 'showTimeSlotModal', value: false } });
+    dispatch({ type: 'SET_MODAL', payload: { modal: 'showDateModal', value: true } });
   };
 
   const handleUpdateField = (field: string, value: string) => {
@@ -263,15 +268,15 @@ const DeliveryDetailsStepContent: React.FC = () => {
         onClose={() => dispatch({ type: 'SET_MODAL', payload: { modal: 'showDateModal', value: false } })}
         onDeliveryTypeSelect={handleDeliveryTypeSelect}
         onChangeDate={handleChangeDateFromDeliveryModal}
-      />
-
-      <TimeSlotModal
+      />      <TimeSlotModal
         isOpen={showTimeSlotModal}
         selectedDate={orderForm.deliveryDate}
         selectedTime={orderForm.timeSlot}
         onTimeSelect={handleTimeSlotSelect}
         onClose={() => dispatch({ type: 'SET_MODAL', payload: { modal: 'showTimeSlotModal', value: false } })}
         deliveryType="scheduled"
+        selectedDeliveryTypeId={orderForm.deliveryType}
+        onGoBackToDeliveryType={handleGoBackToDeliveryType}
       />
     </div>
   );

@@ -29,29 +29,52 @@ export const usePayment = () => {
       script.onerror = () => resolve(false);
       document.body.appendChild(script);
     });
-  };
-  // Create order and initiate payment
+  };  // Create payment for existing order
   const initiatePayment = async (
-    orderData: OrderData,
+    orderId: string,
+    paymentMethod: string,
     customerInfo: any,
     onSuccess: (orderDetails: any, notifications?: any) => void,
     onFailure: (error: string) => void
   ) => {
-    try {
-      setLoading(true);
+    try {      setLoading(true);
       setError(null);
 
-      console.log('Initiating payment with order data:', orderData);
+      console.log('🚀 Initiating payment for existing order:', orderId, 'Method:', paymentMethod);
+      console.log('📋 Order ID type:', typeof orderId, 'Value:', orderId);
 
-      // Step 1: Create order in backend
-      const createOrderResponse = await axios.post('/api/payment/create-order', orderData);
+      // Step 1: Create Razorpay order for existing order
+      const createOrderResponse = await axios.post('/api/payment/create-order', {
+        orderId,
+        paymentMethod
+      });
+      
+      console.log('📤 API Response Status:', createOrderResponse.status);
+      console.log('📄 API Response Data:', createOrderResponse.data);
       
       if (!createOrderResponse.data.success) {
-        throw new Error(createOrderResponse.data.error || 'Failed to create order');
+        throw new Error(createOrderResponse.data.error || 'Failed to create payment order');
       }
 
       const { payment, order } = createOrderResponse.data;
-      console.log('Order created successfully:', { payment, order });
+      console.log('Payment order created successfully:', { payment, order });      // Handle COD payments
+      if (paymentMethod === 'cash_on_delivery') {
+        console.log('COD payment selected, processing through create-order API');
+        
+        // For COD, the create-order API handles everything
+        if (createOrderResponse.data.success) {
+          console.log('COD order processed:', createOrderResponse.data);
+          onSuccess(createOrderResponse.data.order, createOrderResponse.data.notifications);
+        } else {
+          throw new Error(createOrderResponse.data.error || 'Failed to process COD order');
+        }
+        return;
+      }
+
+      // For online payments, proceed with Razorpay
+      if (!payment) {
+        throw new Error('Payment details not received for online payment');
+      }
 
       // Step 2: Load Razorpay script
       const scriptLoaded = await loadRazorpayScript();

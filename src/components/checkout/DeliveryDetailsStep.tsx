@@ -1,25 +1,12 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { 
   Truck, 
-  User, 
-  Phone, 
-  Mail, 
-  Clock, 
-  MapPin, 
-  Home, 
-  Package, 
-  Star, 
-  Gift,
-  Heart,
-  Calendar,
-  AlertCircle,
-  Check
+
 } from 'lucide-react';
-import { OrderForm, areaPinMap } from '@/constants/checkout';
-import { PersonalDetailsForm } from './forms/PersonalDetailsForm';
-import { DeliveryTimingForm } from './forms/DeliveryTimingForm';
-import { AddressForm } from './forms/AddressForm';
-// import { AddressForm } from './forms/AddressForm';
+import { OrderForm } from '@/constants/checkout';
+import { PersonalDetailsFormCollapsible } from './forms/PersonalDetailsFormCollapsible';
+import { DeliveryTimingFormCollapsible } from './forms/DeliveryTimingFormCollapsible';
+import { AddressFormCollapsible } from './forms/AddressFormCollapsible';
 
 interface DeliveryDetailsStepProps {
   orderForm: OrderForm;
@@ -38,6 +25,47 @@ export const DeliveryDetailsStep: React.FC<DeliveryDetailsStepProps> = ({
   onShowCalendar,
   onShowDateModal,
 }) => {
+  const personalDetailsRef = useRef<HTMLDivElement>(null);
+  const deliveryTimingRef = useRef<HTMLDivElement>(null);
+  const addressRef = useRef<HTMLDivElement>(null);
+  // Check completion status for each form
+  const isPersonalDetailsComplete = !!(
+    orderForm.fullName?.trim() &&
+    orderForm.email?.trim() &&
+    orderForm.mobileNumber?.trim()
+  );
+
+  const isDeliveryTimingComplete = !!(
+    orderForm.deliveryType &&
+    orderForm.deliveryDate &&
+    orderForm.timeSlot
+  );
+
+  const isAddressComplete = !!(
+    orderForm.fullAddress?.trim() &&
+    orderForm.area?.trim() &&
+    orderForm.pinCode?.trim()
+  );
+
+  // Auto-scroll to next unfilled form when previous completes
+  useEffect(() => {
+    if (isPersonalDetailsComplete && !isDeliveryTimingComplete) {
+      setTimeout(() => {
+        deliveryTimingRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 300);
+    } else if (isPersonalDetailsComplete && isDeliveryTimingComplete && !isAddressComplete) {
+      setTimeout(() => {
+        addressRef.current?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 300);
+    }
+  }, [isPersonalDetailsComplete, isDeliveryTimingComplete, isAddressComplete]);
+
   return (
     <div className="space-y-4 md:space-y-8">
       <div className="text-center">
@@ -52,84 +80,38 @@ export const DeliveryDetailsStep: React.FC<DeliveryDetailsStepProps> = ({
         </p>
       </div>
 
-      <form className="space-y-4 md:space-y-8">
-        {/* Personal Details Section */}
-        <PersonalDetailsForm
+      {/* Personal Details */}
+      <div ref={personalDetailsRef}>
+        <PersonalDetailsFormCollapsible
           orderForm={orderForm}
           errors={errors}
           onInputChange={onInputChange}
+          isComplete={isPersonalDetailsComplete}
         />
+      </div>
 
-        {/* Delivery Timing Section */}
-        <DeliveryTimingForm
+      {/* Delivery Timing */}
+      <div ref={deliveryTimingRef}>
+        <DeliveryTimingFormCollapsible
           orderForm={orderForm}
           errors={errors}
+          onInputChange={onInputChange}
           onShowCalendar={onShowCalendar}
-          onShowDateModal={onShowDateModal} onUpdateField={function (field: keyof OrderForm, value: string): void {
-            throw new Error('Function not implemented.');
-          } } onContinue={function (): void {
-            throw new Error('Function not implemented.');
-          } }        />
+          onShowDateModal={onShowDateModal}
+          isComplete={isDeliveryTimingComplete}
+        />
+      </div>
 
-        {/* Address Section */}
-        <AddressForm
+      {/* Address Details */}
+      <div ref={addressRef}>
+        <AddressFormCollapsible
           orderForm={orderForm}
           errors={errors}
           onInputChange={onInputChange}
           onAreaChange={onAreaChange}
+          isComplete={isAddressComplete}
         />
-
-        {/* Fun Delivery Info */}
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl md:rounded-2xl p-4 md:p-6 border border-purple-200">
-          <div className="flex items-center justify-center mb-3 md:mb-4">
-            <div className="flex items-center space-x-2">
-              <Heart className="w-4 h-4 md:w-5 md:h-5 text-pink-500 animate-pulse" />
-              <span className="font-medium text-purple-900 text-sm md:text-base">
-                Almost ready to deliver happiness!
-              </span>
-              <Heart className="w-4 h-4 md:w-5 md:h-5 text-pink-500 animate-pulse" />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 text-center">
-            <div className="flex flex-col items-center p-3 bg-white rounded-lg md:rounded-xl shadow-sm">
-              <div className="w-6 h-6 md:w-8 md:h-8 bg-purple-100 rounded-full flex items-center justify-center mb-2">
-                <Truck className="w-3 h-3 md:w-4 md:h-4 text-purple-600" />
-              </div>
-              <span className="text-xs md:text-sm font-medium text-purple-900">
-                Fast Delivery
-              </span>
-              <span className="text-xs text-purple-600">
-                Within 2-4 hours
-              </span>
-            </div>
-            
-            <div className="flex flex-col items-center p-3 bg-white rounded-lg md:rounded-xl shadow-sm">
-              <div className="w-6 h-6 md:w-8 md:h-8 bg-orange-100 rounded-full flex items-center justify-center mb-2">
-                <Gift className="w-3 h-3 md:w-4 md:h-4 text-orange-600" />
-              </div>
-              <span className="text-xs md:text-sm font-medium text-purple-900">
-                Fresh Quality
-              </span>
-              <span className="text-xs text-purple-600">
-                Guaranteed freshness
-              </span>
-            </div>
-            
-            <div className="flex flex-col items-center p-3 bg-white rounded-lg md:rounded-xl shadow-sm">
-              <div className="w-6 h-6 md:w-8 md:h-8 bg-blue-100 rounded-full flex items-center justify-center mb-2">
-                <Heart className="w-3 h-3 md:w-4 md:h-4 text-blue-600" />
-              </div>
-              <span className="text-xs md:text-sm font-medium text-purple-900">
-                Made with Love
-              </span>
-              <span className="text-xs text-purple-600">
-                Each order special
-              </span>
-            </div>
-          </div>
-        </div>
-      </form>
+      </div>
     </div>
   );
 };

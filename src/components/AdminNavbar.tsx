@@ -127,7 +127,7 @@ const AdminNavbar = () => {
           <div className="flex items-center">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-orange-600">Bakingo</h1>
+              <h1 className="text-2xl font-bold text-orange-600">Cakes Wow</h1>
               <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded-full font-medium">
                 Admin
               </span>

@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { X } from 'lucide-react';
+import { X, ArrowLeft } from 'lucide-react';
+import { deliveryTypes } from '@/constants/checkout';
 
 interface TimeSlotModalProps {
   isOpen: boolean;
@@ -10,6 +11,8 @@ interface TimeSlotModalProps {
   selectedTime: string;
   onTimeSelect: (time: string) => void;
   deliveryType: 'asap' | 'scheduled';
+  selectedDeliveryTypeId?: string;
+  onGoBackToDeliveryType?: () => void;
 }
 
 const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
@@ -18,7 +21,9 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
   selectedDate,
   selectedTime,
   onTimeSelect,
-  deliveryType
+  deliveryType,
+  selectedDeliveryTypeId,
+  onGoBackToDeliveryType
 }) => {
   // Prevent background scroll when modal is open
   React.useEffect(() => {
@@ -36,44 +41,59 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
 
   if (!isOpen) return null;
 
-  const generateTimeSlots = () => {
-    const slots = [];
-    const startHour = 9; // 9 AM
-    const endHour = 21; // 9 PM
-    
-    for (let hour = startHour; hour <= endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-        const displayTime = hour <= 12 
-          ? `${hour === 0 ? 12 : hour}:${minute.toString().padStart(2, '0')} ${hour < 12 ? 'AM' : 'PM'}`
-          : `${hour - 12}:${minute.toString().padStart(2, '0')} PM`;
-        
-        slots.push({ value: time, display: displayTime });
+  // Get time slots from the selected delivery type
+  const getTimeSlots = () => {
+    if (selectedDeliveryTypeId) {
+      const deliveryTypeData = deliveryTypes.find(dt => dt.id === selectedDeliveryTypeId);
+      if (deliveryTypeData && deliveryTypeData.timeSlots) {
+        return deliveryTypeData.timeSlots.map(slot => ({
+          value: slot.time,
+          display: slot.time
+        }));
       }
     }
-    
-    return slots;
+
+    // Fallback to default time ranges if no delivery type is selected
+    return [
+      { value: "9:00 AM - 11:00 AM", display: "9:00 AM - 11:00 AM" },
+      { value: "11:00 AM - 1:00 PM", display: "11:00 AM - 1:00 PM" },
+      { value: "1:00 PM - 3:00 PM", display: "1:00 PM - 3:00 PM" },
+      { value: "3:00 PM - 5:00 PM", display: "3:00 PM - 5:00 PM" },
+      { value: "5:00 PM - 7:00 PM", display: "5:00 PM - 7:00 PM" },
+      { value: "7:00 PM - 9:00 PM", display: "7:00 PM - 9:00 PM" }
+    ];
   };
 
-  const timeSlots = generateTimeSlots();
+  const timeSlots = getTimeSlots();
 
   const handleTimeSelection = (time: string) => {
     onTimeSelect(time);
     onClose();
   };  return (
     <div className="fixed inset-0 bg-black/50 flex items-end md:items-center justify-center p-0 md:p-4 z-50">
-      <div className="bg-white rounded-t-3xl md:rounded-lg shadow-xl max-w-md w-full mx-0 md:mx-4 max-h-[85vh] md:max-h-[90vh] flex flex-col overflow-hidden">{/* Header */}
+      <div className="bg-white rounded-t-3xl md:rounded-lg shadow-xl max-w-md w-full mx-0 md:mx-4 max-h-[85vh] md:max-h-[90vh] flex flex-col overflow-hidden">        {/* Header */}
         <div className="flex items-center justify-between p-3 md:p-4 border-b">
-          <h3 className="text-base md:text-lg font-semibold">
-            Select Time for {selectedDate}
-          </h3>
+          <div className="flex items-center space-x-2">
+            {onGoBackToDeliveryType && (
+              <button
+                onClick={onGoBackToDeliveryType}
+                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                title="Go back to delivery type selection"
+              >
+                <ArrowLeft size={18} className="md:w-5 md:h-5 text-gray-600" />
+              </button>
+            )}
+            <h3 className="text-base md:text-lg font-semibold">
+              Select Time for {selectedDate}
+            </h3>
+          </div>
           <button
             onClick={onClose}
             className="p-1 hover:bg-gray-100 rounded-full transition-colors"
           >
             <X size={18} className="md:w-5 md:h-5" />
           </button>
-        </div>        {/* Time Slots */}
+        </div>{/* Time Slots */}
         <div className="p-3 md:p-4 flex-1 overflow-y-auto">
           <div className="grid grid-cols-2 gap-2 md:gap-3 mb-4">
             {timeSlots.map((slot) => (

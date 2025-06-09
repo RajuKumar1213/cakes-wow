@@ -216,21 +216,19 @@ const Header = () => {
                     <Search className="w-5 h-5" />
                   </button>
                 </form>
-              </div>{" "}
-              {/* Right side */}
+              </div>{" "}              {/* Right side */}
               <div className="flex items-center space-x-6">
                 {user ? (
-                  <div className="flex items-center space-x-4">
-                    <div
-                      className="flex items-center space-x-1 cursor-pointer"
-                      onClick={() => router.push("/dashboard")}
+                  <div className="flex items-center space-x-4">                    <div
+                      className="flex items-center space-x-1 cursor-pointer hover:text-pink-600 transition-colors"
+                      onClick={() => router.push("/profile")}
                     >
                       <User className="w-5 h-5" />
-                      <span>{user.phoneNumber}</span>
+                      <span>Profile</span>
                     </div>
                     <button
                       onClick={logout}
-                      className="flex items-center space-x-1 text-gray-600 hover:text-gray-800"
+                      className="flex items-center space-x-1 text-gray-600 hover:text-gray-800 transition-colors"
                     >
                       <LogOut className="w-4 h-4" />
                       <span>Logout</span>
@@ -238,7 +236,7 @@ const Header = () => {
                   </div>
                 ) : (
                   <div
-                    className="flex items-center space-x-1 cursor-pointer right-sidebar-trigger"
+                    className="flex items-center space-x-1 cursor-pointer hover:text-pink-600 transition-colors"
                     onClick={() => setShowLogin(true)}
                   >
                     <User className="w-5 h-5" />
@@ -496,22 +494,34 @@ const Header = () => {
                     )}
                   </div>
                 ))}
-            </div>{" "}
-            {/* User Actions in Mobile Menu */}
+            </div>{" "}            {/* User Actions in Mobile Menu */}
             <div className="p-4 border-t border-gray-200 space-y-3">
               {user ? (
                 <>
                   <button
-                    onClick={() => router.push("/dashboard")}
+                    onClick={() => {
+                      router.push("/orders");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
+                  >
+                    <Package className="w-5 h-5 text-gray-600" />
+                    <span className="font-medium text-gray-800">My Orders</span>
+                  </button>                  <button
+                    onClick={() => {
+                      router.push("/profile");
+                      setIsMobileMenuOpen(false);
+                    }}
                     className="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
                   >
                     <User className="w-5 h-5 text-gray-600" />
-                    <span className="font-medium text-gray-800">
-                      {user.phoneNumber}
-                    </span>
+                    <span className="font-medium text-gray-800">Profile</span>
                   </button>
                   <button
-                    onClick={logout}
+                    onClick={() => {
+                      logout();
+                      setIsMobileMenuOpen(false);
+                    }}
                     className="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
                   >
                     <LogOut className="w-5 h-5 text-gray-600" />
@@ -520,7 +530,10 @@ const Header = () => {
                 </>
               ) : (
                 <button
-                  onClick={() => setShowLogin(true)}
+                  onClick={() => {
+                    setShowLogin(true);
+                    setIsMobileMenuOpen(false);
+                  }}
                   className="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
                 >
                   <User className="w-5 h-5 text-gray-600" />
@@ -529,7 +542,13 @@ const Header = () => {
                   </span>
                 </button>
               )}
-              <button className="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
+              <button 
+                onClick={() => {
+                  router.push("/wishlist");
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
+              >
                 <Heart className="w-5 h-5 text-gray-600" />
                 <span className="font-medium text-gray-800">Wishlist</span>
               </button>
@@ -560,19 +579,42 @@ const Header = () => {
               >
                 <X className="w-6 h-6 text-gray-700" />
               </button>
-            </div>
-            {/* Sidebar Content */}
+            </div>            {/* Sidebar Content */}
             <div className="p-6 flex flex-col space-y-8">
               {/* Login (if no user) */}
-              <button onClick={() => setShowLogin(true)} className="flex items-center space-x-3 justify-center w-full py-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
-                <LogIn className="w-8 h-8 text-red-500" />
-                <span className="text-2xl font-bold text-red-600">Login</span>
-              </button>
+              {!user && (
+                <button 
+                  onClick={() => {
+                    setShowLogin(true);
+                    setIsRightSidebarOpen(false);
+                  }} 
+                  className="flex items-center space-x-3 justify-center w-full py-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                >
+                  <LogIn className="w-8 h-8 text-red-500" />
+                  <span className="text-2xl font-bold text-red-600">Login</span>
+                </button>
+              )}
+              
+              {/* My Orders */}
+              {user && (
+                <button 
+                  onClick={() => {
+                    router.push("/orders");
+                    setIsRightSidebarOpen(false);
+                  }}
+                  className="flex items-center space-x-3 w-full py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors text-lg font-medium text-gray-800 justify-start"
+                >
+                  <Package className="w-6 h-6 text-gray-500" />
+                  <span>My Orders</span>
+                </button>
+              )}
+              
               {/* Track Order */}
               <button className="flex items-center space-x-3 w-full py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors text-lg font-medium text-gray-800 justify-start">
                 <Package className="w-6 h-6 text-gray-500" />
                 <span>Track Order</span>
               </button>
+              
               {/* About Us */}
               <button className="flex items-center space-x-3 w-full py-3 px-4 rounded-lg hover:bg-gray-100 transition-colors text-lg font-medium text-gray-800 justify-start">
                 <Info className="w-6 h-6 text-gray-500" />

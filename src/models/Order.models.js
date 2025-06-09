@@ -1,9 +1,9 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const orderItemSchema = new mongoose.Schema({
   productId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Product',
+    ref: "Product",
     required: true,
   },
   name: {
@@ -23,11 +23,11 @@ const orderItemSchema = new mongoose.Schema({
   },
   selectedWeight: {
     type: String,
-    default: '',
+    default: "",
   },
   imageUrl: {
     type: String,
-    default: '',
+    default: "",
   },
 });
 
@@ -40,7 +40,7 @@ const customerInfoSchema = new mongoose.Schema({
   mobileNumber: {
     type: String,
     required: true,
-    match: [/^[6-9]\d{9}$/, 'Please enter a valid mobile number'],
+    match: [/^[6-9]\d{9}$/, "Please enter a valid mobile number"],
   },
   deliveryDate: {
     type: Date,
@@ -49,12 +49,7 @@ const customerInfoSchema = new mongoose.Schema({
   timeSlot: {
     type: String,
     required: true,
-    enum: [
-      "9:00 AM - 12:00 PM",
-      "12:00 PM - 3:00 PM",
-      "3:00 PM - 6:00 PM",
-      "6:00 PM - 9:00 PM"
-    ],
+    trim: true,
   },
   area: {
     type: String,
@@ -75,227 +70,239 @@ const customerInfoSchema = new mongoose.Schema({
   deliveryOccasion: {
     type: String,
     trim: true,
-    default: '',
+    default: "",
   },
   relation: {
     type: String,
     trim: true,
-    default: '',
+    default: "",
   },
   senderName: {
     type: String,
     trim: true,
-    default: '',
+    default: "",
   },
   messageOnCard: {
     type: String,
     trim: true,
-    default: '',
+    default: "",
     maxLength: 200,
   },
   specialInstructions: {
     type: String,
     trim: true,
-    default: '',
+    default: "",
     maxLength: 150,
   },
 });
 
-const orderSchema = new mongoose.Schema({
-  orderId: {
-    type: String,
-    required: true,
-    unique: true,
-    uppercase: true,
-  },
-  items: [orderItemSchema],
-  customerInfo: {
-    type: customerInfoSchema,
-    required: true,
-  },  totalAmount: {
-    type: Number,
-    required: true,
-    min: 0,
-  },
-  subtotal: {
-    type: Number,
-    default: 0,
-    min: 0,
-  },
-  deliveryCharge: {
-    type: Number,
-    default: 0,
-    min: 0,
-  },
-  onlineDiscount: {
-    type: Number,
-    default: 0,
-    min: 0,
-  },
-  status: {
-    type: String,
-    required: true,
-    enum: ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'],
-    default: 'pending',
-  },
-  paymentStatus: {
-    type: String,
-    required: true,
-    enum: ['pending', 'paid', 'failed', 'refunded'],
-    default: 'pending',
-  },  paymentMethod: {
-    type: String,
-    enum: ['cash_on_delivery', 'online', 'card'],
-    default: 'cash_on_delivery',
-  },
-  // Razorpay payment fields
-  razorpayOrderId: {
-    type: String,
-    default: null,
-  },
-  razorpayPaymentId: {
-    type: String,
-    default: null,
-  },
-  razorpaySignature: {
-    type: String,
-    default: null,
-  },
-  paymentCompletedAt: {
-    type: Date,
-    default: null,
-  },
-  orderDate: {
-    type: Date,
-    required: true,
-    default: Date.now,
-  },
-  estimatedDeliveryDate: {
-    type: Date,
-    required: true,
-  },
-  actualDeliveryDate: {
-    type: Date,
-  },
-  timeSlot: {
-    type: String,
-    required: true,
-  },
-  notes: {
-    type: String,
-    default: '',
-    trim: true,
-  },
-  trackingInfo: {
-    orderPlaced: {
-      timestamp: { type: Date, default: Date.now },
-      status: { type: String, default: 'Order placed successfully' },
+const orderSchema = new mongoose.Schema(
+  {
+    orderId: {
+      type: String,
+      required: true,
+      unique: true,
+      uppercase: true,
     },
-    confirmed: {
-      timestamp: Date,
-      status: String,
+    items: [orderItemSchema],
+    customerInfo: {
+      type: customerInfoSchema,
+      required: true,
     },
-    preparing: {
-      timestamp: Date,
-      status: String,
+    totalAmount: {
+      type: Number,
+      required: true,
+      min: 0,
     },
-    outForDelivery: {
-      timestamp: Date,
-      status: String,
-      deliveryPersonName: String,
-      deliveryPersonPhone: String,
+    subtotal: {
+      type: Number,
+      default: 0,
+      min: 0,
     },
-    delivered: {
-      timestamp: Date,
-      status: String,
-      deliveredBy: String,
+    deliveryCharge: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    onlineDiscount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    status: {
+      type: String,
+      required: true,
+      enum: [
+        "pending",
+        "confirmed",
+        "preparing",
+        "out_for_delivery",
+        "delivered",
+        "cancelled",
+      ],
+      default: "pending",
+    },
+    paymentStatus: {
+      type: String,
+      required: true,
+      enum: ["pending", "paid", "failed", "refunded"],
+      default: "pending",
+    },
+    paymentMethod: {
+      type: String,
+      enum: ["cash_on_delivery", "online", "card"],
+      default: "cash_on_delivery",
+    },
+    // Razorpay payment fields
+    razorpayOrderId: {
+      type: String,
+      default: null,
+    },
+    razorpayPaymentId: {
+      type: String,
+      default: null,
+    },
+    razorpaySignature: {
+      type: String,
+      default: null,
+    },
+    paymentCompletedAt: {
+      type: Date,
+      default: null,
+    },
+    orderDate: {
+      type: Date,
+      required: true,
+      default: Date.now,
+    },
+    estimatedDeliveryDate: {
+      type: Date,
+      required: true,
+    },
+    actualDeliveryDate: {
+      type: Date,
+    },
+    timeSlot: {
+      type: String,
+      required: true,
+    },
+    notes: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    trackingInfo: {
+      orderPlaced: {
+        timestamp: { type: Date, default: Date.now },
+        status: { type: String, default: "Order placed successfully" },
+      },
+      confirmed: {
+        timestamp: Date,
+        status: String,
+      },
+      preparing: {
+        timestamp: Date,
+        status: String,
+      },
+      outForDelivery: {
+        timestamp: Date,
+        status: String,
+        deliveryPersonName: String,
+        deliveryPersonPhone: String,
+      },
+      delivered: {
+        timestamp: Date,
+        status: String,
+        deliveredBy: String,
+      },
+    },
+    cancellationReason: {
+      type: String,
+      trim: true,
+    },
+    refundAmount: {
+      type: Number,
+      min: 0,
     },
   },
-  cancellationReason: {
-    type: String,
-    trim: true,
-  },
-  refundAmount: {
-    type: Number,
-    min: 0,
-  },
-}, {
-  timestamps: true,
-});
+  {
+    timestamps: true,
+  }
+);
 
 // Indexes for better performance
 orderSchema.index({ orderId: 1 });
-orderSchema.index({ 'customerInfo.mobileNumber': 1 });
+orderSchema.index({ "customerInfo.mobileNumber": 1 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ orderDate: -1 });
 orderSchema.index({ estimatedDeliveryDate: 1 });
-orderSchema.index({ 'customerInfo.area': 1 });
+orderSchema.index({ "customerInfo.area": 1 });
 
 // Virtual for order total items count
-orderSchema.virtual('totalItems').get(function() {
+orderSchema.virtual("totalItems").get(function () {
   return this.items.reduce((total, item) => total + item.quantity, 0);
 });
 
 // Virtual for order age in hours
-orderSchema.virtual('orderAgeHours').get(function() {
+orderSchema.virtual("orderAgeHours").get(function () {
   return Math.floor((Date.now() - this.orderDate.getTime()) / (1000 * 60 * 60));
 });
 
 // Virtual for delivery status
-orderSchema.virtual('deliveryStatus').get(function() {
+orderSchema.virtual("deliveryStatus").get(function () {
   const now = new Date();
   const deliveryDate = new Date(this.estimatedDeliveryDate);
-  
-  if (this.status === 'delivered') {
-    return 'delivered';
-  } else if (this.status === 'cancelled') {
-    return 'cancelled';
+
+  if (this.status === "delivered") {
+    return "delivered";
+  } else if (this.status === "cancelled") {
+    return "cancelled";
   } else if (now > deliveryDate) {
-    return 'overdue';
+    return "overdue";
   } else {
-    return 'on_time';
+    return "on_time";
   }
 });
 
 // Ensure virtuals are included in JSON output
-orderSchema.set('toJSON', { virtuals: true });
-orderSchema.set('toObject', { virtuals: true });
+orderSchema.set("toJSON", { virtuals: true });
+orderSchema.set("toObject", { virtuals: true });
 
 // Pre-save middleware to update tracking info
-orderSchema.pre('save', function(next) {
-  if (this.isModified('status')) {
+orderSchema.pre("save", function (next) {
+  if (this.isModified("status")) {
     const timestamp = new Date();
-    
+
     switch (this.status) {
-      case 'confirmed':
+      case "confirmed":
         if (!this.trackingInfo.confirmed.timestamp) {
           this.trackingInfo.confirmed = {
             timestamp,
-            status: 'Order confirmed and being prepared'
+            status: "Order confirmed and being prepared",
           };
         }
         break;
-      case 'preparing':
+      case "preparing":
         if (!this.trackingInfo.preparing.timestamp) {
           this.trackingInfo.preparing = {
             timestamp,
-            status: 'Your cake is being prepared'
+            status: "Your cake is being prepared",
           };
         }
         break;
-      case 'out_for_delivery':
+      case "out_for_delivery":
         if (!this.trackingInfo.outForDelivery.timestamp) {
           this.trackingInfo.outForDelivery = {
             timestamp,
-            status: 'Order is out for delivery'
+            status: "Order is out for delivery",
           };
         }
         break;
-      case 'delivered':
+      case "delivered":
         if (!this.trackingInfo.delivered.timestamp) {
           this.trackingInfo.delivered = {
             timestamp,
-            status: 'Order delivered successfully'
+            status: "Order delivered successfully",
           };
           this.actualDeliveryDate = timestamp;
         }
@@ -305,4 +312,9 @@ orderSchema.pre('save', function(next) {
   next();
 });
 
-export default mongoose.models.Order || mongoose.model('Order', orderSchema);
+// Force recreation of the model to ensure schema changes are applied
+if (mongoose.models.Order) {
+  delete mongoose.models.Order;
+}
+
+export default mongoose.model("Order", orderSchema);

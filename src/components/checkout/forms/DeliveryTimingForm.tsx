@@ -1,12 +1,6 @@
 import React, { useState } from 'react';
-import { Clock, Calendar, AlertCircle, Check, Star, Zap, Heart, User, MessageCircle, FileText, Send, ChevronDown, CreditCard, Loader2, Banknote, Eye } from 'lucide-react';
+import { Clock, Calendar, AlertCircle, Star, Heart, User, MessageCircle, FileText, Send, ChevronDown, Eye } from 'lucide-react';
 import { OrderForm, deliveryTypes, deliveryOccasions, relations, suggestedMessages } from '@/constants/checkout';
-import { useCart } from '@/contexts/CartContext';
-import { usePayment } from '@/hooks/usePayment';
-import { PaymentSuccess } from '@/components/checkout/PaymentSuccess';
-import { PaymentError } from '@/components/checkout/PaymentError';
-import { PaymentSummaryModal } from '@/components/checkout/PaymentSummaryModal';
-import axios from 'axios';
 import { useCheckout } from '@/contexts/CheckoutContext';
 
 interface DeliveryTimingFormProps {
@@ -30,29 +24,9 @@ export const DeliveryTimingForm: React.FC<DeliveryTimingFormProps> = ({
   onTimeSlotSelect,
   onContinue,
 }) => {
-    const { state, goToNextStep } = useCheckout();
-  console.log('DeliveryTimingForm ENHANCED VERSION LOADED with new fields');
-  const selectedDeliveryType = deliveryTypes.find(dt => dt.id === orderForm.deliveryType); const [showSuggestedMessages, setShowSuggestedMessages] = useState(false);
-  const [showPaymentSummary, setShowPaymentSummary] = useState(false);
-  const [paymentSuccess, setPaymentSuccess] = useState<any>(null);
-  const [paymentNotifications, setPaymentNotifications] = useState<any>(null);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [codLoading, setCodLoading] = useState(false);
-
-  const { items, totalPrice, clearCart } = useCart();
-  const { initiatePayment, loading: paymentLoading } = usePayment();
-
-  const handleDeliveryTypeSelect = (deliveryType: any) => {
-    if (onDeliveryTypeChange) {
-      onDeliveryTypeChange(deliveryType);
-    }
-  };
-
-  const handleTimeSlotSelect = (timeSlot: string) => {
-    if (onTimeSlotSelect) {
-      onTimeSlotSelect(timeSlot);
-    }
-  };
+  const { goToNextStep } = useCheckout();
+  const selectedDeliveryType = deliveryTypes.find(dt => dt.id === orderForm.deliveryType);
+  const [showSuggestedMessages, setShowSuggestedMessages] = useState(false);
 
   const handleSuggestedMessageSelect = (message: string) => {
     onUpdateField('messageOnCard', message);
@@ -62,222 +36,6 @@ export const DeliveryTimingForm: React.FC<DeliveryTimingFormProps> = ({
   const currentSuggestedMessages = orderForm.deliveryOccasion && suggestedMessages[orderForm.deliveryOccasion]
     ? suggestedMessages[orderForm.deliveryOccasion]
     : [];
-  const handleContinue = () => {
-    // Basic validation for new fields
-    const requiredFields = ['deliveryDate', 'timeSlot'];
-    const hasErrors = requiredFields.some(field => !orderForm[field as keyof OrderForm]);
-
-    if (!hasErrors) {
-      onContinue();
-    }
-  }; const getAddOnsFromStorage = () => {
-    try {
-      const savedAddOns = localStorage.getItem('bakingo-selected-addons');
-      const savedQuantities = localStorage.getItem('bakingo-addon-quantities');
-
-      if (!savedAddOns) return [];
-
-      const addOns = JSON.parse(savedAddOns);
-      const quantities = savedQuantities ? JSON.parse(savedQuantities) : {};
-
-      return addOns.map((addOn: any) => ({
-        name: addOn.name,
-        quantity: quantities[addOn._id] || 1,
-        price: addOn.price
-      }));
-    } catch (error) {
-      console.error('Error loading add-ons:', error);
-      return [];
-    }
-  };
-
-  const calculateOrderSummary = () => {
-    const addOns = getAddOnsFromStorage();
-    const addOnsTotal = addOns.reduce((total: number, addOn: any) => total + (addOn.price * addOn.quantity), 0);
-    const subtotal = totalPrice + addOnsTotal;
-    const deliveryCharge = selectedDeliveryType ? selectedDeliveryType.price : 0;
-    const totalAmount = subtotal + deliveryCharge;
-    const onlineDiscount = Math.round(totalAmount * 0.02); // 2% discount for online payment
-    const finalAmountOnline = totalAmount - onlineDiscount;
-    const finalAmountCOD = totalAmount; // No discount for COD
-
-    return {
-      items: items.map(item => ({
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price,
-        weight: item.selectedWeight,
-        imageUrl: item.imageUrl
-      })),
-      addOns,
-      subtotal,
-      addOnsTotal,
-      deliveryCharge,
-      deliveryType: selectedDeliveryType?.name || 'Standard Delivery',
-      onlineDiscount,
-      totalAmount,
-      finalAmountOnline,
-      finalAmountCOD
-    };
-  };
-
-  const validateForm = () => {
-    // Validate required fields
-    const requiredFields = ['fullName', 'mobileNumber', 'deliveryDate', 'timeSlot', 'area', 'fullAddress'];
-    const missingFields = [];
-
-    for (const field of requiredFields) {
-      const value = orderForm[field as keyof OrderForm];
-      if (!value || value.toString().trim() === '') {
-        missingFields.push(field);
-      }
-    }
-
-    if (missingFields.length > 0) {
-      alert(`Please fill all required fields before proceeding. Missing: ${missingFields.join(', ')}`);
-      return false;
-    }
-
-    if (items.length === 0) {
-      alert('Your cart is empty');
-      return false;
-    }
-
-    return true;
-  };
-
-  const handleShowPaymentSummary = () => {
-    if (!validateForm()) return;
-    setShowPaymentSummary(true);
-  };
-
-  const handlePaymentConfirm = async (paymentType: 'online' | 'cod') => {
-    setShowPaymentSummary(false);
-
-    if (paymentType === 'online') {
-      await handleOnlinePayment();
-    } else {
-      await handleCOD();
-    }
-  };
-  const handleOnlinePayment = async () => {
-    const orderSummary = calculateOrderSummary();
-
-    // Prepare order data
-    const orderData = {
-      items: items.map(item => ({
-        productId: item.productId,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        selectedWeight: item.selectedWeight || '',
-        imageUrl: item.imageUrl || '',
-      })),
-      addOns: orderSummary.addOns,
-      customerInfo: {
-        fullName: orderForm.fullName,
-        mobileNumber: orderForm.mobileNumber,
-        email: orderForm.email,
-        deliveryDate: orderForm.deliveryDate,
-        timeSlot: orderForm.timeSlot,
-        area: orderForm.area,
-        pinCode: orderForm.pinCode,
-        fullAddress: orderForm.fullAddress,
-        deliveryOccasion: orderForm.deliveryOccasion,
-        relation: orderForm.relation,
-        senderName: orderForm.senderName,
-        messageOnCard: orderForm.messageOnCard,
-        specialInstructions: orderForm.specialInstructions,
-      },
-      totalAmount: orderSummary.finalAmountOnline,
-      subtotal: orderSummary.subtotal,
-      addOnsTotal: orderSummary.addOnsTotal,
-      deliveryCharge: orderSummary.deliveryCharge,
-      onlineDiscount: orderSummary.onlineDiscount,
-      notes: orderForm.specialInstructions,
-    };
-
-    console.log('Initiating payment with order data:', orderData);
-
-    await initiatePayment(
-      orderData,
-      orderForm,
-      (orderDetails, notifications) => {
-        console.log('Payment successful:', orderDetails);
-        setPaymentSuccess(orderDetails);
-        setPaymentNotifications(notifications);
-        clearCart(); // Clear cart after successful payment
-        // Clear add-ons from localStorage
-        localStorage.removeItem('bakingo-selected-addons');
-        localStorage.removeItem('bakingo-addon-quantities');
-      },
-      (error) => {
-        console.error('Payment failed:', error);
-        setPaymentError(error);
-      }
-    );
-  }; const handleCOD = async () => {
-    setCodLoading(true);
-
-    try {
-      const orderSummary = calculateOrderSummary();
-
-      // Prepare order data
-      const orderData = {
-        items: items.map(item => ({
-          productId: item.productId,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          selectedWeight: item.selectedWeight || '',
-          imageUrl: item.imageUrl || '',
-        })),
-        addOns: orderSummary.addOns,
-        customerInfo: {
-          fullName: orderForm.fullName,
-          mobileNumber: orderForm.mobileNumber,
-          email: orderForm.email,
-          deliveryDate: orderForm.deliveryDate,
-          timeSlot: orderForm.timeSlot,
-          area: orderForm.area,
-          pinCode: orderForm.pinCode,
-          fullAddress: orderForm.fullAddress,
-          deliveryOccasion: orderForm.deliveryOccasion,
-          relation: orderForm.relation,
-          senderName: orderForm.senderName,
-          messageOnCard: orderForm.messageOnCard,
-          specialInstructions: orderForm.specialInstructions,
-        },
-        totalAmount: orderSummary.finalAmountCOD,
-        subtotal: orderSummary.subtotal,
-        addOnsTotal: orderSummary.addOnsTotal,
-        deliveryCharge: orderSummary.deliveryCharge,
-        notes: orderForm.specialInstructions,
-      };
-
-      console.log('Creating COD order with data:', orderData);
-
-      const response = await axios.post('/api/payment/cod', orderData);
-
-      if (response.data.success) {
-        console.log('COD order created successfully:', response.data);
-        setPaymentSuccess(response.data.order);
-        setPaymentNotifications(response.data.notifications);
-        clearCart(); // Clear cart after successful order creation
-        // Clear add-ons from localStorage
-        localStorage.removeItem('bakingo-selected-addons');
-        localStorage.removeItem('bakingo-addon-quantities');
-      } else {
-        throw new Error(response.data.error || 'Failed to create COD order');
-      }
-    } catch (error: any) {
-      console.error('COD order creation error:', error);
-      const errorMessage = error.response?.data?.error || error.message || 'Failed to create COD order';
-      setPaymentError(errorMessage);
-    } finally {
-      setCodLoading(false);
-    }
-  };
 
   return (
     <div className="bg-white rounded shadow-xl overflow-hidden">
@@ -459,12 +217,16 @@ export const DeliveryTimingForm: React.FC<DeliveryTimingFormProps> = ({
               </div>
             </div>
           )}
-        </div>        {/* Additional Delivery Information */}
+        </div>
+
+        {/* Additional Delivery Information */}
         <div className="space-y-6 border-t pt-6">
           <div className="flex items-center gap-2 mb-4">
             <Heart className="w-5 h-5 text-pink-500" />
             <h3 className="text-lg font-semibold text-gray-900">Make it Special</h3>
-          </div>            {/* Delivery Occasion, Relation, and Sender Name */}
+          </div>
+
+          {/* Delivery Occasion, Relation, and Sender Name */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -595,71 +357,32 @@ export const DeliveryTimingForm: React.FC<DeliveryTimingFormProps> = ({
                 {orderForm.specialInstructions.length}/150
               </div>
             </div>
-          </div>            {/* Payment Buttons */}
+          </div>
+
+          {/* Continue Button */}
           <div className="pt-4 border-t space-y-3">
-            {/* Single Preview Order Button */}
             <button
               type="button"
               onClick={goToNextStep}
-              disabled={!orderForm.deliveryDate || !orderForm.timeSlot || paymentLoading || codLoading}
-              className={`w-full py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform flex items-center justify-center gap-2 ${orderForm.deliveryDate && orderForm.timeSlot && !paymentLoading && !codLoading
+              disabled={!orderForm.deliveryDate || !orderForm.timeSlot}
+              className={`w-full py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform flex items-center justify-center gap-2 ${orderForm.deliveryDate && orderForm.timeSlot
                 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl hover:scale-[1.02]'
                 : 'bg-gray-200 text-gray-500 cursor-not-allowed'
                 }`}
             >
-
               <Eye className="w-5 h-5" />
               {!orderForm.deliveryDate || !orderForm.timeSlot
                 ? 'Please select date and time first'
-                : 'Preview Order'
+                : 'Continue to Next Step'
               }
-
             </button>
 
-            {/* Payment Info */}
-            <div className="text-center text-xs text-gray-500 mt-2">
-              <p>💳 Review your order details before payment</p>
-              <p>💰 Choose between Online Payment (2% discount) or Cash on Delivery</p>
+            <div className="text-center text-xs text-gray-500">
+              <p>💳 Complete all steps to proceed to payment</p>
             </div>
           </div>
         </div>
-      </div>      {/* Payment Summary Modal */}
-      {showPaymentSummary && (
-        <PaymentSummaryModal
-          isOpen={showPaymentSummary}
-          onClose={() => setShowPaymentSummary(false)}
-          onPayOnline={() => handlePaymentConfirm('online')}
-          onCashOnDelivery={() => handlePaymentConfirm('cod')}
-          orderSummary={calculateOrderSummary()}
-        />
-      )}
-
-      {/* Payment Success Modal */}
-      {paymentSuccess && (
-        <PaymentSuccess
-          orderDetails={paymentSuccess}
-          notifications={paymentNotifications}
-          onClose={() => {
-            setPaymentSuccess(null);
-            setPaymentNotifications(null);
-            window.location.href = '/'; // Redirect to home
-          }}
-        />
-      )}
-
-      {/* Payment Error Modal */}
-      {paymentError && (
-        <PaymentError
-          error={paymentError}
-          onRetry={() => {
-            setPaymentError(null);
-            handleShowPaymentSummary(); // Retry payment
-          }}
-          onBack={() => {
-            setPaymentError(null);
-          }}
-        />
-      )}
+      </div>
     </div>
   );
 };

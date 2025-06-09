@@ -13,9 +13,9 @@ interface AdminHeaderProps {
   backButtonUrl?: string;
 }
 
-const AdminHeader = ({ 
-  title, 
-  showBackButton = false, 
+const AdminHeader = ({
+  title,
+  showBackButton = false,
   backButtonText = "Back to Dashboard",
   backButtonUrl = "/admin"
 }: AdminHeaderProps) => {
@@ -43,13 +43,13 @@ const AdminHeader = ({
   const handleLogout = async () => {
     try {
       const response = await axios.post('/api/auth/admin-logout');
-      
+
       if (response.status === 200) {
         showSuccess('Success', 'Logged out successfully');
         // Clear any client-side storage if needed
         localStorage.removeItem('admin_token');
         sessionStorage.removeItem('admin_token');
-        
+
         // Redirect to admin login
         router.push('/admin-login');
       } else {
@@ -58,7 +58,7 @@ const AdminHeader = ({
     } catch (error) {
       console.error('Logout error:', error);
       showError('Error', 'An error occurred during logout');
-      
+
       // Force redirect even if API call fails
       localStorage.removeItem('admin_token');
       sessionStorage.removeItem('admin_token');
@@ -83,7 +83,7 @@ const AdminHeader = ({
                 <div className="h-6 w-px bg-gray-300"></div>
               </>
             )}
-            <h1 className="text-2xl font-bold text-orange-600">Bakingo</h1>
+            <h1 className="text-2xl font-bold text-orange-600">Cakes Wow</h1>
             <span className="text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded-full font-medium">
               Admin
             </span>
@@ -93,7 +93,8 @@ const AdminHeader = ({
                 <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
               </>
             )}
-          </div>          <div className="flex items-center gap-4">
+          </div>          
+          <div className="flex items-center gap-4">
             <div className="text-right">
               <span className="text-sm text-gray-500">Logged in as</span>
               <div className="text-gray-700 font-medium">{adminEmail || 'Admin'}</div>

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Order from '@/models/Order.models';
-import { generateOrderId } from '@/lib/orderUtils';
+import { generateOrderId } from '@/lib/serverOrderUtils';
 import jwt from 'jsonwebtoken';
 
 /**
