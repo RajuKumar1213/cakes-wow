@@ -26,6 +26,11 @@ const addOnSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Prevent warnings in browser environment
+if (typeof window === 'undefined' && !process.emitWarning) {
+  process.emitWarning = () => {};
+}
+
 const AddOn = mongoose.models.AddOn || mongoose.model('AddOn', addOnSchema);
 
 module.exports = AddOn;

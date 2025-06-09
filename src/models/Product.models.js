@@ -5,12 +5,12 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
-  },
-  slug: {
+  },  slug: {
     type: String,
     required: true,
     unique: true,
     lowercase: true,
+    index: true,
   },
   description: {
     type: String,
@@ -119,7 +119,7 @@ const productSchema = new mongoose.Schema({
 });
 
 // Indexes for better performance
-productSchema.index({ slug: 1, isAvailable: 1 }); // Compound index for product page queries
+productSchema.index({ isAvailable: 1, slug: 1 }); // Compound index for product page queries
 productSchema.index({ categories: 1 });
 productSchema.index({ tags: 1 });
 productSchema.index({ price: 1 });
@@ -146,5 +146,10 @@ productSchema.virtual('finalPrice').get(function() {
 // Ensure virtuals are included in JSON output
 productSchema.set('toJSON', { virtuals: true });
 productSchema.set('toObject', { virtuals: true });
+
+// Prevent warnings in browser environment
+if (typeof window === 'undefined' && !process.emitWarning) {
+  process.emitWarning = () => {};
+}
 
 export default mongoose.models.Product || mongoose.model('Product', productSchema);

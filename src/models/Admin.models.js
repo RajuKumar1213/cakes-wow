@@ -72,9 +72,13 @@ adminSchema.pre('insertMany', async function(next, docs) {
     const error = new Error('Cannot create multiple admin accounts. Only one admin is allowed.');
     error.name = 'SingleAdminError';
     return next(error);
-  }
-  next();
+  }  next();
 });
+
+// Prevent warnings in browser environment
+if (typeof window === 'undefined' && !process.emitWarning) {
+  process.emitWarning = () => {};
+}
 
 const Admin = mongoose.models.Admin || mongoose.model("Admin", adminSchema);
 

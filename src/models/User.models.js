@@ -95,4 +95,9 @@ if (mongoose.models.User) {
   delete mongoose.models.User;
 }
 
+// Prevent warnings in browser environment
+if (typeof window === 'undefined' && !process.emitWarning) {
+  process.emitWarning = () => {};
+}
+
 export default mongoose.model('User', UserSchema);

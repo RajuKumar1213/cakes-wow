@@ -103,6 +103,7 @@ const orderSchema = new mongoose.Schema(
       required: true,
       unique: true,
       uppercase: true,
+      index: true,
     },
     items: [orderItemSchema],
     customerInfo: {
@@ -231,7 +232,6 @@ const orderSchema = new mongoose.Schema(
 );
 
 // Indexes for better performance
-orderSchema.index({ orderId: 1 });
 orderSchema.index({ "customerInfo.mobileNumber": 1 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ orderDate: -1 });
@@ -315,6 +315,11 @@ orderSchema.pre("save", function (next) {
 // Force recreation of the model to ensure schema changes are applied
 if (mongoose.models.Order) {
   delete mongoose.models.Order;
+}
+
+// Prevent warnings in browser environment
+if (typeof window === 'undefined' && !process.emitWarning) {
+  process.emitWarning = () => {};
 }
 
 export default mongoose.model("Order", orderSchema);

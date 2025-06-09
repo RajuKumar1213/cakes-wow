@@ -17,4 +17,9 @@ const OtpSchema = new mongoose.Schema({
   }
 });
 
+// Prevent warnings in browser environment
+if (typeof window === 'undefined' && !process.emitWarning) {
+  process.emitWarning = () => {};
+}
+
 export default mongoose.models.Otp || mongoose.model('Otp', OtpSchema);

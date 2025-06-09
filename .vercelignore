@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build outputs (handled by Vercel)
+.next/
+out/
+
+# Environment files (use Vercel environment variables instead)
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
+
+# Debug files
+test-payment-integration.js
+PaymentStep-DEBUG.tsx
+PAYMENT_DEBUG_FIXED.md
+PAYMENT_FLOW_EXPLANATION.md
+IMPLEMENTATION_COMPLETE.md
+TYPESCRIPT_FIXES_COMPLETE.md
+RAZORPAY_SETUP_GUIDE.md
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Coverage reports
+coverage/
+
+# Temporary files
+.tmp/
+temp/
