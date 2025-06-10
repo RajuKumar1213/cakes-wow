@@ -501,11 +501,9 @@ export default function OrderConfirmationPage() {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Payment Status</span>
                   <span className="capitalize font-medium text-green-600">{order.paymentStatus}</span>
-                </div>
-
-                <div className="flex justify-between text-sm">
+                </div>                <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Payment Method</span>
-                  <span>{order.paymentMethod === 'online' ? 'Online Payment' : 'Cash on Delivery'}</span>
+                  <span>Online Payment</span>
                 </div>
               </div>
             </div>

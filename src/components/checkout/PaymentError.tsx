@@ -67,28 +67,13 @@ export const PaymentError: React.FC<PaymentErrorProps> = ({ error, onRetry, onBa
               <RefreshCw className="w-4 h-4" />
               Try Payment Again
             </button>
-            
-            <button
+              <button
               onClick={onBack}
               className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Checkout
             </button>
-
-            {/* Cash on Delivery Option */}
-            <div className="text-center pt-2">
-              <p className="text-xs text-gray-500 mb-2">Or choose</p>
-              <button
-                onClick={() => {
-                  // Handle COD option
-                  alert('Cash on Delivery option will be implemented');
-                }}
-                className="text-blue-600 hover:text-blue-700 font-medium text-sm underline"
-              >
-                Cash on Delivery
-              </button>
-            </div>
           </div>
         </div>
       </div>

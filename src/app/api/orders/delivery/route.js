@@ -92,10 +92,9 @@ export async function POST(request) {
       })),
       addOns: processedAddOns,
       totalAmount: totalAmount,
-      itemsTotal: totalAmount - addOnsTotal,
-      addOnsTotal: addOnsTotal,
+      itemsTotal: totalAmount - addOnsTotal,      addOnsTotal: addOnsTotal,
       status: 'pending',
-      paymentMethod: 'cash_on_delivery', // Default for now
+      paymentMethod: 'online', // Default for online payments
       orderDate: new Date(),
       estimatedDeliveryDate: new Date(orderData.deliveryDate),
       timeSlot: orderData.timeSlot,

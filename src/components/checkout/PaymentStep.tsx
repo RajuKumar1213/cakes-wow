@@ -102,9 +102,7 @@ export const PaymentStep: React.FC = () => {
         {/* Payment Methods */}
         <div className="lg:col-span-2 space-y-3 md:space-y-4">
           <div className="bg-white rounded-lg border border-gray-200 p-3 md:p-4">
-            <h3 className="text-sm md:text-base font-semibold text-gray-900 mb-3 md:mb-4">Payment Method</h3>
-
-            <div className="space-y-2 md:space-y-3">
+            <h3 className="text-sm md:text-base font-semibold text-gray-900 mb-3 md:mb-4">Payment Method</h3>            <div className="space-y-2 md:space-y-3">
               {/* Online Payment */}
               <label className="flex items-center p-3 md:p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
                 <input
@@ -120,23 +118,6 @@ export const PaymentStep: React.FC = () => {
                   <div className="font-medium text-sm md:text-base">Online Payment</div>
                   <div className="text-xs md:text-sm text-gray-600">UPI, Card, Net Banking</div>
                   <div className="text-xs md:text-sm text-green-600 font-medium">Save 2% with online payment!</div>
-                </div>
-              </label>
-
-              {/* Cash on Delivery */}
-              <label className="flex items-center p-3 md:p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="cash_on_delivery"
-                  checked={selectedPaymentMethod === 'cash_on_delivery'}
-                  onChange={(e) => setSelectedPaymentMethod(e.target.value)}
-                  className="mr-3 md:mr-4"
-                />
-                <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-green-600 mr-2 md:mr-3" />
-                <div className="flex-1">
-                  <div className="font-medium text-sm md:text-base">Cash on Delivery</div>
-                  <div className="text-xs md:text-sm text-gray-600">Pay when your order arrives</div>
                 </div>
               </label>
             </div>
@@ -215,15 +196,13 @@ export const PaymentStep: React.FC = () => {
         >
           <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" />
           <span>Back to Cart Review</span>
-        </button>
-
-        <button
+        </button>        <button
           onClick={handlePayment}
           disabled={loading}
           className="px-6 md:px-8 py-2 md:py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors font-medium text-sm md:text-base w-full md:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? 'Processing...' : selectedPaymentMethod === 'online' ? 'Pay Now' : 'Place Order'}        
-          </button>
+          {loading ? 'Processing...' : 'Pay Now'}        
+        </button>
       </div>
     </div>
   );

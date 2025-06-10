@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Clock, Calendar, AlertCircle, Star, Heart, User, MessageCircle, FileText, Send, ChevronDown, Eye } from 'lucide-react';
 import { OrderForm, deliveryTypes, deliveryOccasions, relations, suggestedMessages } from '@/constants/checkout';
 import { useCheckout } from '@/contexts/CheckoutContext';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 interface DeliveryTimingFormProps {
   orderForm: OrderForm;
@@ -23,19 +24,44 @@ export const DeliveryTimingForm: React.FC<DeliveryTimingFormProps> = ({
   onDeliveryTypeChange,
   onTimeSlotSelect,
   onContinue,
-}) => {
-  const { goToNextStep } = useCheckout();
+}) => {  const { goToNextStep } = useCheckout();
   const selectedDeliveryType = deliveryTypes.find(dt => dt.id === orderForm.deliveryType);
   const [showSuggestedMessages, setShowSuggestedMessages] = useState(false);
+  const [isLoadingDeliveryData, setIsLoadingDeliveryData] = useState(true);
+
+  // Simulate loading of delivery types and time slots
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoadingDeliveryData(false);
+    }, 500); // Small delay to show spinner
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSuggestedMessageSelect = (message: string) => {
     onUpdateField('messageOnCard', message);
     setShowSuggestedMessages(false);
   };
-
   const currentSuggestedMessages = orderForm.deliveryOccasion && suggestedMessages[orderForm.deliveryOccasion]
     ? suggestedMessages[orderForm.deliveryOccasion]
     : [];
+
+  // Show loading spinner if delivery data is still loading
+  if (isLoadingDeliveryData) {
+    return (
+      <div className="bg-white rounded shadow-xl overflow-hidden">
+        <div className="bg-blue-600 text-white p-3 md:p-4">
+          <h2 className="text-base md:text-lg font-semibold flex items-center gap-2">
+            <Clock className="w-4 h-4 md:w-5 md:h-5" />
+            Delivery Details
+          </h2>
+          <p className="text-blue-100 mt-1 text-xs md:text-sm">Complete your delivery information ⏰</p>
+        </div>
+        <div className="p-4 md:p-6 flex items-center justify-center min-h-[200px]">
+          <LoadingSpinner size="md" color="primary" text="Loading delivery options..." />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded shadow-xl overflow-hidden">
@@ -290,7 +316,7 @@ export const DeliveryTimingForm: React.FC<DeliveryTimingFormProps> = ({
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 <div className="flex items-center">
                   <MessageCircle className="w-3 h-3 mr-1 text-pink-500" />
-                  Message on Card
+                  Message on Cake Card
                 </div>
               </label>
 
@@ -357,13 +383,11 @@ export const DeliveryTimingForm: React.FC<DeliveryTimingFormProps> = ({
                 {orderForm.specialInstructions.length}/150
               </div>
             </div>
-          </div>
-
-          {/* Continue Button */}
+          </div>          {/* Continue Button */}
           <div className="pt-4 border-t space-y-3">
             <button
               type="button"
-              onClick={goToNextStep}
+              onClick={onContinue}
               disabled={!orderForm.deliveryDate || !orderForm.timeSlot}
               className={`w-full py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform flex items-center justify-center gap-2 ${orderForm.deliveryDate && orderForm.timeSlot
                 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl hover:scale-[1.02]'
@@ -373,12 +397,10 @@ export const DeliveryTimingForm: React.FC<DeliveryTimingFormProps> = ({
               <Eye className="w-5 h-5" />
               {!orderForm.deliveryDate || !orderForm.timeSlot
                 ? 'Please select date and time first'
-                : 'Continue to Next Step'
+                : 'Save Data & Continue to Payment'
               }
-            </button>
-
-            <div className="text-center text-xs text-gray-500">
-              <p>💳 Complete all steps to proceed to payment</p>
+            </button>            <div className="text-center text-xs text-gray-500">
+              <p>💾 All personal details and address will be automatically saved before proceeding to payment</p>
             </div>
           </div>
         </div>

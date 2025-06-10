@@ -39,29 +39,89 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen) return null;  // Helper function to convert time string to 24-hour format for comparison
+  const convertTo24Hour = (timeStr: string) => {
+    const [time, period] = timeStr.split(' ');
+    
+    // Handle both formats: "10:00" and "10"
+    let hours: number;
+    let minutes: number = 0;
+    
+    if (time.includes(':')) {
+      [hours, minutes] = time.split(':').map(Number);
+    } else {
+      hours = parseInt(time);
+      minutes = 0;
+    }
+    
+    if (period === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (period === 'AM' && hours === 12) {
+      hours = 0;
+    }
+    
+    const totalMinutes = hours * 60 + minutes;
+    return totalMinutes;
+  };
+
+  // Helper function to extract start time from time slot
+  const getSlotStartTime = (slot: string) => {
+    const startTime = slot.split(' - ')[0];
+    return convertTo24Hour(startTime);
+  };
+
+  // Check if selected date is today
+  const isToday = (dateString: string) => {
+    const today = new Date();
+    const selectedDateObj = new Date(dateString);
+    return today.toDateString() === selectedDateObj.toDateString();
+  };
+
+  // Get current time in minutes from midnight
+  const getCurrentTimeInMinutes = () => {
+    const now = new Date();
+    return now.getHours() * 60 + now.getMinutes();
+  };  // Filter time slots based on current time if it's today
+  const filterAvailableSlots = (slots: { value: string; display: string }[]) => {
+    if (!isToday(selectedDate)) {
+      return slots;
+    }
+
+    const currentTime = getCurrentTimeInMinutes();
+    
+    return slots.filter(slot => {
+      const slotStartTime = getSlotStartTime(slot.value);
+      // Only show slots that start at least 60 minutes (1 hour) from now
+      return slotStartTime > currentTime + 60;
+    });
+  };
 
   // Get time slots from the selected delivery type
   const getTimeSlots = () => {
+    let allSlots: { value: string; display: string }[] = [];
+
     if (selectedDeliveryTypeId) {
       const deliveryTypeData = deliveryTypes.find(dt => dt.id === selectedDeliveryTypeId);
       if (deliveryTypeData && deliveryTypeData.timeSlots) {
-        return deliveryTypeData.timeSlots.map(slot => ({
+        allSlots = deliveryTypeData.timeSlots.map(slot => ({
           value: slot.time,
           display: slot.time
         }));
       }
+    } else {
+      // Fallback to default time ranges if no delivery type is selected
+      allSlots = [
+        { value: "9 AM - 11 AM", display: "9 AM - 11 AM" },
+        { value: "11 AM - 1 PM", display: "11 AM - 1 PM" },
+        { value: "1 PM - 3 PM", display: "1 PM - 3 PM" },
+        { value: "3 PM - 5 PM", display: "3 PM - 5 PM" },
+        { value: "5 PM - 7 PM", display: "5 PM - 7 PM" },
+        { value: "7 PM - 9 PM", display: "7 PM - 9 PM" }
+      ];
     }
 
-    // Fallback to default time ranges if no delivery type is selected
-    return [
-      { value: "9:00 AM - 11:00 AM", display: "9:00 AM - 11:00 AM" },
-      { value: "11:00 AM - 1:00 PM", display: "11:00 AM - 1:00 PM" },
-      { value: "1:00 PM - 3:00 PM", display: "1:00 PM - 3:00 PM" },
-      { value: "3:00 PM - 5:00 PM", display: "3:00 PM - 5:00 PM" },
-      { value: "5:00 PM - 7:00 PM", display: "5:00 PM - 7:00 PM" },
-      { value: "7:00 PM - 9:00 PM", display: "7:00 PM - 9:00 PM" }
-    ];
+    // Filter slots based on current time if it's today
+    return filterAvailableSlots(allSlots);
   };
 
   const timeSlots = getTimeSlots();
@@ -93,28 +153,48 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
           >
             <X size={18} className="md:w-5 md:h-5" />
           </button>
-        </div>{/* Time Slots */}
+        </div>        {/* Time Slots */}
         <div className="p-3 md:p-4 flex-1 overflow-y-auto">
-          <div className="grid grid-cols-2 gap-2 md:gap-3 mb-4">
-            {timeSlots.map((slot) => (
-              <button
-                key={slot.value}
-                onClick={() => handleTimeSelection(slot.value)}
-                className={`p-2 md:p-3 rounded-lg border-2 text-xs md:text-sm font-medium transition-all ${
-                  selectedTime === slot.value
-                    ? 'border-pink-500 bg-pink-50 text-pink-700'
-                    : 'border-gray-200 bg-white text-gray-700 hover:border-pink-300 hover:bg-pink-50'
-                }`}
-              >
-                {slot.display}
-              </button>
-            ))}
-          </div>        </div>
-
-        {/* Footer */}
+          {timeSlots.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-gray-400 text-4xl mb-4">⏰</div>
+              <h4 className="text-lg font-medium text-gray-700 mb-2">No Time Slots Available</h4>
+              <p className="text-sm text-gray-500 mb-4">
+                All delivery slots for today have passed. Please select a future date for delivery.
+              </p>
+              {onGoBackToDeliveryType && (
+                <button
+                  onClick={onGoBackToDeliveryType}
+                  className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
+                >
+                  Choose Different Date
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 md:gap-3 mb-4">
+              {timeSlots.map((slot) => (
+                <button
+                  key={slot.value}
+                  onClick={() => handleTimeSelection(slot.value)}
+                  className={`p-2 md:p-3 rounded-lg border-2 text-xs md:text-sm font-medium transition-all ${
+                    selectedTime === slot.value
+                      ? 'border-pink-500 bg-pink-50 text-pink-700'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-pink-300 hover:bg-pink-50'
+                  }`}
+                >
+                  {slot.display}
+                </button>
+              ))}
+            </div>
+          )}        </div>        {/* Footer */}
         <div className="p-3 md:p-4 border-t bg-gray-50 flex-shrink-0">
           <p className="text-xs md:text-sm text-gray-600 text-center">
-            {deliveryType === 'asap' 
+            {timeSlots.length === 0 
+              ? 'All slots for today have passed. Please select a future date.'
+              : isToday(selectedDate)
+              ? `Showing available slots after ${new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`
+              : deliveryType === 'asap' 
               ? 'Select earliest available time' 
               : 'Choose your preferred delivery time'
             }

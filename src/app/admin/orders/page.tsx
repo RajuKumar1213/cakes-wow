@@ -64,7 +64,7 @@ interface Order {
   onlineDiscount: number;
   status: 'pending' | 'confirmed' | 'preparing' | 'out_for_delivery' | 'delivered' | 'cancelled';
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
-  paymentMethod: 'cash_on_delivery' | 'online' | 'card';
+  paymentMethod: 'online' | 'card';
   orderDate: string;
   estimatedDeliveryDate: string;
   actualDeliveryDate?: string;

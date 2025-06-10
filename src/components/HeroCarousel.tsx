@@ -49,7 +49,7 @@ const HeroCarousel = () => {
     },
     {
       id: "3",
-      image: "/images/aniversary6.webp",
+      image: "/images/aniversary5.webp",
       alt: "Anniversary Cakes",
       // title: "Anniversary Cakes",
       href: "/anniversary-cakes",

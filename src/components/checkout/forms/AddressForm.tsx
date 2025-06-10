@@ -3,6 +3,7 @@ import { MapPin, Home, Phone, User, Edit3, Plus, Trash2, ChevronRight, AlertCirc
 import { OrderForm } from '@/constants/checkout';
 import { areaPinMap } from '@/constants/areaPinMap';
 import { useAuth, Address } from '@/contexts/AuthContext';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 interface AddressFormProps {
     orderForm: OrderForm;
@@ -17,11 +18,11 @@ export const AddressForm: React.FC<AddressFormProps> = ({
     onInputChange,
     onAreaChange,
 }) => {
-    const { user, addAddress, updateAddress, deleteAddress } = useAuth();
-    const [showAddressForm, setShowAddressForm] = useState(false);
+    const { user, addAddress, updateAddress, deleteAddress } = useAuth(); const [showAddressForm, setShowAddressForm] = useState(false);
     const [editingAddress, setEditingAddress] = useState<Address | null>(null);
     const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
-    const [isLoading, setIsLoading] = useState(false); const [formData, setFormData] = useState<Address>({
+    const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingAddresses, setIsLoadingAddresses] = useState(true); const [formData, setFormData] = useState<Address>({
         receiverName: '',
         prefix: 'Mr.',
         city: '',
@@ -47,9 +48,10 @@ export const AddressForm: React.FC<AddressFormProps> = ({
         if (user?.phoneNumber && !formData.phoneNumber) {
             setFormData(prev => ({ ...prev, phoneNumber: user.phoneNumber }));
         }
-    }, [user?.address, selectedAddress, user?.phoneNumber, formData.phoneNumber]);
 
-    // Separate effect to auto-select first address when none is selected
+        // Set loading to false once user data is processed
+        setIsLoadingAddresses(false);
+    }, [user?.address, selectedAddress, user?.phoneNumber, formData.phoneNumber]);    // Separate effect to auto-select first address when none is selected
     useEffect(() => {
         if (user?.address && user.address.length > 0 && !selectedAddress && !orderForm.fullAddress && !orderForm.area) {
             const firstAddress = user.address[0];
@@ -60,15 +62,46 @@ export const AddressForm: React.FC<AddressFormProps> = ({
         }
     }, [user?.address, selectedAddress, orderForm.fullAddress, orderForm.area, onInputChange, onAreaChange]);
 
-    const handleInputChange = (field: keyof Address, value: string) => {
+    // Sync orderForm data back to local formData when orderForm changes
+    useEffect(() => {
+        if (orderForm.fullAddress && !selectedAddress) {
+            setFormData(prev => ({
+                ...prev,
+                fullAddress: orderForm.fullAddress,
+                pinCode: orderForm.pinCode || prev.pinCode,
+                city: orderForm.area || prev.city,
+                receiverName: orderForm.fullName || prev.receiverName,
+                phoneNumber: orderForm.mobileNumber || prev.phoneNumber
+            }));
+        }
+    }, [orderForm.fullAddress, orderForm.pinCode, orderForm.area, orderForm.fullName, orderForm.mobileNumber, selectedAddress]);    const handleInputChange = (field: keyof Address, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
         if (formErrors[field]) {
             setFormErrors(prev => ({ ...prev, [field]: '' }));
         }
-    }; const handleAreaChange = (area: string) => {
+        
+        // Also update parent orderForm for critical fields
+        if (field === 'fullAddress') {
+            onInputChange('fullAddress', value);
+        } else if (field === 'pinCode') {
+            onInputChange('pinCode', value);
+        }
+    };
+
+    // Sync receiverName from orderForm.fullName if available
+    useEffect(() => {
+        if (orderForm.fullName && !formData.receiverName) {
+            setFormData(prev => ({ ...prev, receiverName: orderForm.fullName }));
+        }
+    }, [orderForm.fullName, formData.receiverName]);const handleAreaChange = (area: string) => {
         const pinCode = (areaPinMap as Record<string, string>)[area] || '';
+
+        // Update local state
         setFormData(prev => ({ ...prev, city: area, pinCode }));
+
+        // Update parent orderForm
         onAreaChange(area);
+        onInputChange('pinCode', pinCode);
     }; const validateForm = (): boolean => {
         const errors: Partial<Address> = {};
 
@@ -168,6 +201,24 @@ export const AddressForm: React.FC<AddressFormProps> = ({
         setEditingAddress(null);
         setShowAddressForm(true);
     };
+
+    // Show loading spinner if address data is still loading
+    if (isLoadingAddresses && !user) {
+        return (
+            <div className="bg-white rounded shadow-xl overflow-hidden">
+                <div className="bg-green-600 text-white p-3 md:p-4">
+                    <h2 className="text-base md:text-lg font-semibold flex items-center gap-2">
+                        <MapPin className="w-4 h-4 md:w-5 md:h-5" />
+                        Delivery Address
+                    </h2>
+                    <p className="text-green-100 mt-1 text-xs md:text-sm">Where should we bring the sweetness? 🏠</p>
+                </div>
+                <div className="p-4 md:p-6 flex items-center justify-center min-h-[200px]">
+                    <LoadingSpinner size="md" color="primary" text="Loading your addresses..." />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-white rounded shadow-xl overflow-hidden">
@@ -329,23 +380,44 @@ export const AddressForm: React.FC<AddressFormProps> = ({
                                         {formErrors.city}
                                     </div>
                                 )}
-                            </div>
-
-                            <div className="group">
+                            </div>                            <div className="group">
                                 <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
-                                    PIN Code *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.pinCode}
-                                    readOnly
-                                    className="w-full px-3 py-3 border-2 border-gray-200 rounded-lg bg-gray-100 text-gray-600"
-                                    placeholder="Auto-filled based on city"
-                                />
-                                {formData.pinCode && (
-                                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                                        <Check className="w-4 h-4 text-green-500" />
+                                    <div className="flex items-center">
+                                        <MapPin className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2 text-green-500" />
+                                        PIN Code *
                                     </div>
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={formData.pinCode}
+                                        onChange={(e) => handleInputChange('pinCode', e.target.value)}
+                                        readOnly={!!formData.city} // Read-only only when city is selected
+                                        className={`w-full pl-10 pr-3 py-3 border-2 rounded-lg focus:ring-0 focus:border-green-400 transition-all duration-300 ${formData.city
+                                                ? 'bg-gray-100 text-gray-600 border-gray-200'
+                                                : formErrors.pinCode
+                                                    ? 'border-red-400 bg-red-50'
+                                                    : 'border-gray-200'
+                                            }`}
+                                        placeholder={formData.city ? "Auto-filled based on city" : "Enter PIN code manually"}
+                                    />
+                                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                    {formData.pinCode && formData.city && (
+                                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                                            <Check className="w-4 h-4 text-green-500" />
+                                        </div>
+                                    )}
+                                </div>
+                                {formErrors.pinCode && (
+                                    <div className="mt-2 flex items-center text-red-500 text-xs">
+                                        <AlertCircle className="w-3 h-3 mr-1" />
+                                        {formErrors.pinCode}
+                                    </div>
+                                )}
+                                {!formData.city && (
+                                    <p className="mt-1 text-xs text-gray-500">
+                                        💡 Select an area above to auto-fill PIN code, or enter manually
+                                    </p>
                                 )}
                             </div>
                         </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Phone, Mail, AlertCircle, Save, Check } from 'lucide-react';
 import { OrderForm } from '@/constants/checkout';
 import { useAuth } from '@/contexts/AuthContext';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 interface PersonalDetailsFormProps {
   orderForm: OrderForm;
@@ -18,6 +19,12 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [isLoadingUserData, setIsLoadingUserData] = useState(true);
+  const [originalUserData, setOriginalUserData] = useState<{
+    fullName: string;
+    email: string;
+  }>({ fullName: '', email: '' });
+
   // Load user data into form when user is available
   useEffect(() => {
     if (user && user.name && !orderForm.fullName) {
@@ -30,7 +37,41 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
     if (user && user.phoneNumber && !orderForm.mobileNumber) {
       onInputChange('mobileNumber', user.phoneNumber);
     }
+    // Store original data for change detection and set loading to false
+    setOriginalUserData({
+      fullName: orderForm.fullName || '',
+      email: orderForm.email || ''
+    });
+    setIsLoadingUserData(false);
   }, [user, onInputChange, orderForm.fullName, orderForm.email, orderForm.mobileNumber]);
+
+  // Check if there are changes from original data
+  const hasChanges = 
+    orderForm.fullName !== originalUserData.fullName || 
+    orderForm.email !== originalUserData.email;
+
+  // Get list of changed fields
+  const changedFields = [];
+  if (orderForm.fullName !== originalUserData.fullName) changedFields.push('Name');
+  if (orderForm.email !== originalUserData.email) changedFields.push('Email');
+
+  // Show loading spinner if user data is still loading
+  if (isLoadingUserData && !user) {
+    return (
+      <div className="bg-white rounded shadow-xl overflow-hidden">
+        <div className="bg-orange-600 text-white p-3 md:p-4">
+          <h2 className="text-base md:text-lg font-semibold flex items-center gap-2">
+            <User className="w-4 h-4 md:w-5 md:h-5" />
+            Personal Details
+          </h2>
+          <p className="text-orange-100 mt-1 text-xs md:text-sm">Help us deliver to the right person 👤</p>
+        </div>
+        <div className="p-4 md:p-6 flex items-center justify-center min-h-[200px]">
+          <LoadingSpinner size="md" color="primary" text="Loading your profile..." />
+        </div>
+      </div>
+    );
+  }
 
   const handleSave = async () => {
     if (!user) return;
@@ -53,10 +94,13 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
       updateData.email = orderForm.email.trim();
     }
 
-    const success = await updateUser(updateData);
-
-    if (success) {
+    const success = await updateUser(updateData);    if (success) {
       setSaveSuccess(true);
+      // Reset original data to current values after successful save
+      setOriginalUserData({
+        fullName: orderForm.fullName || '',
+        email: orderForm.email || ''
+      });
       setTimeout(() => setSaveSuccess(false), 3000);
     } else {
       setSaveError('Failed to save. Please try again.');
@@ -84,14 +128,15 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
               Full Name *
             </div>
           </label>
-          <div className="relative">
-            <input
+          <div className="relative">            <input
               type="text"
               value={orderForm.fullName}
               onChange={(e) => onInputChange("fullName", e.target.value)}
               className={`w-full pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-4 border-2 rounded-lg md:rounded-xl focus:ring-0 focus:border-orange-400 transition-all duration-300 bg-white shadow-sm text-sm md:text-base ${
                 errors.fullName
                   ? "border-red-400 bg-red-50"
+                  : orderForm.fullName !== originalUserData.fullName
+                  ? "border-orange-300 bg-orange-50 ring-2 ring-orange-100"
                   : "border-gray-200 hover:border-orange-300"
               }`}
               placeholder="Who's receiving this sweetness?"
@@ -154,14 +199,15 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
               Email Address *
             </div>
           </label>
-          <div className="relative">
-            <input
+          <div className="relative">            <input
               type="email"
               value={orderForm.email}
               onChange={(e) => onInputChange("email", e.target.value)}
               className={`w-full pl-10 md:pl-12 pr-3 md:pr-4 py-3 md:py-4 border-2 rounded-lg md:rounded-xl focus:ring-0 focus:border-orange-400 transition-all duration-300 bg-white shadow-sm text-sm md:text-base ${
                 errors.email
                   ? "border-red-400 bg-red-50"
+                  : orderForm.email !== originalUserData.email
+                  ? "border-orange-300 bg-orange-50 ring-2 ring-orange-100"
                   : "border-gray-200 hover:border-orange-300"
               }`}
               placeholder="Where to send order updates?"
@@ -177,14 +223,17 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
               {errors.email}
             </div>          )}
         </div>
-        </div>
-
-        {/* Save Button Section */}
+        </div>        {/* Save Button Section */}
         {user && (
           <div className="mt-6 pt-4 border-t border-gray-200">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="text-sm text-gray-600">
                 Save your details to your profile for future orders
+                {hasChanges && changedFields.length > 0 && (
+                  <div className="text-xs text-orange-600 mt-1 font-medium">
+                    ✨ Changes detected: {changedFields.join(', ')}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-3">
                 {saveError && (
@@ -201,21 +250,21 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
                 )}
                 <button
                   onClick={handleSave}
-                  disabled={isSaving || (!orderForm.fullName.trim() && !orderForm.email.trim())}
+                  disabled={isSaving || !hasChanges || (!orderForm.fullName.trim() && !orderForm.email.trim())}
                   className={`px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 flex items-center gap-2 ${
-                    isSaving || (!orderForm.fullName.trim() && !orderForm.email.trim())
+                    isSaving || !hasChanges || (!orderForm.fullName.trim() && !orderForm.email.trim())
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : hasChanges
+                      ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 shadow-md hover:shadow-lg transform hover:scale-105'
                       : 'bg-orange-600 text-white hover:bg-orange-700 shadow-md hover:shadow-lg'
-                  }`}
-                >
+                  }`}                >
                   <Save className="w-4 h-4" />
-                  {isSaving ? 'Saving...' : 'Save Details'}
+                  {isSaving ? 'Saving...' : hasChanges ? 'Save Changes' : (user?.name ? 'No Changes' : 'Save Details')}
                 </button>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        )}      </div>
     </div>
   );
 };

@@ -4,9 +4,9 @@ import {
 
 } from 'lucide-react';
 import { OrderForm } from '@/constants/checkout';
-import { PersonalDetailsFormCollapsible } from './forms/PersonalDetailsFormCollapsible';
-import { DeliveryTimingFormCollapsible } from './forms/DeliveryTimingFormCollapsible';
-import { AddressFormCollapsible } from './forms/AddressFormCollapsible';
+// import { PersonalDetailsFormCollapsible } from './forms/PersonalDetailsFormCollapsible';
+// import { DeliveryTimingFormCollapsible } from './forms/DeliveryTimingFormCollapsible';
+// import { AddressFormCollapsible } from './forms/AddressFormCollapsible';
 
 interface DeliveryDetailsStepProps {
   orderForm: OrderForm;
@@ -65,7 +65,6 @@ export const DeliveryDetailsStep: React.FC<DeliveryDetailsStepProps> = ({
       }, 300);
     }
   }, [isPersonalDetailsComplete, isDeliveryTimingComplete, isAddressComplete]);
-
   return (
     <div className="space-y-4 md:space-y-8">
       <div className="text-center">
@@ -80,18 +79,24 @@ export const DeliveryDetailsStep: React.FC<DeliveryDetailsStepProps> = ({
         </p>
       </div>
 
+      {/* TODO: These collapsible forms need to be created */}
+      <div className="p-4 border border-gray-300 rounded-lg">
+        <p className="text-gray-600">Collapsible forms are not yet implemented.</p>
+        <p className="text-sm text-gray-500">Use DeliveryDetailsStepContent.tsx instead.</p>
+      </div>
+
       {/* Personal Details */}
-      <div ref={personalDetailsRef}>
+      {/* <div ref={personalDetailsRef}>
         <PersonalDetailsFormCollapsible
           orderForm={orderForm}
           errors={errors}
           onInputChange={onInputChange}
           isComplete={isPersonalDetailsComplete}
         />
-      </div>
+      </div> */}
 
       {/* Delivery Timing */}
-      <div ref={deliveryTimingRef}>
+      {/* <div ref={deliveryTimingRef}>
         <DeliveryTimingFormCollapsible
           orderForm={orderForm}
           errors={errors}
@@ -100,10 +105,10 @@ export const DeliveryDetailsStep: React.FC<DeliveryDetailsStepProps> = ({
           onShowDateModal={onShowDateModal}
           isComplete={isDeliveryTimingComplete}
         />
-      </div>
+      </div> */}
 
       {/* Address Details */}
-      <div ref={addressRef}>
+      {/* <div ref={addressRef}>
         <AddressFormCollapsible
           orderForm={orderForm}
           errors={errors}
@@ -111,7 +116,7 @@ export const DeliveryDetailsStep: React.FC<DeliveryDetailsStepProps> = ({
           onAreaChange={onAreaChange}
           isComplete={isAddressComplete}
         />
-      </div>
+      </div> */}
     </div>
   );
 };

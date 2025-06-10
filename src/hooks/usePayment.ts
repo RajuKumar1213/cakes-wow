@@ -54,22 +54,8 @@ export const usePayment = () => {
       
       if (!createOrderResponse.data.success) {
         throw new Error(createOrderResponse.data.error || 'Failed to create payment order');
-      }
-
-      const { payment, order } = createOrderResponse.data;
-      console.log('Payment order created successfully:', { payment, order });      // Handle COD payments
-      if (paymentMethod === 'cash_on_delivery') {
-        console.log('COD payment selected, processing through create-order API');
-        
-        // For COD, the create-order API handles everything
-        if (createOrderResponse.data.success) {
-          console.log('COD order processed:', createOrderResponse.data);
-          onSuccess(createOrderResponse.data.order, createOrderResponse.data.notifications);
-        } else {
-          throw new Error(createOrderResponse.data.error || 'Failed to process COD order');
-        }
-        return;
-      }
+      }      const { payment, order } = createOrderResponse.data;
+      console.log('Payment order created successfully:', { payment, order });
 
       // For online payments, proceed with Razorpay
       if (!payment) {

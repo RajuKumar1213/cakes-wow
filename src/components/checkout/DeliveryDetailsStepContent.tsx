@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useCheckout } from '@/contexts/CheckoutContext';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { PersonalDetailsForm } from '@/components/checkout/forms/PersonalDetailsForm';
 import { AddressForm } from '@/components/checkout/forms/AddressForm';
 import { DeliveryTimingForm } from '@/components/checkout/forms/DeliveryTimingForm';
@@ -11,10 +12,13 @@ import { DeliveryTypeModal } from '@/components/checkout/modals/DeliveryTypeModa
 import TimeSlotModal from '@/components/checkout/modals/TimeSlotModal';
 import { validatePersonalDetails, validateAddress } from '@/utils/validation';
 import { areaPinMap } from '@/constants/areaPinMap';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 const DeliveryDetailsStepContent: React.FC = () => {
   const { state, dispatch, updateOrderForm, goToNextStep, goToPreviousStep } = useCheckout();
   const { items, totalPrice } = useCart();
+  const { user, updateUser, addAddress } = useAuth();
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
   const { 
     orderForm, 
     errors, 
@@ -47,10 +51,13 @@ const DeliveryDetailsStepContent: React.FC = () => {
     // Show delivery type modal after date selection
     dispatch({ type: 'SET_MODAL', payload: { modal: 'showDateModal', value: true } });
   };
-
   const handleCalendarDateSelect = (date: Date) => {
     dispatch({ type: 'SET_SELECTED_DATE', payload: date });
-    const dateString = date.toISOString().split('T')[0];
+    // Fix for timezone issues - use local date formatting instead of ISO string
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
     updateOrderForm('deliveryDate', dateString);
     dispatch({ type: 'SET_MODAL', payload: { modal: 'showCalendar', value: false } });
     // Show delivery type modal after date selection
@@ -76,111 +83,169 @@ const DeliveryDetailsStepContent: React.FC = () => {
 
   const handleUpdateField = (field: string, value: string) => {
     updateOrderForm(field as keyof typeof orderForm, value);
-  };
-  const handleContinue = async () => {
+  };  const handleContinue = async () => {
     try {
-      // Validate all required fields first
-      const personalDetailsErrors = validatePersonalDetails({
-        firstName: orderForm.fullName.split(' ')[0] || '',
-        lastName: orderForm.fullName.split(' ').slice(1).join(' ') || '',
+      setIsAutoSaving(true); // Start loading
+      console.log('🔒 Automatically saving user data before proceeding to payment...');
+        // Debug orderForm data
+      console.log('🔍 Debug - orderForm data:', {
+        fullName: orderForm.fullName,
+        mobileNumber: orderForm.mobileNumber,
         email: orderForm.email,
-        phone: orderForm.mobileNumber,
-      });
-
-      const addressErrors = validateAddress({
-        address: orderForm.fullAddress,
-        landmark: orderForm.landmark,
-        pincode: orderForm.pinCode,
+        fullAddress: orderForm.fullAddress,
         area: orderForm.area,
+        pinCode: orderForm.pinCode,
+        landmark: orderForm.landmark,
+        deliveryDate: orderForm.deliveryDate,
+        deliveryType: orderForm.deliveryType,
+        timeSlot: orderForm.timeSlot
       });
 
-      const allErrors = [...personalDetailsErrors, ...addressErrors];
-
-      // Additional validation for delivery details
-      if (!orderForm.deliveryDate) {
-        allErrors.push({ field: 'deliveryDate', message: 'Delivery date is required' });
-      }
-      if (!orderForm.deliveryType) {
-        allErrors.push({ field: 'deliveryType', message: 'Delivery type is required' });
-      }
-      if (!orderForm.timeSlot) {
-        allErrors.push({ field: 'timeSlot', message: 'Time slot is required' });
-      }
-
-      if (allErrors.length > 0) {
-        // Convert errors to the format expected by the context
-        const errorObj: Partial<typeof orderForm> = {};
-        allErrors.forEach(error => {
-          if (error.field === 'firstName' || error.field === 'lastName') {
-            errorObj.fullName = error.message;
-          } else if (error.field === 'phone') {
-            errorObj.mobileNumber = error.message;
-          } else if (error.field === 'address') {
-            errorObj.fullAddress = error.message;
-          } else if (error.field === 'pincode') {
-            errorObj.pinCode = error.message;
-          } else {
-            (errorObj as any)[error.field] = error.message;
-          }
-        });
-        dispatch({ type: 'SET_ERRORS', payload: errorObj });
-        return;
-      }
-
-      // Get add-ons from localStorage
-      let selectedAddOns: any[] = [];
-      let addOnQuantities: { [key: string]: number } = {};
-      
-      try {
-        const savedAddOns = localStorage.getItem('bakingo-selected-addons');
-        const savedQuantities = localStorage.getItem('bakingo-addon-quantities');
+      // If user is logged in, skip validation and proceed directly to save
+      if (user) {
+        console.log('✅ User is logged in - skipping validation and proceeding to save...');
+      } else {
+        console.log('⚠️ Running validation checks for guest user...');
         
-        if (savedAddOns) {
-          selectedAddOns = JSON.parse(savedAddOns);
+        // Only run validation for guest users
+        const personalDetailsErrors = validatePersonalDetails({
+          firstName: orderForm.fullName?.split(' ')[0] || '',
+          lastName: orderForm.fullName?.split(' ').slice(1).join(' ') || '',
+          email: orderForm.email || '',
+          phone: orderForm.mobileNumber ? orderForm.mobileNumber.replace(/^\+?91/, '') : '',
+        });
+
+        const addressErrors = validateAddress({
+          address: orderForm.fullAddress || '',
+          landmark: orderForm.landmark || '',
+          pincode: orderForm.pinCode || '',
+          area: orderForm.area || '',
+        });
+
+        const allErrors = [...personalDetailsErrors, ...addressErrors];
+
+        // Additional validation for delivery details
+        if (!orderForm.deliveryDate) {
+          allErrors.push({ field: 'deliveryDate', message: 'Delivery date is required' });
         }
-        if (savedQuantities) {
-          addOnQuantities = JSON.parse(savedQuantities);
+        if (!orderForm.deliveryType) {
+          allErrors.push({ field: 'deliveryType', message: 'Delivery type is required' });
         }
-      } catch (error) {
-        console.error('Error loading add-ons:', error);
+        if (!orderForm.timeSlot) {
+          allErrors.push({ field: 'timeSlot', message: 'Time slot is required' });
+        }
+
+        if (allErrors.length > 0) {
+          console.log('❌ Validation errors found:', allErrors);
+          const errorObj: Partial<typeof orderForm> = {};
+          allErrors.forEach(error => {
+            if (error.field === 'firstName' || error.field === 'lastName') {
+              errorObj.fullName = error.message;
+            } else if (error.field === 'phone') {
+              errorObj.mobileNumber = error.message;
+            } else if (error.field === 'address') {
+              errorObj.fullAddress = error.message;
+            } else if (error.field === 'pincode') {
+              errorObj.pinCode = error.message;
+            } else {
+              (errorObj as any)[error.field] = error.message;
+            }
+          });
+          dispatch({ type: 'SET_ERRORS', payload: errorObj });
+          setIsAutoSaving(false);
+          return;
+        }
       }
 
-      // Calculate add-ons total
-      const addOnsTotal = selectedAddOns.reduce((total, addOn) => {
-        const quantity = addOnQuantities[addOn._id] || 1;
-        return total + (addOn.price * quantity);
-      }, 0);
-
-      // Create delivery order
-      const response = await fetch('/api/orders/delivery', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          orderData: orderForm,
-          items: items,
-          selectedAddOns: selectedAddOns,
-          addOnQuantities: addOnQuantities,
-          totalAmount: totalPrice + addOnsTotal,
-        }),
+      // AUTOMATIC SAVING LOGIC - Save personal details and address before creating order
+      console.log('🔒 All validations passed, proceeding with auto-save...');
+      
+      // Step 1: Save personal details to user profile if user is logged in
+      if (user && (orderForm.fullName.trim() || orderForm.email.trim())) {
+        console.log('💾 Auto-saving personal details to user profile...');
+        try {
+          const updateData: { name?: string; email?: string } = {};
+          if (orderForm.fullName.trim()) {
+            updateData.name = orderForm.fullName.trim();
+          }
+          if (orderForm.email.trim()) {
+            updateData.email = orderForm.email.trim();
+          }
+          
+          const personalDetailsSuccess = await updateUser(updateData);
+          if (personalDetailsSuccess) {
+            console.log('✅ Personal details saved successfully');
+          } else {
+            console.warn('⚠️ Failed to save personal details, but continuing...');
+          }
+        } catch (error) {
+          console.error('❌ Error saving personal details:', error);
+          // Continue anyway, don't block the checkout process
+        }
+      }      // Step 2: Save address to user's address book if user is logged in and address is complete
+      console.log('🔍 Address save check:', {
+        user: !!user,
+        fullAddress: orderForm.fullAddress,
+        area: orderForm.area,
+        pinCode: orderForm.pinCode
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create order');
-      }
+      if (user && orderForm.fullAddress?.trim() && orderForm.area?.trim() && orderForm.pinCode?.trim()) {
+        console.log('🏠 Auto-saving address to user address book...');
+        try {
+          // Check if this exact address already exists
+          const addressExists = user.address?.some((addr: any) => 
+            addr.fullAddress === orderForm.fullAddress.trim() &&
+            addr.city === orderForm.area.trim() &&
+            addr.pinCode === orderForm.pinCode.trim()
+          );
 
-      const orderResult = await response.json();
-      
-      // Show success message and proceed
-      console.log('Order created successfully:', orderResult);
+          console.log('🔍 Address exists check:', addressExists);
+
+          if (!addressExists) {
+            const newAddress = {
+              receiverName: orderForm.fullName?.trim() || 'Default Receiver',
+              prefix: 'Mr.',
+              city: orderForm.area.trim(),
+              pinCode: orderForm.pinCode.trim(),
+              fullAddress: orderForm.fullAddress.trim(),
+              phoneNumber: orderForm.mobileNumber || user.phoneNumber || '',
+              alternatePhoneNumber: '',
+              addressType: 'Home' as const
+            };
+
+            console.log('🏠 Attempting to save address:', newAddress);
+            const addressSuccess = await addAddress(newAddress);
+            if (addressSuccess) {
+              console.log('✅ Address saved successfully to address book');
+            } else {
+              console.warn('⚠️ Failed to save address, but continuing...');
+            }
+          } else {
+            console.log('ℹ️ Address already exists in address book, skipping save');
+          }
+        } catch (error) {
+          console.error('❌ Error saving address:', error);
+          // Continue anyway, don't block the checkout process
+        }
+      } else {
+        console.log('❌ Address save skipped - missing required data:', {
+          hasUser: !!user,
+          hasFullAddress: !!(orderForm.fullAddress?.trim()),
+          hasArea: !!(orderForm.area?.trim()),
+          hasPinCode: !!(orderForm.pinCode?.trim())
+        });      }
+
+      // All data saved successfully, proceed to next step
+      console.log('✅ All data saved successfully, proceeding to next step...');
+      setIsAutoSaving(false); // Stop loading
       goToNextStep();
       
     } catch (error) {
-      console.error('Error creating order:', error);
+      console.error('❌ Error in checkout process:', error);
+      setIsAutoSaving(false); // Stop loading on error
       // You can show an error message to the user here
-      alert('Failed to create order. Please try again.');
+      alert('Failed to save data. Please try again.');
     }
   };
 
@@ -194,9 +259,18 @@ const DeliveryDetailsStepContent: React.FC = () => {
   const handleChangeDateFromDeliveryModal = () => {
     dispatch({ type: 'SET_MODAL', payload: { modal: 'showDateModal', value: false } });
     dispatch({ type: 'SET_MODAL', payload: { modal: 'showCalendar', value: true } });
-  };
+  };  return (
+    <div className="p-3 md:p-6 relative">
+      {/* Auto-save Loading Overlay */}
+      {isAutoSaving && (
+        <div className="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg border-2 border-blue-200">
+            <LoadingSpinner size="md" color="primary" text="Saving your data securely..." />
+            <p className="text-sm text-gray-600 mt-2 text-center">This will only take a moment</p>
+          </div>
+        </div>
+      )}
 
-  return (    <div className="p-3 md:p-6">
       <div className="mb-4 md:mb-6">
         <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-1 md:mb-2">Delivery Details</h2>
         <p className="text-sm md:text-base text-gray-600">Please provide your delivery information</p>

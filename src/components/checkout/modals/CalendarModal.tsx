@@ -35,10 +35,16 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
       document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
-
   if (!isOpen) return null;
 
-  const formatDate = (date: Date) => date.toISOString().split('T')[0];
+  // Fix for timezone issues - use local date formatting instead of ISO string
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 

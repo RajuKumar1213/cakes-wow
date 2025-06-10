@@ -1,15 +1,13 @@
-import { 
-  CreditCard, 
-  Smartphone, 
-  Building2, 
-  Wallet, 
+import {
+  CreditCard,
+  Smartphone,
+  Building2,
+  Wallet,
   Banknote,
   ShoppingCart,
   Truck,
-  CheckCircle
-} from 'lucide-react';
-
-
+  CheckCircle,
+} from "lucide-react";
 
 // Delivery types configuration
 export const deliveryTypes = [
@@ -21,69 +19,54 @@ export const deliveryTypes = [
     icon: "🚚",
     popular: true,
     timeSlots: [
-      { time: "9:00 AM - 11:00 AM", available: true },
-      { time: "11:00 AM - 1:00 PM", available: true },
-      { time: "1:00 PM - 3:00 PM", available: true },
-      { time: "3:00 PM - 5:00 PM", available: true },
-      { time: "5:00 PM - 7:00 PM", available: true },
+      { time: "9 AM - 11 AM", available: true },
+      { time: "11 AM - 1 PM", available: true },
+      { time: "1 PM - 3 PM", available: true },
+      { time: "3 PM - 5 PM", available: true },
+      { time: "5 PM - 7 PM", available: true },
+      { time: "7 PM - 9 PM", available: true },
+      { time: "8 PM - 10 PM", available: true },
+      { time: "9 PM - 11 PM", available: true },
     ],
-  },
-  {
-    id: "standard",
-    name: "Standard Delivery",
-    price: 149,
-    description: "Same day delivery",
-    icon: "⚡",
-    timeSlots: [
-      { time: "9:00 AM - 11:00 AM", available: true },
-      { time: "11:00 AM - 1:00 PM", available: true },
-      { time: "1:00 PM - 3:00 PM", available: true },
-      { time: "3:00 PM - 5:00 PM", available: true },
-      { time: "5:00 PM - 7:00 PM", available: true },
-      { time: "7:00 PM - 9:00 PM", available: true },
-    ],
-  },
-  {
+  },  {
     id: "midnight",
     name: "Midnight Delivery",
-    price: 150,
+    price: 149,
     description: "Perfect for surprises",
     icon: "🌙",
-    timeSlots: [
-      { time: "8:00 PM - 10:00 PM", available: true },
-      { time: "9:00 PM - 11:00 PM", available: true },
-      { time: "10:00 PM - 12:00 AM", available: true },
-      { time: "11:00 PM - 1:00 AM", available: true },
-    ],
-  },
-  {
+    timeSlots: [{ time: "11 PM - 12 AM", available: true }],
+  },{
     id: "fixtime",
     name: "Fixtime Delivery",
-    price: 200,
+    price: 150,
     description: "Guaranteed time delivery",
     icon: "🎯",
     premium: true,
     timeSlots: [
-      { time: "9:00 AM - 11:00 AM", available: true },
-      { time: "11:00 AM - 1:00 PM", available: true },
-      { time: "1:00 PM - 3:00 PM", available: true },
-      { time: "3:00 PM - 5:00 PM", available: true },
-      { time: "5:00 PM - 7:00 PM", available: true },
-      { time: "7:00 PM - 9:00 PM", available: true },
-      { time: "8:00 PM - 10:00 PM", available: true },
+      { time: "8 AM - 9 AM", available: true },
+      { time: "9 AM - 10 AM", available: true },
+      { time: "10 AM - 11 AM", available: true },
+      { time: "11 AM - 12 PM", available: true },
+      { time: "12 PM - 1 PM", available: true },
+      { time: "1 PM - 2 PM", available: true },
+      { time: "2 PM - 3 PM", available: true },
+      { time: "3 PM - 4 PM", available: true },
+      { time: "4 PM - 5 PM", available: true },
+      { time: "5 PM - 6 PM", available: true },
+      { time: "6 PM - 7 PM", available: true },
+      { time: "7 PM - 8 PM", available: true },
+      { time: "8 PM - 9 PM", available: true },
+      { time: "9 PM - 10 PM", available: true },
+      { time: "10 PM - 11 PM", available: true },
     ],
-  },
-  {
+  },  {
     id: "earlymorning",
-    name: "Early Morning",
-    price: 100,
-    description: "Early bird delivery",
+    name: "Early Morning ",
+    price: 200,
+    description: "Guaranteed time delivery",
     icon: "🌅",
-    timeSlots: [
-      { time: "6:00 AM - 8:00 AM", available: true },
-      { time: "7:00 AM - 9:00 AM", available: true },
-      { time: "8:00 AM - 10:00 AM", available: true },
-    ],
+    premium: true,
+    timeSlots: [{ time: "7 AM - 9 AM", available: true }],
   },
 ];
 
@@ -111,20 +94,12 @@ export const paymentMethods = [
     description: "All major banks supported",
     icon: Building2,
     charge: 0,
-  },
-  {
+  },  {
     id: "wallet",
     name: "Digital Wallets",
     description: "Paytm, Mobikwik, Amazon Pay",
     icon: Wallet,
     charge: 0,
-  },
-  {
-    id: "cod",
-    name: "Cash on Delivery",
-    description: "Pay when you receive",
-    icon: Banknote,
-    charge: 25,
   },
 ];
 
@@ -192,7 +167,7 @@ export const deliveryOccasions = [
   "Thank You",
   "Get Well Soon",
   "Just Because",
-  "Other"
+  "Other",
 ];
 
 // Relations
@@ -211,36 +186,36 @@ export const relations = [
   "Colleague",
   "Boss",
   "Teacher",
-  "Other"
+  "Other",
 ];
 
 // Suggested messages based on occasion
 export const suggestedMessages: Record<string, string[]> = {
-  "Birthday": [
+  Birthday: [
     "Wishing you a very happy birthday! May all your dreams come true.",
     "Another year older, another year wiser! Happy Birthday!",
-    "Hope your birthday is as sweet as this cake!"
+    "Hope your birthday is as sweet as this cake!",
   ],
-  "Anniversary": [
+  Anniversary: [
     "Celebrating another year of love and happiness together!",
     "Here's to many more years of love and laughter!",
-    "Your love story continues to inspire us all."
+    "Your love story continues to inspire us all.",
   ],
   "Valentine's Day": [
     "You make my heart skip a beat every day. Happy Valentine's Day!",
     "Roses are red, violets are blue, this sweet treat is just for you!",
-    "With all my love on Valentine's Day and always."
+    "With all my love on Valentine's Day and always.",
   ],
-  "Congratulations": [
+  Congratulations: [
     "Congratulations on your amazing achievement!",
     "You did it! So proud of you!",
-    "Your hard work has paid off. Congratulations!"
+    "Your hard work has paid off. Congratulations!",
   ],
   "Thank You": [
     "Thank you for being so wonderful!",
     "A sweet thank you for all that you do!",
-    "Grateful for your kindness and support."
-  ]
+    "Grateful for your kindness and support.",
+  ],
 };
 
 // Initial order form state

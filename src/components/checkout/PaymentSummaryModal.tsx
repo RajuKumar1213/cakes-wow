@@ -1,11 +1,10 @@
 import React from 'react';
-import { X, CreditCard, Banknote, ShoppingCart, Truck, Gift, Calculator } from 'lucide-react';
+import { X, CreditCard, ShoppingCart, Truck, Gift } from 'lucide-react';
 
 interface PaymentSummaryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPayOnline: () => void;
-  onCashOnDelivery: () => void;
   orderSummary: {
     items: Array<{
       name: string;
@@ -26,7 +25,6 @@ interface PaymentSummaryModalProps {
     onlineDiscount: number;
     totalAmount: number;
     finalAmountOnline: number;
-    finalAmountCOD: number;
   };
 }
 
@@ -34,7 +32,6 @@ export const PaymentSummaryModal: React.FC<PaymentSummaryModalProps> = ({
   isOpen,
   onClose,
   onPayOnline,
-  onCashOnDelivery,
   orderSummary
 }) => {
   // Prevent background scrolling when modal is open
@@ -50,13 +47,7 @@ export const PaymentSummaryModal: React.FC<PaymentSummaryModalProps> = ({
       document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
-
   if (!isOpen) return null;
-
-  const handlePayOnline = () => {
-    // Logic for online payment
-
-  }
   
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-hidden">
@@ -153,16 +144,10 @@ export const PaymentSummaryModal: React.FC<PaymentSummaryModalProps> = ({
                   <span className="text-green-600">Online Payment Discount</span>
                   <span className="font-medium text-green-600">-₹{orderSummary.onlineDiscount}</span>
                 </div>
-              )}
-
-              {/* Total Lines */}
-              <div className="border-t pt-3 space-y-2">
+              )}              {/* Total Line */}
+              <div className="border-t pt-3">
                 <div className="flex justify-between text-lg font-bold">
-                  <span>COD Total</span>
-                  <span className="text-gray-900">₹{orderSummary.finalAmountCOD.toFixed(0)}</span>
-                </div>
-                <div className="flex justify-between text-lg font-bold">
-                  <span>Online Total</span>
+                  <span>Total Amount</span>
                   <div className="text-right">
                     <span className="text-green-600">₹{orderSummary.finalAmountOnline.toFixed(0)}</span>
                     {orderSummary.onlineDiscount > 0 && (
@@ -174,38 +159,25 @@ export const PaymentSummaryModal: React.FC<PaymentSummaryModalProps> = ({
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Right Side - Payment Options */}
+          </div>          {/* Right Side - Payment Options */}
           <div className="lg:w-80 bg-gray-50 p-6 flex flex-col justify-center space-y-4">
             <div className="text-center mb-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Choose Payment Method</h3>
-              <p className="text-gray-600 text-sm">Select your preferred payment option</p>
-            </div>            {/* Online Payment Button */}
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Secure Payment</h3>
+              <p className="text-gray-600 text-sm">Complete your order with online payment</p>
+            </div>
+
+            {/* Online Payment Button */}
             <button
               onClick={onPayOnline}
-              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-[1.01] shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-4 px-4 rounded-lg transition-all duration-300 transform hover:scale-[1.01] shadow-md hover:shadow-lg flex items-center justify-center gap-2"
             >
-              <CreditCard className="w-4 h-4" />
-              <div className="text-center ">
-                <div className="text-sm">Pay Online</div>
+              <CreditCard className="w-5 h-5" />
+              <div className="text-center">
+                <div className="text-sm">Pay Now</div>
                 <div className="text-lg font-bold">₹{orderSummary.finalAmountOnline.toFixed(0)}</div>
                 {orderSummary.onlineDiscount > 0 && (
                   <div className="text-xs text-green-100">Save ₹{orderSummary.onlineDiscount}</div>
                 )}
-              </div>
-            </button>
-
-            {/* Cash on Delivery Button */}
-            <button
-              onClick={handlePayOnline}
-              className="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
-            >
-              <Banknote className="w-4 h-4" />
-              <div className="text-center">
-                <div className="text-sm">Cash on Delivery</div>
-                <div className="text-lg font-bold">₹{orderSummary.finalAmountCOD.toFixed(0)}</div>
-                <div className="text-xs text-gray-200">Pay when you receive</div>
               </div>
             </button>
 

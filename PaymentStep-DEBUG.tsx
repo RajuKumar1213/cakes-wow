@@ -181,25 +181,7 @@ export const PaymentStep: React.FC = () => {
                   <div className="font-medium text-sm md:text-base">Online Payment</div>
                   <div className="text-xs md:text-sm text-gray-600">UPI, Card, Net Banking</div>
                   <div className="text-xs md:text-sm text-green-600 font-medium">Save 2% with online payment!</div>
-                </div>
-              </label>
-
-              {/* Cash on Delivery */}
-              <label className="flex items-center p-3 md:p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                <input
-                  type="radio"
-                  name="paymentMethod"
-                  value="cash_on_delivery"
-                  checked={selectedPaymentMethod === 'cash_on_delivery'}
-                  onChange={(e) => handlePaymentMethodChange(e.target.value)}
-                  className="mr-3 md:mr-4"
-                />
-                <DollarSign className="w-4 h-4 md:w-5 md:h-5 text-green-600 mr-2 md:mr-3" />
-                <div className="flex-1">
-                  <div className="font-medium text-sm md:text-base">Cash on Delivery</div>
-                  <div className="text-xs md:text-sm text-gray-600">Pay when your order arrives</div>
-                </div>
-              </label>
+                </div>              </label>
             </div>
           </div>
 

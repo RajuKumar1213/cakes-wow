@@ -150,11 +150,10 @@ const orderSchema = new mongoose.Schema(
       required: true,
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
-    },
-    paymentMethod: {
+    },    paymentMethod: {
       type: String,
-      enum: ["cash_on_delivery", "online", "card"],
-      default: "cash_on_delivery",
+      enum: ["online", "card"],
+      default: "online",
     },
     // Razorpay payment fields
     razorpayOrderId: {

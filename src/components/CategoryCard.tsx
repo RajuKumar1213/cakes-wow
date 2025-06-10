@@ -8,9 +8,10 @@ interface CategoryCardProps {
   href: string;
   description?: string;
   productCount?: number;
+  hideTitle?: boolean;
 }
 
-const CategoryCard = ({ id, name, image, href }: CategoryCardProps) => {
+const CategoryCard = ({ hideTitle, id, name, image, href }: CategoryCardProps) => {
   const router = useRouter();
 
   const handleClick = () => {
@@ -49,11 +50,13 @@ const CategoryCard = ({ id, name, image, href }: CategoryCardProps) => {
       </div>
       
       {/* Content Section with improved spacing */}
-      <div className="p-2">
-        <h3 className="text-sm py-2 text-center md:text-lg font-bold text-gray-800 group-hover:text-pink-600 transition-colors duration-200  leading-tight">
-          {name}
-        </h3>
-      </div>
+      { !hideTitle && (
+        <div className="p-2">
+          <h3 className="text-sm py-2 text-center md:text-lg font-bold text-gray-800 group-hover:text-pink-600 transition-colors duration-200  leading-tight">
+            {name}
+          </h3>
+        </div>
+      )}
     </div>
   );
 };

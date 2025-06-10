@@ -13,15 +13,14 @@ const CategoryShowcase = () => {
     {
       id: "2",
       name: "Gourmet Cakes",
-      slug: "gourmet-cakes",
-
-      image: "/images/aniversary2.webp",
+      slug: "gourment-cakes",
+      image: "/images/gourmet.webp",
     },
     {
       id: "3",
       name: "Photo Cakes",
-      slug: "photo-cakes",
-      image: "/images/birthday.webp",
+      slug: "photo-print-cakes",
+      image: "/images/photo.webp",
     },
     {
       id: "4",
