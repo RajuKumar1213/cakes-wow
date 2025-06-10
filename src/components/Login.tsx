@@ -62,10 +62,8 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
           "Content-Type": "application/json",
         },
         data: { phoneNumber },
-      });
-
-      if (response.status === 200) {
-        setSuccess("OTP sent successfully!");
+      });      if (response.status === 200) {
+        setSuccess("OTP sent to your WhatsApp!");
         setStep(2);
       } else {
         setError(response.data.error || "Failed to send OTP");
@@ -118,10 +116,8 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
     try {
       const response = await axios.post("/api/auth/send-otp", {
         phoneNumber,
-      });
-
-      if (response.status === 200) {
-        setSuccess("OTP resent successfully!");
+      });      if (response.status === 200) {
+        setSuccess("OTP resent to your WhatsApp!");
       } else {
         setError(response.data.error || "Failed to resend OTP");
       }
@@ -160,11 +156,10 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
             </div>
             <h1 className="text-3xl md:text-lg font-bold text-gray-900 mb-3 md:mb-1 tracking-tight">
               {step === 1 ? "Welcome Back!" : "Verify Phone"}
-            </h1>
-            <p className="text-gray-600 text-lg md:text-xs font-medium">
+            </h1>            <p className="text-gray-600 text-lg md:text-xs font-medium">
               {step === 1
                 ? "Enter your phone to continue"
-                : `Code sent to ${phoneNumber}`}
+                : `WhatsApp code sent to ${phoneNumber}`}
             </p>
           </div>{/* Alert Messages */}
           {error && (
@@ -199,9 +194,8 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
                     placeholder="+91 98765 43210"
                     className="w-full px-6 py-4 md:px-4 md:py-3 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 text-lg md:text-base  font-medium focus:outline-none focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 shadow-sm hover:shadow-md transition-all duration-300"
                     required
-                  />
-                  <p className="mt-3 md:mt-2 text-gray-500 text-sm text-center font-medium">
-                    📱 We'll send you a verification code
+                  />                  <p className="mt-3 md:mt-2 text-gray-500 text-sm text-center font-medium">
+                    💬 We'll send you a verification code on WhatsApp
                   </p>
                 </div>
               </div>
@@ -225,9 +219,8 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
                     maxLength={6}
                     className="w-full px-6 py-4 md:px-4 md:py-3 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 text-2xl md:text-lg text-center font-mono tracking-[0.3em] focus:outline-none focus:ring-4 focus:ring-green-500/20 focus:border-green-500 shadow-sm hover:shadow-md transition-all duration-300"
                     required
-                  />
-                  <p className="mt-3 md:mt-2 text-gray-500 text-sm text-center font-medium">
-                    📨 Enter the 6-digit code
+                  />                  <p className="mt-3 md:mt-2 text-gray-500 text-sm text-center font-medium">
+                    💬 Check your WhatsApp for the 6-digit code
                   </p>
                 </div>
 
