@@ -49,28 +49,16 @@ export async function GET(request) {
     const sortBy = searchParams.get("sortBy") || "createdAt";
     const sortOrder = searchParams.get("sortOrder") || "desc";
     const page = searchParams.get("page") || 1;
-    const limit = searchParams.get("limit") || 12;
-
-    await dbConnect();
-
-    // Build filters
-    const filters = createProductFilters({
-      category,
-      tags,
-      weights,
-      minPrice,
-      maxPrice,
-      isBestseller,
-      isFeatured,
-      search,
-    });
-
-    // Handle category filter by slug
+    const limit = searchParams.get("limit") || 12;    await dbConnect();    // Handle category filter by slug first (before building filters)
+    let categoryObjectId = null;
     if (category) {
+      console.log("🔍 Looking for category with slug:", category);
       const categoryDoc = await Category.findOne({ slug: category });
       if (categoryDoc) {
-        filters.categories = categoryDoc._id;
+        categoryObjectId = categoryDoc._id;
+        console.log("✅ Found category:", categoryDoc.name, "with ID:", categoryObjectId);
       } else {
+        console.log("❌ Category not found for slug:", category);
         // Category not found, return empty results
         return NextResponse.json({
           success: true,
@@ -88,6 +76,20 @@ export async function GET(request) {
       }
     }
 
+    // Build filters with resolved category ObjectId
+    const filters = createProductFilters({
+      category: categoryObjectId, // Pass ObjectId instead of slug
+      tags,
+      weights,
+      minPrice,
+      maxPrice,
+      isBestseller,
+      isFeatured,
+      search,
+    });
+
+    console.log("🔧 MongoDB filters:", JSON.stringify(filters, null, 2));
+
     // Calculate pagination
     const {
       page: pageNum,
@@ -99,15 +101,18 @@ export async function GET(request) {
     const sort = createSortOptions(sortBy, sortOrder);
 
     // Get total count for pagination
-    const total = await Product.countDocuments(filters);
-
-    // Fetch products
+    const total = await Product.countDocuments(filters);    // Fetch products
     const products = await Product.find(filters)
       .populate("categories", "name slug group type")
       .sort(sort)
       .skip(skip)
       .limit(limitNum)
       .lean();
+
+    console.log(`📦 Found ${products.length} products for category:`, category);
+    if (products.length > 0) {
+      console.log("📦 First product categories:", products[0].categories.map(c => c.name));
+    }
 
     // Format products for response
     const formattedProducts = products.map((product) => ({

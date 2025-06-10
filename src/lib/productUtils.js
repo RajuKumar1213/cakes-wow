@@ -76,7 +76,8 @@ export function validateImageUrls(urls) {
 export function createProductFilters(params) {
   const filters = { isAvailable: true };
 
-  // Category filter
+  // Category filter - Note: category should be ObjectId, not slug
+  // The API route should resolve category slug to ObjectId before calling this function
   if (params.category) {
     filters.categories = params.category;
   }
