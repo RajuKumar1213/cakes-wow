@@ -14,7 +14,6 @@ interface AddressFormProps {
 
 export const AddressForm: React.FC<AddressFormProps> = ({
     orderForm,
-    errors,
     onInputChange,
     onAreaChange,
 }) => {
@@ -22,7 +21,8 @@ export const AddressForm: React.FC<AddressFormProps> = ({
     const [editingAddress, setEditingAddress] = useState<Address | null>(null);
     const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [isLoadingAddresses, setIsLoadingAddresses] = useState(true); const [formData, setFormData] = useState<Address>({
+    const [isLoadingAddresses, setIsLoadingAddresses] = useState(true); 
+    const [formData, setFormData] = useState<Address>({
         receiverName: '',
         prefix: 'Mr.',
         city: '',
@@ -35,7 +35,8 @@ export const AddressForm: React.FC<AddressFormProps> = ({
     const [formErrors, setFormErrors] = useState<Partial<Address>>({});
 
     const prefixes = ['Mr.', 'Ms.', 'Mrs.', 'Dr.'];
-    const addressTypes = ['Home', 'Office', 'Others']; useEffect(() => {
+    const addressTypes = ['Home', 'Office', 'Others'];
+    useEffect(() => {
         // If user has addresses and none is selected, show address list
         if (user?.address && user.address.length > 0 && !selectedAddress) {
             setShowAddressForm(false);
@@ -74,12 +75,14 @@ export const AddressForm: React.FC<AddressFormProps> = ({
                 phoneNumber: orderForm.mobileNumber || prev.phoneNumber
             }));
         }
-    }, [orderForm.fullAddress, orderForm.pinCode, orderForm.area, orderForm.fullName, orderForm.mobileNumber, selectedAddress]);    const handleInputChange = (field: keyof Address, value: string) => {
+    }, [orderForm.fullAddress, orderForm.pinCode, orderForm.area, orderForm.fullName, orderForm.mobileNumber, selectedAddress]);
+
+    const handleInputChange = (field: keyof Address, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
         if (formErrors[field]) {
             setFormErrors(prev => ({ ...prev, [field]: '' }));
         }
-        
+
         // Also update parent orderForm for critical fields
         if (field === 'fullAddress') {
             onInputChange('fullAddress', value);
@@ -89,11 +92,13 @@ export const AddressForm: React.FC<AddressFormProps> = ({
     };
 
     // Sync receiverName from orderForm.fullName if available
-    useEffect(() => {
-        if (orderForm.fullName && !formData.receiverName) {
-            setFormData(prev => ({ ...prev, receiverName: orderForm.fullName }));
-        }
-    }, [orderForm.fullName, formData.receiverName]);const handleAreaChange = (area: string) => {
+    // useEffect(() => {
+    //     if (orderForm.fullName && !formData.receiverName) {
+    //         setFormData(prev => ({ ...prev, receiverName: orderForm.fullName }));
+    //     }
+    // }, [orderForm.fullName, formData.receiverName]); 
+    
+    const handleAreaChange = (area: string) => {
         const pinCode = (areaPinMap as Record<string, string>)[area] || '';
 
         // Update local state
@@ -394,10 +399,10 @@ export const AddressForm: React.FC<AddressFormProps> = ({
                                         onChange={(e) => handleInputChange('pinCode', e.target.value)}
                                         readOnly={!!formData.city} // Read-only only when city is selected
                                         className={`w-full pl-10 pr-3 py-3 border-2 rounded-lg focus:ring-0 focus:border-green-400 transition-all duration-300 ${formData.city
-                                                ? 'bg-gray-100 text-gray-600 border-gray-200'
-                                                : formErrors.pinCode
-                                                    ? 'border-red-400 bg-red-50'
-                                                    : 'border-gray-200'
+                                            ? 'bg-gray-100 text-gray-600 border-gray-200'
+                                            : formErrors.pinCode
+                                                ? 'border-red-400 bg-red-50'
+                                                : 'border-gray-200'
                                             }`}
                                         placeholder={formData.city ? "Auto-filled based on city" : "Enter PIN code manually"}
                                     />

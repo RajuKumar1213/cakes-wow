@@ -136,18 +136,72 @@ const CheckoutContext = createContext<CheckoutContextType | null>(null);
 
 export function CheckoutProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(checkoutReducer, initialState);
-  const { user } = useAuth();
-  const { items } = useCart();
-
-  // Pre-fill form if user is logged in
+  const { user, loading } = useAuth();
+  const { items } = useCart();  // Pre-fill form if user is logged in
   useEffect(() => {
-    if (user) {
-      dispatch({
-        type: 'UPDATE_FORM',
-        payload: { field: 'mobileNumber', value: user.phoneNumber || '' },
-      });
+    // Wait for auth loading to complete
+    if (loading) {
+      console.log('⏳ CheckoutContext: Auth still loading, waiting...');
+      return;
     }
-  }, [user]);
+
+    if (user) {
+      console.log('🔄 CheckoutContext: User loaded, prefilling form data...', {
+        userName: user.name,
+        userEmail: user.email,
+        userPhone: user.phoneNumber,
+        hasAddress: user.address && user.address.length > 0
+      });
+
+      // Batch all form updates together
+      const updates: Array<{ field: keyof OrderForm; value: string }> = [];
+
+      if (user.phoneNumber) {
+        console.log('📱 Setting mobile number:', user.phoneNumber);
+        updates.push({ field: 'mobileNumber', value: user.phoneNumber });
+      }
+      
+      if (user.name) {
+        console.log('👤 Setting full name:', user.name);
+        updates.push({ field: 'fullName', value: user.name });
+      }
+      
+      if (user.email) {
+        console.log('📧 Setting email:', user.email);
+        updates.push({ field: 'email', value: user.email });
+      }
+      
+      // Auto-prefill address from user's first saved address if available
+      if (user.address && user.address.length > 0) {
+        const firstAddress = user.address[0];
+        console.log('🏠 Setting address from saved addresses:', firstAddress);
+        
+        if (firstAddress.fullAddress) {
+          updates.push({ field: 'fullAddress', value: firstAddress.fullAddress });
+        }
+        
+        if (firstAddress.city) {
+          updates.push({ field: 'area', value: firstAddress.city });
+        }
+        
+        if (firstAddress.pinCode) {
+          updates.push({ field: 'pinCode', value: firstAddress.pinCode });
+        }
+      }
+
+      // Apply all updates
+      updates.forEach(update => {
+        dispatch({
+          type: 'UPDATE_FORM',
+          payload: update,
+        });
+      });
+      
+      console.log('✅ CheckoutContext: Form prefilling completed with', updates.length, 'updates');
+    } else {
+      console.log('❌ CheckoutContext: No user found, skipping prefill');
+    }
+  }, [user, loading]);
 
   const updateOrderForm = (field: keyof OrderForm, value: string) => {
     dispatch({ type: 'UPDATE_FORM', payload: { field, value } });
