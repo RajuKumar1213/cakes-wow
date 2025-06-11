@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import dbConnect from "@/lib/mongodb";
 import Order from "@/models/Order.models";
+import { sendCustomerOrderConfirmation } from "@/lib/whatsapp";
 
 /**
  * POST /api/payment/verify
@@ -71,22 +72,65 @@ export async function POST(request) {
     order.razorpayPaymentId = razorpay_payment_id;
     order.razorpayOrderId = razorpay_order_id;
     order.razorpaySignature = razorpay_signature;
-    order.paymentCompletedAt = new Date();
-
+    order.paymentCompletedAt = new Date();    
     const updatedOrder = await order.save();
     console.log("Order updated successfully:", {
       orderId: updatedOrder.orderId,
       paymentStatus: updatedOrder.paymentStatus,
       status: updatedOrder.status,
     });    
-   
-
-    // if verification is successful, send whatsapp notification 
-
+     // Send WhatsApp confirmation to customer after successful payment
+    console.log("🚀 Sending WhatsApp order confirmation...");
     
-   
-
-    return NextResponse.json({
+    try {
+      const whatsappResult = await sendCustomerOrderConfirmation(updatedOrder);
+      
+      if (whatsappResult.success) {
+        console.log("✅ WhatsApp confirmation sent successfully:", {
+          phone: whatsappResult.phone,
+          orderId: whatsappResult.orderId,
+          customer: whatsappResult.customer
+        });
+        
+        // Store notification status in order
+        updatedOrder.notifications = {
+          whatsapp: {
+            sent: true,
+            sentAt: new Date(),
+            phone: whatsappResult.phone,
+            broadcastName: whatsappResult.broadcastName
+          }
+        };
+      } else {
+        console.error("❌ WhatsApp confirmation failed:", whatsappResult.error);
+        
+        // Store failure status
+        updatedOrder.notifications = {
+          whatsapp: {
+            sent: false,
+            error: whatsappResult.error,
+            attemptedAt: new Date()
+          }
+        };
+      }
+      
+      // Save notification status
+      await updatedOrder.save();
+      
+    } catch (whatsappError) {
+      console.error("❌ WhatsApp confirmation error:", whatsappError.message);
+      
+      // Store error status
+      updatedOrder.notifications = {
+        whatsapp: {
+          sent: false,
+          error: whatsappError.message,
+          attemptedAt: new Date()
+        }
+      };
+      
+      await updatedOrder.save();
+    }return NextResponse.json({
       success: true,
       message: "Payment verified successfully",
       order: {

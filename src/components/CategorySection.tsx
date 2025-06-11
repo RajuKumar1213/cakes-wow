@@ -12,14 +12,14 @@ const CategorySection = () => {
       id: "1",
       name: "Mango",
       slug: "mango-cakes",
-      image: "/images/heart.webp",
+      image: "/images/mango.webp",
       href: "/mango",
     },
     {
       id: "2",
       name: "Chocolate",
       slug: "chocolate-cakes",
-      image: "/images/chocolateloaded.webp",
+      image: "/images/chocolate.webp",
       href: "/chocolate-loaded-cakes",
     },
     {

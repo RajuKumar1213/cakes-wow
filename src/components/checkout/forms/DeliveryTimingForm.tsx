@@ -21,13 +21,44 @@ export const DeliveryTimingForm: React.FC<DeliveryTimingFormProps> = ({
   onUpdateField,
   onShowCalendar,
   onShowDateModal,
-  onDeliveryTypeChange,
-  onTimeSlotSelect,
   onContinue,
-}) => {  const { goToNextStep } = useCheckout();
+}) => {
+  const { goToNextStep } = useCheckout();
   const selectedDeliveryType = deliveryTypes.find(dt => dt.id === orderForm.deliveryType);
   const [showSuggestedMessages, setShowSuggestedMessages] = useState(false);
   const [isLoadingDeliveryData, setIsLoadingDeliveryData] = useState(true);
+
+  // Comprehensive validation function to check all required fields
+  const validateAllRequiredFields = () => {
+    const requiredFields = {
+      // Personal details
+      fullName: orderForm.fullName?.trim(),
+      email: orderForm.email?.trim(),
+      mobileNumber: orderForm.mobileNumber?.trim(),
+      
+      // Address details
+      fullAddress: orderForm.fullAddress?.trim(),
+      area: orderForm.area?.trim(),
+      pinCode: orderForm.pinCode?.trim(),
+      
+      // Delivery details
+      deliveryDate: orderForm.deliveryDate?.trim(),
+      timeSlot: orderForm.timeSlot?.trim(),
+    };
+
+    const missingFields = Object.entries(requiredFields)
+      .filter(([key, value]) => !value)
+      .map(([key]) => key);
+
+    return {
+      isValid: missingFields.length === 0,
+      missingFields,
+      requiredFields
+    };
+  };
+
+  const validation = validateAllRequiredFields();
+  const isFormComplete = validation.isValid;
 
   // Simulate loading of delivery types and time slots
   React.useEffect(() => {
@@ -243,9 +274,7 @@ export const DeliveryTimingForm: React.FC<DeliveryTimingFormProps> = ({
               </div>
             </div>
           )}
-        </div>
-
-        {/* Additional Delivery Information */}
+        </div>        {/* Additional Delivery Information */}
         <div className="space-y-6 border-t pt-6">
           <div className="flex items-center gap-2 mb-4">
             <Heart className="w-5 h-5 text-pink-500" />
@@ -385,21 +414,50 @@ export const DeliveryTimingForm: React.FC<DeliveryTimingFormProps> = ({
             </div>
           </div>          {/* Continue Button */}
           <div className="pt-4 border-t space-y-3">
+            {/* Show validation errors if form is incomplete */}
+            {!isFormComplete && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-red-700">
+                    <p className="font-medium mb-1">Please complete the following required fields:</p>
+                    <ul className="space-y-1 text-xs">
+                      {validation.missingFields.map((field) => (
+                        <li key={field} className="flex items-center gap-1">
+                          <span className="w-1 h-1 bg-red-400 rounded-full"></span>
+                          {field === 'fullName' && 'Full Name'}
+                          {field === 'email' && 'Email Address'}
+                          {field === 'mobileNumber' && 'Mobile Number'}
+                          {field === 'fullAddress' && 'Full Address'}
+                          {field === 'area' && 'Delivery Area'}
+                          {field === 'pinCode' && 'PIN Code'}
+                          {field === 'deliveryDate' && 'Delivery Date'}
+                          {field === 'timeSlot' && 'Time Slot'}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <button
               type="button"
               onClick={onContinue}
-              disabled={!orderForm.deliveryDate || !orderForm.timeSlot}
-              className={`w-full py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform flex items-center justify-center gap-2 ${orderForm.deliveryDate && orderForm.timeSlot
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl hover:scale-[1.02]'
-                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                }`}
+              disabled={!isFormComplete}
+              className={`w-full py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform flex items-center justify-center gap-2 ${
+                isFormComplete
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl hover:scale-[1.02]'
+                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              }`}
             >
               <Eye className="w-5 h-5" />
-              {!orderForm.deliveryDate || !orderForm.timeSlot
-                ? 'Please select date and time first'
+              {!isFormComplete
+                ? `Complete ${validation.missingFields.length} required field${validation.missingFields.length > 1 ? 's' : ''} first`
                 : 'Save Data & Continue to Payment'
               }
-            </button>            <div className="text-center text-xs text-gray-500">
+            </button>            
+            <div className="text-center text-xs text-gray-500">
               <p>💾 All personal details and address will be automatically saved before proceeding to payment</p>
             </div>
           </div>
