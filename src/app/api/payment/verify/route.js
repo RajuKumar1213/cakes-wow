@@ -2,11 +2,6 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import dbConnect from "@/lib/mongodb";
 import Order from "@/models/Order.models";
-import {
-  generateOrderConfirmationMessage,
-  generateAdminNotificationMessage,
-  sendOrderConfirmationWithOwnerNotification,
-} from "@/lib/whatsapp";
 
 /**
  * POST /api/payment/verify
@@ -83,48 +78,13 @@ export async function POST(request) {
       orderId: updatedOrder.orderId,
       paymentStatus: updatedOrder.paymentStatus,
       status: updatedOrder.status,
-    });    // Generate WhatsApp messages and send order confirmation to customer + owner
-    try {
-      const customerMessage = generateOrderConfirmationMessage(updatedOrder);
-      const adminMessage = generateAdminNotificationMessage(updatedOrder);
+    });    
+   
 
-      console.log("WhatsApp notifications prepared:", {
-        customerPhone: updatedOrder.customerInfo.mobileNumber,
-        customerMessageLength: customerMessage.length,
-        adminMessageLength: adminMessage.length,
-      });
+    // if verification is successful, send whatsapp notification 
 
-      // Send WATI API order confirmation to customer AND owner notification
-      const whatsappResults = await sendOrderConfirmationWithOwnerNotification(
-        updatedOrder.customerInfo.mobileNumber,
-        updatedOrder
-      );
-
-      console.log("📱 WATI API Order Confirmation Results:", {
-        customerSuccess: whatsappResults.customer?.success,
-        ownerSuccess: whatsappResults.owner?.success,
-        overallSuccess: whatsappResults.success,
-        orderId: updatedOrder.orderId,
-        customerImageIncluded: whatsappResults.customer?.imageIncluded,
-        ownerImageIncluded: whatsappResults.owner?.imageIncluded,
-        errors: whatsappResults.errors,
-      });
-
-      // Store notification data for frontend use
-      updatedOrder.notifications = {
-        customer: {
-          phone: updatedOrder.customerInfo.mobileNumber,
-          message: customerMessage,
-        },
-        admin: {
-          message: adminMessage,
-        },
-        whatsapp: whatsappResults,
-      };
-    } catch (notificationError) {
-      console.error("Error preparing notifications:", notificationError);
-      // Don't fail the payment verification if notification prep fails
-    }
+    
+   
 
     return NextResponse.json({
       success: true,

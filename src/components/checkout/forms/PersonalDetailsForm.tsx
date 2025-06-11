@@ -24,26 +24,19 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
     fullName: string;
     email: string;
   }>({ fullName: '', email: '' });
-
-  // Load user data into form when user is available
+  // Initialize original user data and set loading state
   useEffect(() => {
-    if (user && user.name && !orderForm.fullName) {
-      onInputChange('fullName', user.name);
+    if (user) {
+      // Store original data for change detection
+      setOriginalUserData({
+        fullName: user.name || '',
+        email: user.email || ''
+      });
     }
-    if (user && user.email && !orderForm.email) {
-      onInputChange('email', user.email);
-    }
-    // Always ensure mobile number is synced if available
-    if (user && user.phoneNumber && !orderForm.mobileNumber) {
-      onInputChange('mobileNumber', user.phoneNumber);
-    }
-    // Store original data for change detection and set loading to false
-    setOriginalUserData({
-      fullName: orderForm.fullName || '',
-      email: orderForm.email || ''
-    });
     setIsLoadingUserData(false);
-  }, [user, onInputChange, orderForm.fullName, orderForm.email, orderForm.mobileNumber]);
+  }, [user]);
+
+  console.log(user, 'User data in PersonalDetailsForm');
 
   // Check if there are changes from original data
   const hasChanges =
