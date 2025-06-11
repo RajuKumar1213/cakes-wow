@@ -1,6 +1,5 @@
 import React from 'react';
 import { CheckCircle, Package, Clock, Phone, MapPin, Calendar, Heart, MessageCircle, ExternalLink } from 'lucide-react';
-import { sendWhatsAppMessage } from '@/lib/whatsapp';
 
 interface PaymentSuccessProps {
   orderDetails: {
@@ -32,16 +31,6 @@ export const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ orderDetails, no
       month: 'long',
       day: 'numeric',
     });
-  };
-
-  const handleWhatsAppClick = () => {
-    if (notifications?.customer) {
-      const whatsappUrl = sendWhatsAppMessage(
-        notifications.customer.phone,
-        notifications.customer.message
-      );
-      window.open(whatsappUrl, '_blank');
-    }
   };
 
   return (
@@ -136,7 +125,6 @@ export const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ orderDetails, no
             {/* WhatsApp Confirmation Button */}
             {notifications?.customer && (
               <button
-                onClick={handleWhatsAppClick}
                 className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
               >
                 <MessageCircle className="w-5 h-5" />
