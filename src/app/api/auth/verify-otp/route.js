@@ -3,11 +3,13 @@ import dbConnect from '@/lib/mongodb';
 import User from '@/models/User.models';
 import Otp from '@/models/Otp.models';
 import { generateToken } from '@/lib/jwt';
-import { validatePhoneNumber } from '@/lib/otp';
+import { validatePhoneNumber, verifyOTPRobust, normalizePhoneNumber } from '@/lib/otp';
 
 export async function POST(request) {
   try {
     const { phoneNumber, otp } = await request.json();
+
+    console.log(`🔍 Verify OTP request for phone: ${phoneNumber}, OTP: ${otp}`);
 
     // Validate input
     if (!phoneNumber || !otp) {
@@ -19,65 +21,53 @@ export async function POST(request) {
 
     // Validate phone number format
     if (!validatePhoneNumber(phoneNumber)) {
+      console.error(`❌ Invalid phone number format: ${phoneNumber}`);
       return NextResponse.json(
         { error: 'Invalid phone number format' },
         { status: 400 }
       );
     }
 
-    // Validate OTP format (6 digits)
-    if (!/^\d{6}$/.test(otp)) {
-      return NextResponse.json(
-        { error: 'OTP must be 6 digits' },
-        { status: 400 }
-      );
-    }
-
     await dbConnect();
 
-    // Find the OTP record
-    const otpRecord = await Otp.findOne({ phoneNumber, otp });
-
-    if (!otpRecord) {
+    // Use the robust OTP verification function
+    const verificationResult = await verifyOTPRobust(phoneNumber, otp, Otp);
+    
+    if (!verificationResult.success) {
+      console.error(`❌ OTP verification failed: ${verificationResult.error}`);
       return NextResponse.json(
-        { error: 'Invalid or expired OTP' },
+        { error: verificationResult.error },
         { status: 400 }
       );
     }
 
-    // Check if OTP is expired (should be handled by MongoDB TTL, but double-check)
-    const now = new Date();
-    const otpAge = now - otpRecord.createdAt;
-    if (otpAge > 5 * 60 * 1000) { // 5 minutes
-      await Otp.deleteOne({ _id: otpRecord._id });
-      return NextResponse.json(
-        { error: 'OTP has expired' },
-        { status: 400 }
-      );
-    }
-
-    // OTP is valid, delete it
-    await Otp.deleteOne({ _id: otpRecord._id });
+    const normalizedPhone = verificationResult.normalizedPhone;
+    console.log(`✅ OTP verified successfully for ${normalizedPhone}`);
 
     // Find or create user
-    let user = await User.findOne({ phoneNumber });
+    let user = await User.findOne({ phoneNumber: normalizedPhone });
     
     if (!user) {
+      console.log(`👤 Creating new user for ${normalizedPhone}`);
       // Create new user
       user = new User({
-        phoneNumber,
+        phoneNumber: normalizedPhone,
         isVerified: true
       });
       await user.save();
+      console.log(`✅ New user created: ${user._id}`);
     } else {
+      console.log(`👤 Existing user found: ${user._id}`);
       // Update existing user
       user.isVerified = true;
       user.updatedAt = new Date();
       await user.save();
+      console.log(`✅ User updated: ${user._id}`);
     }
 
     // Generate JWT token
     const token = generateToken(user._id);
+    console.log(`🔐 JWT token generated for user: ${user._id}`);
 
     // Create response with token as cookie
     const response = NextResponse.json({
@@ -98,10 +88,10 @@ export async function POST(request) {
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
+    console.log(`✅ Complete OTP verification successful for ${normalizedPhone}`);
     return response;
-
   } catch (error) {
-    console.error('Verify OTP error:', error);
+    console.error('❌ Verify OTP error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

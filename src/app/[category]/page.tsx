@@ -12,7 +12,6 @@ import DualRangeSlider from "@/components/ui/DualRangeSlider";
 import { useToast } from "@/contexts/ToastContext";
 import {
   Filter,
-  Search,
   X,
   SlidersHorizontal,
   Sparkles
@@ -56,30 +55,18 @@ const CategoryPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterLoading, setFilterLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null); const [showFilters, setShowFilters] = useState(false);
+  const [error, setError] = useState<string | null>(null);  const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("popularity");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [priceInputs, setPriceInputs] = useState({ min: 0, max: 5000 });
   // Filter states
   const [priceRange, setPriceRange] = useState([0, 5000]);
   const [selectedWeights, setSelectedWeights] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [availableWeights, setAvailableWeights] = useState<string[]>([]);
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
-  // Sync price inputs with slider
+  const [availableTags, setAvailableTags] = useState<string[]>([]);  // Sync price inputs with slider
   useEffect(() => {
     setPriceInputs({ min: priceRange[0], max: priceRange[1] });
   }, [priceRange]);
-
-  // Debounce search query
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
 
   // Prevent background scrolling when filters modal is open on mobile
   useEffect(() => {
@@ -119,13 +106,7 @@ const CategoryPage = () => {
     // Add tag filters
     selectedTags.forEach(tag => {
       params.append('tags', tag);
-    });
-    // Add search query
-    if (debouncedSearchQuery.trim()) {
-      params.append('search', debouncedSearchQuery.trim());
-    }
-
-    // Add sorting
+    });    // Add sorting
     if (sortBy === 'price_low') {
       params.append('sortBy', 'price');
       params.append('sortOrder', 'asc');
@@ -238,7 +219,7 @@ const CategoryPage = () => {
     if (category) { // Only fetch if category is already loaded
       fetchCategoryAndProducts(true);
     }
-  }, [priceRange, selectedWeights, selectedTags, debouncedSearchQuery, sortBy]);
+  }, [priceRange, selectedWeights, selectedTags, sortBy]);
 
   const sortOptions = [
     { value: "popularity", label: "Popularity" },
@@ -306,20 +287,7 @@ const CategoryPage = () => {
               <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-pink-50 to-purple-50">
                 <div className="flex items-center gap-2 mb-4">
                   <SlidersHorizontal className="h-5 w-5 text-pink-600" />
-                  <h3 className="text-lg font-bold text-gray-900">Filters</h3>
-                  <Sparkles className="h-4 w-4 text-pink-500" />
-                </div>
-
-                {/* Search */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search products..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white shadow-sm transition-all duration-200 hover:shadow-md"
-                  />
+                  <h3 className="text-lg font-bold text-gray-900">Filters</h3>                  <Sparkles className="h-4 w-4 text-pink-500" />
                 </div>
               </div>
 
@@ -444,15 +412,12 @@ const CategoryPage = () => {
                       </div>
                     </div>
                   </div>
-                )}
-
-                {/* Clear Filters */}
+                )}                {/* Clear Filters */}
                 <button
                   onClick={() => {
                     setPriceRange([0, 5000]);
                     setSelectedWeights([]);
                     setSelectedTags([]);
-                    setSearchQuery("");
                   }}
                   className="w-full text-sm text-pink-600 hover:text-pink-700 font-semibold py-3 border-2 border-pink-200 rounded-xl hover:bg-pink-50 transition-all duration-200 hover:border-pink-300"
                 >
@@ -473,20 +438,7 @@ const CategoryPage = () => {
                   >
                     <Filter className="h-4 w-4" />
                     Filters
-                  </button>
-                </div>
-
-                {/* Mobile Search */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search products..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white shadow-sm"
-                  />
-                </div>
+                  </button>                </div>
               </div>
 
               <div className="p-4 lg:p-6">
@@ -537,23 +489,21 @@ const CategoryPage = () => {
                       ))}
                     </div>
                   </div>
-                ) : (
-                  <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
+                ) : (                  <div className="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-100">
                     <div className="text-gray-400 mb-6">
                       <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Search className="h-8 w-8" />
+                        <Filter className="h-8 w-8" />
                       </div>
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">No Products Found</h3>
                     <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                      We couldn't find any products matching your criteria. Try adjusting your filters or search terms.
+                      We couldn't find any products matching your criteria. Try adjusting your filters.
                     </p>
                     <button
                       onClick={() => {
                         setPriceRange([0, 5000]);
                         setSelectedWeights([]);
                         setSelectedTags([]);
-                        setSearchQuery("");
                       }}
                       className="px-6 py-3 bg-pink-600 text-white rounded-xl hover:bg-pink-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl"
                     >
@@ -706,15 +656,12 @@ const CategoryPage = () => {
                     </div>
                   </div>
                 )}
-              </div>
-
-              <div className="p-4 border-t bg-gray-50 flex gap-3 sticky bottom-0">
+              </div>              <div className="p-4 border-t bg-gray-50 flex gap-3 sticky bottom-0">
                 <button
                   onClick={() => {
                     setPriceRange([0, 5000]);
                     setSelectedWeights([]);
                     setSelectedTags([]);
-                    setSearchQuery("");
                   }}
                   className="flex-1 py-3 border-2 border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-white transition-all duration-200"
                 >

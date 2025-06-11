@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Otp from '@/models/Otp.models';
-import { generateOTP, sendOTP, validatePhoneNumber, checkRateLimit } from '@/lib/otp';
+import { generateOTP, sendOTP, validatePhoneNumber, checkRateLimit, normalizePhoneNumber } from '@/lib/otp';
 
 export async function POST(request) {
   try {
     const { phoneNumber } = await request.json();
+
+    console.log(`🔄 Send OTP request for: ${phoneNumber}`);
 
     // Validate input
     if (!phoneNumber) {
@@ -17,16 +19,22 @@ export async function POST(request) {
 
     // Validate phone number format
     if (!validatePhoneNumber(phoneNumber)) {
+      console.error(`❌ Invalid phone number format: ${phoneNumber}`);
       return NextResponse.json(
-        { error: 'Invalid phone number format' },
+        { error: 'Invalid phone number format. Please enter a valid 10-digit mobile number.' },
         { status: 400 }
       );
     }
 
+    // Normalize phone number
+    const normalizedPhone = normalizePhoneNumber(phoneNumber);
+    console.log(`📱 Normalized phone: ${normalizedPhone}`);
+
     // Check rate limiting
-    const rateLimit = checkRateLimit(phoneNumber);
+    const rateLimit = checkRateLimit(normalizedPhone);
     if (!rateLimit.allowed) {
       const resetTime = new Date(rateLimit.resetTime);
+      console.log(`⚠️ Rate limit exceeded for ${normalizedPhone}`);
       return NextResponse.json(
         { 
           error: 'Too many OTP requests. Please try again later.',
@@ -40,21 +48,36 @@ export async function POST(request) {
 
     // Generate OTP
     const otp = generateOTP();
+    console.log(`🔢 Generated OTP: ${otp} for ${normalizedPhone}`);
 
     // Remove any existing OTP for this phone number
-    await Otp.deleteMany({ phoneNumber });
+    const deleteResult = await Otp.deleteMany({ phoneNumber: normalizedPhone });
+    console.log(`🗑️ Deleted ${deleteResult.deletedCount} existing OTP records for ${normalizedPhone}`);
 
     // Save new OTP
     const otpDoc = new Otp({
-      phoneNumber,
-      otp
+      phoneNumber: normalizedPhone,
+      otp,
+      attempts: 0,
+      isUsed: false
     });
-    await otpDoc.save();    // Send OTP via WhatsApp
-    const whatsappResult = await sendOTP(phoneNumber, otp);
+    
+    const savedOtp = await otpDoc.save();
+    console.log(`💾 Saved new OTP record:`, {
+      id: savedOtp._id,
+      phone: savedOtp.phoneNumber,
+      otp: savedOtp.otp,
+      createdAt: savedOtp.createdAt
+    });
+
+    // Send OTP via WhatsApp
+    const whatsappResult = await sendOTP(normalizedPhone, otp);
     
     if (!whatsappResult.success) {
+      console.error(`❌ Failed to send OTP via WhatsApp:`, whatsappResult.error);
+      
       // If WhatsApp sending fails, clean up the saved OTP
-      await Otp.deleteMany({ phoneNumber });
+      await Otp.deleteMany({ phoneNumber: normalizedPhone });
       
       return NextResponse.json(
         { 
@@ -65,16 +88,20 @@ export async function POST(request) {
       );
     }
 
+    console.log(`✅ OTP sent successfully to ${normalizedPhone}`);
+
     return NextResponse.json({
       message: 'OTP sent successfully',
-      success: true
+      success: true,
+      phoneNumber: normalizedPhone
     });
 
   } catch (error) {
-    console.error('Send OTP error:', error);
+    console.error('❌ Send OTP error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
   }
 }
+      

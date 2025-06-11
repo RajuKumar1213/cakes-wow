@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Product from '@/models/Product.models';
-import { formatProductResponse } from '@/lib/productUtils';
+import { formatProductResponse, createProductFilters } from '@/lib/productUtils';
 
 export async function GET(request) {
   try {
@@ -17,8 +17,8 @@ export async function GET(request) {
 
     await dbConnect();
 
-    // Create search filter using text search and regex for flexibility
-    const searchFilter = {
+    // Create base search filter using text search and regex for flexibility
+    const baseSearchFilter = {
       isAvailable: true,
       $or: [
         { name: { $regex: query, $options: 'i' } },
@@ -26,7 +26,29 @@ export async function GET(request) {
         { description: { $regex: query, $options: 'i' } },
         { tags: { $in: [new RegExp(query, 'i')] } }
       ]
+    };    // Get filtering parameters
+    const filterParams = {
+      minPrice: searchParams.get('minPrice'),
+      maxPrice: searchParams.get('maxPrice'),
+      weights: searchParams.getAll('weights'),
+      tags: searchParams.getAll('tags'),
+      isBestseller: searchParams.get('isBestseller'),
+      isFeatured: searchParams.get('isFeatured')
     };
+    
+    console.log('Search API - Filter params:', filterParams);
+    
+    const filters = createProductFilters(filterParams);
+    
+    console.log('Search API - Created filters:', filters);
+    
+    // Combine search filter with other filters
+    const combinedFilters = {
+      ...baseSearchFilter,
+      ...filters
+    };
+    
+    console.log('Search API - Combined filters:', JSON.stringify(combinedFilters, null, 2));
 
     // Get pagination parameters
     const page = parseInt(searchParams.get('page')) || 1;
@@ -36,17 +58,15 @@ export async function GET(request) {
     // Get sorting parameters
     const sortBy = searchParams.get('sortBy') || 'createdAt';
     const sortOrder = searchParams.get('sortOrder') === 'asc' ? 1 : -1;
-    const sortOptions = { [sortBy]: sortOrder };
-
-    // Execute search query
+    const sortOptions = { [sortBy]: sortOrder };    // Execute search query with filters
     const [products, total] = await Promise.all([
-      Product.find(searchFilter)
+      Product.find(combinedFilters)
         .populate('categories', 'name slug group type')
         .sort(sortOptions)
         .skip(skip)
         .limit(limit)
         .lean(),
-      Product.countDocuments(searchFilter)
+      Product.countDocuments(combinedFilters)
     ]);
 
     // Format response

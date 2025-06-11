@@ -24,8 +24,9 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [resendTimer, setResendTimer] = useState(0);
+  const [canResend, setCanResend] = useState(true);
   const router = useRouter();
-
   // Prevent background scroll when modal is visible
   useEffect(() => {
     if (isVisible) {
@@ -41,6 +42,35 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
     }
   }, [isVisible]);
 
+  // Timer effect for resend OTP
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => {
+          if (prev <= 1) {
+            setCanResend(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [resendTimer]);
+
+  // Start timer when moving to OTP step
+  const startResendTimer = () => {
+    setCanResend(false);
+    setResendTimer(30);
+  };
+
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (value.startsWith("+91 ")) {
@@ -49,7 +79,6 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
       setPhoneNumber("+91 ");
     }
   };
-
   const handlePhoneSubmit = async () => {
     setLoading(true);
     setError("");
@@ -62,19 +91,36 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
           "Content-Type": "application/json",
         },
         data: { phoneNumber },
-      });      if (response.status === 200) {
+      }); if (response.status === 200) {
         setSuccess("OTP sent to your WhatsApp!");
         setStep(2);
+        startResendTimer(); // Start the 30-second timer
       } else {
         setError(response.data.error || "Failed to send OTP");
       }
-    } catch (error) {
-      setError("Network error. Please try again." + " " + (error instanceof Error ? error.message : ""));
+    } catch (error: any) {
+      console.error("Send OTP Error:", error);
+
+      // Extract specific error message from API response
+      if (error.response?.data?.error) {
+        setError(error.response.data.error);
+      } else if (error.response?.data?.details) {
+        setError(`Failed to send OTP: ${error.response.data.details}`);
+      } else if (error.response?.status === 400) {
+        setError("Invalid phone number format. Please enter a valid 10-digit mobile number.");
+      } else if (error.response?.status === 429) {
+        setError("Too many OTP requests. Please try again later.");
+      } else if (error.response?.status === 500) {
+        setError("Server error. Please try again in a moment.");
+      } else if (error.message) {
+        setError(`Failed to send OTP: ${error.message}`);
+      } else {
+        setError("Unable to send OTP. Please check your connection and try again.");
+      }
     } finally {
       setLoading(false);
     }
-  };
-  const handleOtpSubmit = async () => {
+  }; const handleOtpSubmit = async () => {
     setLoading(true);
     setError("");
 
@@ -94,20 +140,35 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
       } else {
         setError(response.data.error || "Invalid OTP");
       }
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (error: any) {
+      console.error("Verify OTP Error:", error);
+
+      // Extract specific error message from API response
+      if (error.response?.data?.error) {
+        setError(error.response.data.error);
+      } else if (error.response?.status === 400 && error.response?.data?.message) {
+        setError(error.response.data.message);
+      } else if (error.response?.status === 429) {
+        setError("Too many attempts. Please wait before trying again.");
+      } else if (error.response?.status === 500) {
+        setError("Server error. Please try again in a moment.");
+      } else if (error.message) {
+        setError(`Verification failed: ${error.message}`);
+      } else {
+        setError("Unable to verify OTP. Please check your connection and try again.");
+      }
     } finally {
       setLoading(false);
     }
   };
-
   const handleBackToPhone = () => {
     setStep(1);
     setOtp("");
     setError("");
     setSuccess("");
+    setResendTimer(0);
+    setCanResend(true);
   };
-
   const handleResendOtp = async () => {
     setLoading(true);
     setError("");
@@ -116,13 +177,29 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
     try {
       const response = await axios.post("/api/auth/send-otp", {
         phoneNumber,
-      });      if (response.status === 200) {
+      }); if (response.status === 200) {
         setSuccess("OTP resent to your WhatsApp!");
+        startResendTimer(); // Start the 30-second timer again
       } else {
         setError(response.data.error || "Failed to resend OTP");
       }
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (error: any) {
+      console.error("Resend OTP Error:", error);
+
+      // Extract specific error message from API response
+      if (error.response?.data?.error) {
+        setError(error.response.data.error);
+      } else if (error.response?.data?.details) {
+        setError(`Failed to resend OTP: ${error.response.data.details}`);
+      } else if (error.response?.status === 429) {
+        setError("Too many OTP requests. Please wait before trying again.");
+      } else if (error.response?.status === 500) {
+        setError("Server error. Please try again in a moment.");
+      } else if (error.message) {
+        setError(`Failed to resend OTP: ${error.message}`);
+      } else {
+        setError("Unable to resend OTP. Please check your connection and try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -134,13 +211,13 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
       {/* Modal Backdrop - only visible on larger screens */}
       <div className="hidden md:block absolute inset-0 bg-black/60" onClick={() => setShowLogin(false)}></div>
       {/* Modal Content */}
-      <div className={`w-full h-full md:absolute md:top-1/2 md:left-1/2 md:transform md:-translate-x-1/2 md:-translate-y-1/2 md:w-[26rem] md:h-auto md:max-h-[85vh] bg-white md:bg-transparent md:rounded-lg md:overflow-visible flex flex-col ${isVisible ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}`}>
+      <div className={`w-full overflow-y-scroll h-full md:absolute md:top-1/2 md:left-1/2 md:transform md:-translate-x-1/2 md:-translate-y-1/2 md:w-[26rem] md:h-auto md:max-h-[85vh] bg-white md:bg-transparent md:rounded-lg md:overflow-visible flex flex-col ${isVisible ? 'translate-y-0' : 'translate-y-full md:translate-y-0'}`}>
 
         {/* Decorative Background - only on mobile */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none md:hidden">
+        {/* <div className="absolute inset-0 overflow-hidden pointer-events-none md:hidden">
           <div className="absolute -top-24 -left-24 w-96 h-96 bg-gradient-to-br from-orange-200/40 via-pink-200/30 to-purple-200/40 rounded-full blur-3xl opacity-50"></div>
           <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-gradient-to-br from-green-200/40 via-blue-200/30 to-indigo-200/40 rounded-full blur-3xl opacity-50"></div>
-        </div>
+        </div> */}
 
         {/* Close Button */}
         <button
@@ -148,25 +225,44 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
           className="absolute top-3 right-3 md:top-2 md:right-2 p-2 rounded-full bg-white shadow-md hover:shadow-lg border hover:bg-gray-50 z-10"
         >
           <X className="w-4 h-4 text-gray-600" />
-        </button>        {/* Content */}
-        <div className="flex-1 flex flex-col px-6 py-8 md:px-6 md:py-5 relative md:bg-white md:shadow-lg md:rounded-lg md:min-h-[30rem]">          {/* Header - Top section */}
+        </button>        
+        {/* Content */}
+        <div className="flex-1 flex flex-col px-6 py-8 md:px-6 md:py-5 relative md:bg-white md:shadow-lg md:rounded-lg md:min-h-[30rem]">          
+          {/* Header - Top section */}
           <div className="text-center pt-8 md:pt-3 pb-8 md:pb-4">
             <div className="w-20 h-20 md:hidden mx-auto bg-gradient-to-br from-orange-400 via-pink-500 to-purple-500 rounded-full flex items-center justify-center shadow-xl mb-4 border-4 border-white/20">
               <span className="text-3xl">🍰</span>
             </div>
             <h1 className="text-3xl md:text-lg font-bold text-gray-900 mb-3 md:mb-1 tracking-tight">
               {step === 1 ? "Welcome Back!" : "Verify Phone"}
-            </h1>            <p className="text-gray-600 text-lg md:text-xs font-medium">
+            </h1>            
+            <p className="text-gray-600 text-lg md:text-xs font-medium">
               {step === 1
                 ? "Enter your phone to continue"
                 : `WhatsApp code sent to ${phoneNumber}`}
             </p>
-          </div>{/* Alert Messages */}
+          </div>          
+          {/* Alert Messages */}
           {error && (
-            <div className="mb-6 md:mb-4 p-4 md:p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 shadow-sm">
-              <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
-              <p className="text-red-700 text-sm font-medium">{error}</p>
-            </div>
+            <div className="flex gap-3 mb-3">
+              <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5 " />
+              <div className="flex-1">
+                <p className="text-red-700 text-sm font-medium leading-relaxed">{error}</p>
+                {/* Show helpful tips based on error type */}
+
+                {error.includes("phone number") && (
+                  <div className="mt-2 text-xs text-red-600">
+                    <p>💡 <strong>Tip:</strong> Please enter a valid 10-digit Indian mobile number (e.g., 9876543210)</p>
+                  </div>
+                )}
+                  {error.includes("Too many") && (
+                    <div className="mt-2 text-xs text-red-600">
+                      <p>💡 <strong>Tip:</strong> Please wait a few minutes before trying again to avoid rate limiting.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+   
           )}
           {success && (
             <div className="mb-6 md:mb-4 p-4 md:p-3 bg-green-50 border border-green-200 rounded-xl flex items-center gap-3 shadow-sm">
@@ -195,7 +291,7 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
                     className="w-full px-6 py-4 md:px-4 md:py-3 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 text-lg md:text-base  font-medium focus:outline-none focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 shadow-sm hover:shadow-md transition-all duration-300"
                     required
                   />                  <p className="mt-3 md:mt-2 text-gray-500 text-sm text-center font-medium">
-                    💬 We'll send you a verification code on WhatsApp
+                    💬 We'll send you a verification code on <span className="text-green-600 font-semibold">WhatsApp</span>
                   </p>
                 </div>
               </div>
@@ -204,12 +300,7 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
             {step === 2 && (
               <div className="space-y-6 md:space-y-4">
                 <div className="text-center">
-                  <label htmlFor="otp" className="text-gray-700 text-base md:text-sm font-semibold mb-4 md:mb-3 flex items-center justify-center gap-2">
-                    <div className="p-2 bg-gradient-to-br from-green-100 to-blue-100 rounded-lg">
-                      <MessageSquare className="w-5 h-5 text-green-600" />
-                    </div>
-                    Verification Code
-                  </label>
+                  
                   <input
                     id="otp"
                     type="text"
@@ -219,9 +310,12 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
                     maxLength={6}
                     className="w-full px-6 py-4 md:px-4 md:py-3 bg-gradient-to-br from-gray-50 to-white border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 text-2xl md:text-lg text-center font-mono tracking-[0.3em] focus:outline-none focus:ring-4 focus:ring-green-500/20 focus:border-green-500 shadow-sm hover:shadow-md transition-all duration-300"
                     required
-                  />                  <p className="mt-3 md:mt-2 text-gray-500 text-sm text-center font-medium">
-                    💬 Check your WhatsApp for the 6-digit code
-                  </p>
+                  />                  <div className="mt-3 md:mt-2 text-center space-y-1">
+                    <p className="text-gray-500 text-sm font-medium">
+                      💬 Check your <span className="text-green-600 font-semibold">WhatsApp</span> for the 6-digit code
+                    </p>
+                    
+                  </div>
                 </div>
 
                 {/* Back and Resend options */}
@@ -232,14 +326,22 @@ export default function Login({ setShowLogin, isVisible = true }: LoginProps) {
                     className="text-gray-600 hover:text-gray-900 flex items-center gap-2 text-sm font-medium hover:bg-gray-100 px-3 py-2 rounded-lg transition-all duration-200"
                   >
                     ← Change Phone
-                  </button>
-                  <button
+                  </button>                  <button
                     type="button"
                     onClick={handleResendOtp}
-                    disabled={loading}
-                    className="text-orange-600 hover:text-orange-700 font-semibold text-sm disabled:opacity-50 hover:bg-orange-50 px-3 py-2 rounded-lg transition-all duration-200"
+                    disabled={loading || !canResend}
+                    className={`font-semibold text-sm px-3 py-2 rounded-lg transition-all duration-200 ${canResend && !loading
+                      ? 'text-orange-600 hover:text-orange-700 hover:bg-orange-50'
+                      : 'text-gray-400 cursor-not-allowed'
+                      }`}
                   >
-                    Resend OTP
+                    {!canResend && resendTimer > 0 ? (
+                      <span className="flex items-center gap-1">
+                        🕐 Resend in {resendTimer}s
+                      </span>
+                    ) : (
+                      'Resend OTP'
+                    )}
                   </button>
                 </div>
               </div>

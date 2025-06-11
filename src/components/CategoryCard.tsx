@@ -27,7 +27,7 @@ const CategoryCard = ({ hideTitle, id, name, image, href }: CategoryCardProps) =
       <div className="relative md:h-65 h-52 overflow-hidden bg-gray-100">
         <Image
           src={image}
-          alt={name}
+          alt={`${name} category image`}
           fill
           className=" object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
           priority

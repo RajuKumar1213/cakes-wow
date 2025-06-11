@@ -13,10 +13,12 @@ import TimeSlotModal from '@/components/checkout/modals/TimeSlotModal';
 import { validatePersonalDetails, validateAddress } from '@/utils/validation';
 import { areaPinMap } from '@/constants/areaPinMap';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { useRouter } from 'next/navigation';
+
 
 const DeliveryDetailsStepContent: React.FC = () => {
   const { state, dispatch, updateOrderForm, goToNextStep, goToPreviousStep } = useCheckout();
-  const { items, totalPrice } = useCart();
+  const router = useRouter();
   const { user, updateUser, addAddress } = useAuth();
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const { 
@@ -301,7 +303,7 @@ const DeliveryDetailsStepContent: React.FC = () => {
         <div className="flex items-center justify-between pt-3 md:pt-6">
           <button
             type="button"
-            onClick={goToPreviousStep}
+            onClick={()=> router.back()}
             className="px-4 md:px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm md:text-base"
           >
             Back to Cart

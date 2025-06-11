@@ -124,7 +124,7 @@ export function createProductFilters(params) {
     if (priceFilter.length > 0) {
       filters.$or = priceFilter;
     }
-  }// Tag filter
+  }  // Tag filter
   if (params.tags && params.tags.length > 0) {
     const tagArray = Array.isArray(params.tags) ? params.tags : [params.tags];
     const filteredTags = tagArray.filter(tag => tag && tag.trim().length > 0);
@@ -139,16 +139,8 @@ export function createProductFilters(params) {
     const filteredWeights = weightArray.filter(weight => weight && weight.trim().length > 0);
     if (filteredWeights.length > 0) {
       filters['weightOptions.weight'] = { $in: filteredWeights };
+    }
   }
-  }
-
-  // Weight filter
-  if (params.weights && params.weights.length > 0) {
-    const weightArray = Array.isArray(params.weights) ? params.weights : [params.weights];
-    const filteredWeights = weightArray.filter(weight => weight && weight.trim().length > 0);
-    if (filteredWeights.length > 0) {
-      filters['weightOptions.weight'] = { $in: filteredWeights };
-    }  }
 
   // Bestseller filter
   if (params.isBestseller === 'true') {
