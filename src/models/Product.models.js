@@ -124,7 +124,7 @@ productSchema.index({ isAvailable: 1, slug: 1 }); // Compound index for product 
 productSchema.index({ categories: 1 });
 productSchema.index({ tags: 1 });
 productSchema.index({ price: 1 });
-productSchema.index({ isAvailable: 1 });
+// Note: isAvailable index is covered by compound index above
 productSchema.index({ isBestseller: 1 });
 productSchema.index({ isFeatured: 1 });
 productSchema.index({ name: 'text', description: 'text', tags: 'text' });

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import dbConnect from "@/lib/mongodb";
 import Order from "@/models/Order.models";
-import { sendCustomerOrderConfirmation } from "@/lib/whatsapp";
+import { sendCustomerOrderSuccessMessage } from "@/lib/whatsapp";
 
 /**
  * POST /api/payment/verify
@@ -68,37 +68,42 @@ export async function POST(request) {
 
     // Update order with payment details
     order.paymentStatus = "paid";
-    order.status = "confirmed";
-    order.razorpayPaymentId = razorpay_payment_id;
+    order.status = "confirmed";    order.razorpayPaymentId = razorpay_payment_id;
     order.razorpayOrderId = razorpay_order_id;
-    order.razorpaySignature = razorpay_signature;
-    order.paymentCompletedAt = new Date();    
+    order.razorpaySignature = razorpay_signature;    
+    order.paymentCompletedAt = new Date();
     const updatedOrder = await order.save();
     console.log("Order updated successfully:", {
       orderId: updatedOrder.orderId,
       paymentStatus: updatedOrder.paymentStatus,
       status: updatedOrder.status,
-    });    
-     // Send WhatsApp confirmation to customer after successful payment
-    console.log("🚀 Sending WhatsApp order confirmation...");
+    });
     
+    // Send WhatsApp confirmation to customer after successful payment
+    console.log("🚀 Sending WhatsApp order success message...");
     try {
-      const whatsappResult = await sendCustomerOrderConfirmation(updatedOrder);
-      
+      const whatsappResult = await sendCustomerOrderSuccessMessage(
+        updatedOrder.customerInfo.mobileNumber, 
+        updatedOrder
+      );
       if (whatsappResult.success) {
-        console.log("✅ WhatsApp confirmation sent successfully:", {
+        console.log("✅ WhatsApp success message sent successfully:", {
           phone: whatsappResult.phone,
           orderId: whatsappResult.orderId,
-          customer: whatsappResult.customer
+          customer: whatsappResult.customer,
+          template: whatsappResult.template
         });
-        
-        // Store notification status in order
+          // Store notification status in order
         updatedOrder.notifications = {
           whatsapp: {
             sent: true,
             sentAt: new Date(),
             phone: whatsappResult.phone,
-            broadcastName: whatsappResult.broadcastName
+            customer: whatsappResult.customer,
+            orderId: whatsappResult.orderId,
+            broadcastName: whatsappResult.broadcastName,
+            template: whatsappResult.template,
+            message: whatsappResult.message
           }
         };
       } else {
@@ -109,9 +114,11 @@ export async function POST(request) {
           whatsapp: {
             sent: false,
             error: whatsappResult.error,
-            attemptedAt: new Date()
-          }
-        };
+            phone: whatsappResult.phone,
+            orderId: whatsappResult.orderId,
+            attemptedAt: new Date(),
+            details: whatsappResult.details
+          }        };
       }
       
       // Save notification status
@@ -130,7 +137,9 @@ export async function POST(request) {
       };
       
       await updatedOrder.save();
-    }return NextResponse.json({
+    }
+    
+    return NextResponse.json({
       success: true,
       message: "Payment verified successfully",
       order: {

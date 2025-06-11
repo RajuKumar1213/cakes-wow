@@ -36,8 +36,6 @@ export const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
     setIsLoadingUserData(false);
   }, [user]);
 
-  console.log(user, 'User data in PersonalDetailsForm');
-
   // Check if there are changes from original data
   const hasChanges =
     orderForm.fullName !== originalUserData.fullName ||

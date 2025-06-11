@@ -17,11 +17,12 @@ export const AddressForm: React.FC<AddressFormProps> = ({
     onInputChange,
     onAreaChange,
 }) => {
-    const { user, addAddress, updateAddress, deleteAddress } = useAuth(); const [showAddressForm, setShowAddressForm] = useState(false);
+    const { user, addAddress, updateAddress, deleteAddress, checkAuth } = useAuth(); 
+    const [showAddressForm, setShowAddressForm] = useState(false);
     const [editingAddress, setEditingAddress] = useState<Address | null>(null);
     const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [isLoadingAddresses, setIsLoadingAddresses] = useState(true); 
+    const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
     const [formData, setFormData] = useState<Address>({
         receiverName: '',
         prefix: 'Mr.',
@@ -33,10 +34,44 @@ export const AddressForm: React.FC<AddressFormProps> = ({
         addressType: 'Home'
     });
     const [formErrors, setFormErrors] = useState<Partial<Address>>({});
-
-    const prefixes = ['Mr.', 'Ms.', 'Mrs.', 'Dr.'];
+    
+    const prefixes = ['Mr.', 'Ms.', 'Mrs.'];
     const addressTypes = ['Home', 'Office', 'Others'];
+    
+    // Explicitly fetch user data when component mounts
     useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                setIsLoadingAddresses(true);
+                // Force a refresh of the user data
+                await checkAuth();
+                console.log('User data refreshed');
+            } catch (error) {
+                console.error('Error refreshing user data:', error);
+            } finally {
+                // We don't set isLoadingAddresses to false here
+                // It will be handled by the other useEffect
+            }
+        };
+        
+        if (user) {
+            console.log('User already exists, checking addresses...');
+            if (!user.address || user.address.length === 0) {
+                console.log('No addresses found, refreshing user data...');
+                fetchUserData();
+            } else {
+                console.log('User has addresses:', user.address.length);
+                setIsLoadingAddresses(false);
+            }
+        } else {
+            console.log('No user found, waiting for auth context...');
+        }
+    }, [user, checkAuth]);
+
+    // Handle UI updates once we have user data
+    useEffect(() => {
+        console.log('User data changed, addresses:', user?.address?.length);
+        
         // If user has addresses and none is selected, show address list
         if (user?.address && user.address.length > 0 && !selectedAddress) {
             setShowAddressForm(false);
@@ -52,14 +87,27 @@ export const AddressForm: React.FC<AddressFormProps> = ({
 
         // Set loading to false once user data is processed
         setIsLoadingAddresses(false);
-    }, [user?.address, selectedAddress, user?.phoneNumber, formData.phoneNumber]);    // Separate effect to auto-select first address when none is selected
+    }, [user?.address, selectedAddress, user?.phoneNumber, formData.phoneNumber]);
+    
     useEffect(() => {
         if (user?.address && user.address.length > 0 && !selectedAddress && !orderForm.fullAddress && !orderForm.area) {
+            console.log('Auto-selecting first address');
             const firstAddress = user.address[0];
             setSelectedAddress(firstAddress);
             onInputChange('fullAddress', firstAddress.fullAddress);
             onInputChange('pinCode', firstAddress.pinCode);
             onAreaChange(firstAddress.city);
+        } else if (user?.address && user.address.length > 0 && !selectedAddress && (orderForm.fullAddress || orderForm.area)) {
+            // If orderForm already has data, try to find a matching address
+            console.log('Looking for matching address in user saved addresses');
+            const matchingAddress = user.address.find(
+                addr => addr.fullAddress === orderForm.fullAddress || addr.city === orderForm.area
+            );
+            
+            if (matchingAddress) {
+                console.log('Found matching address, selecting it');
+                setSelectedAddress(matchingAddress);
+            }
         }
     }, [user?.address, selectedAddress, orderForm.fullAddress, orderForm.area, onInputChange, onAreaChange]);
 
@@ -91,13 +139,7 @@ export const AddressForm: React.FC<AddressFormProps> = ({
         }
     };
 
-    // Sync receiverName from orderForm.fullName if available
-    // useEffect(() => {
-    //     if (orderForm.fullName && !formData.receiverName) {
-    //         setFormData(prev => ({ ...prev, receiverName: orderForm.fullName }));
-    //     }
-    // }, [orderForm.fullName, formData.receiverName]); 
-    
+
     const handleAreaChange = (area: string) => {
         const pinCode = (areaPinMap as Record<string, string>)[area] || '';
 
@@ -107,7 +149,9 @@ export const AddressForm: React.FC<AddressFormProps> = ({
         // Update parent orderForm
         onAreaChange(area);
         onInputChange('pinCode', pinCode);
-    }; const validateForm = (): boolean => {
+    };
+    
+    const validateForm = (): boolean => {
         const errors: Partial<Address> = {};
 
         if (!formData.receiverName.trim()) errors.receiverName = 'Receiver name is required';
@@ -186,13 +230,17 @@ export const AddressForm: React.FC<AddressFormProps> = ({
         } finally {
             setIsLoading(false);
         }
-    }; const handleSelectAddress = (address: Address) => {
+    }; 
+    
+    const handleSelectAddress = (address: Address) => {
         setSelectedAddress(address);
         // Update order form with selected address
         onInputChange('fullAddress', address.fullAddress);
         onInputChange('pinCode', address.pinCode);
         onAreaChange(address.city);
-    }; const handleAddNewAddress = () => {
+    };
+    
+    const handleAddNewAddress = () => {
         setFormData({
             receiverName: '',
             prefix: 'Mr.',
@@ -206,9 +254,9 @@ export const AddressForm: React.FC<AddressFormProps> = ({
         setEditingAddress(null);
         setShowAddressForm(true);
     };
-
+    
     // Show loading spinner if address data is still loading
-    if (isLoadingAddresses && !user) {
+    if (isLoadingAddresses) {
         return (
             <div className="bg-white rounded shadow-xl overflow-hidden">
                 <div className="bg-green-600 text-white p-3 md:p-4">

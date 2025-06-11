@@ -63,7 +63,7 @@ const categorySchema = new Schema<ICategory>(
 
 // Create compound index for better performance
 categorySchema.index({ group: 1, sortOrder: 1 });
-categorySchema.index({ slug: 1 });
+// Note: slug index is already created by unique: true constraint
 
 export default mongoose.models.Category ||
   mongoose.model<ICategory>("Category", categorySchema);

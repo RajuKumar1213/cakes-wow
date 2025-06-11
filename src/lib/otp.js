@@ -14,10 +14,6 @@ export function normalizePhoneNumber(phoneNumber) {
   // Remove all non-digit characters
   let cleaned = phoneNumber.replace(/[^\d]/g, "");
   
-  // Handle different formats:
-  // +91XXXXXXXXXX -> XXXXXXXXXX
-  // 91XXXXXXXXXX -> XXXXXXXXXX  
-  // XXXXXXXXXX -> XXXXXXXXXX
   if (cleaned.startsWith('91') && cleaned.length === 12) {
     cleaned = cleaned.substring(2);
   }
@@ -35,19 +31,16 @@ export function normalizePhoneNumber(phoneNumber) {
  */
 export async function sendOTP(phoneNumber, otp) {
   try {
-    console.log(`🔄 Attempting to send OTP to ${phoneNumber}`);
     
     // Normalize phone number
     const normalizedPhone = normalizePhoneNumber(phoneNumber);
     if (!normalizedPhone) {
-      console.error(`❌ Invalid phone number format: ${phoneNumber}`);
       return {
         success: false,
         error: 'Invalid phone number format'
       };
     }
 
-    console.log(`📱 Normalized phone: ${normalizedPhone}, OTP: ${otp}`);
 
     // Validate environment variables
     if (!process.env.WATI_API_ENDPOINT || !process.env.WATI_ACCESS_TOKEN) {
