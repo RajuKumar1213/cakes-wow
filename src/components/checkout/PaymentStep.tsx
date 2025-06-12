@@ -5,15 +5,17 @@ import { usePayment } from '@/hooks/usePayment';
 import { formatPrice } from '@/utils/calculations';
 import { ArrowLeft, CreditCard, DollarSign } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { PaymentError } from './PaymentError';
 
 export const PaymentStep: React.FC = () => {
   const { clearCart } = useCart();
   const { state, goToPreviousStep } = useCheckout();
   const { initiatePayment, loading } = usePayment();
   const router = useRouter();
-
   const [pendingOrder, setPendingOrder] = useState<any>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('online');
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [showPaymentError, setShowPaymentError] = useState<boolean>(false);
 
   // Load pending order from localStorage
   useEffect(() => {
@@ -48,34 +50,47 @@ export const PaymentStep: React.FC = () => {
       customerInfo: pendingOrder.customerInfo
     });
 
-    const customerInfo = pendingOrder.customerInfo; 
+    const customerInfo = pendingOrder.customerInfo;
     // Use the MongoDB document ID (this is what the API expects)
     const orderIdToSend = pendingOrder.id || pendingOrder._id;
-    
+
     console.log('📤 Sending to API:', {
       orderId: orderIdToSend,
       paymentMethod: selectedPaymentMethod
     });
-    
+
     await initiatePayment(
       orderIdToSend,
       selectedPaymentMethod,
       customerInfo,
       (orderDetails, notifications) => {
-        console.log('Payment successful:', orderDetails);
-
-        // Clear cart and localStorage
+        console.log('Payment successful:', orderDetails);        // Clear cart and localStorage
         clearCart();
         localStorage.removeItem('pending-order');
         localStorage.removeItem('bakingo-selected-addons');
-        localStorage.removeItem('bakingo-addon-quantities');        // Redirect to order confirmation page
-        router.push(`/order-confirmation/${orderDetails.orderId}`);
+        localStorage.removeItem('bakingo-addon-quantities');
+        
+        // Direct redirect to order confirmation page (no intermediate steps)
+        window.location.href = `/order-confirmation/${orderDetails.orderId}`;
       },
       (error) => {
         console.error('Payment failed:', error);
-        alert(`Payment failed: ${error}`);
+        setPaymentError(error);
+        setShowPaymentError(true);
       }
     );
+  };
+
+  const handleRetryPayment = () => {
+    setShowPaymentError(false);
+    setPaymentError(null);
+    // The user can try again with the same order
+  };
+
+  const handleBackToCheckout = () => {
+    setShowPaymentError(false);
+    setPaymentError(null);
+    goToPreviousStep();
   };
 
   if (!pendingOrder) {
@@ -201,9 +216,18 @@ export const PaymentStep: React.FC = () => {
           disabled={loading}
           className="px-6 md:px-8 py-2 md:py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors font-medium text-sm md:text-base w-full md:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? 'Processing...' : 'Pay Now'}        
+          {loading ? 'Processing...' : 'Pay Now'}
         </button>
       </div>
+
+      {/* Payment Error Modal */}
+      {showPaymentError && paymentError && (
+        <PaymentError
+          error={paymentError}
+          onRetry={handleRetryPayment}
+          onBack={handleBackToCheckout}
+        />
+      )}
     </div>
   );
 };

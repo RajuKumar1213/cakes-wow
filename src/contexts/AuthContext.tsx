@@ -87,9 +87,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return false;
     }
   };
-
   const addAddress = async (address: Omit<Address, '_id'>) => {
     try {
+      console.log('=== Adding Address via API ===');
+      console.log('Current user addresses before add:', user?.address?.length);
+      
       const response = await fetch('/api/user/address', {
         method: 'POST',
         headers: {
@@ -100,7 +102,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Address API success, updating user state...');
+        console.log('New user data addresses count:', data.user?.address?.length);
         setUser(data.user);
+        console.log('User state updated');
         return true;
       } else {
         console.error('Add address failed:', await response.text());

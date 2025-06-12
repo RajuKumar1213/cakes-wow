@@ -44,23 +44,14 @@ export async function POST(request) {
         { error: 'User not found' },
         { status: 404 }
       );
-    }    console.log('User address field type:', typeof user.address);
-    console.log('User address field value:', user.address);
-    console.log('Is address an array:', Array.isArray(user.address));
+    }    // Initialize address array if it doesn't exist or is not an array
+    if (!user.address || !Array.isArray(user.address)) {
+      console.log('Initializing address array for user...');
+      user.address = [];
+      await user.save();
+    }
 
-    // Always reset the address field to ensure it's a proper array
-    console.log('Ensuring address field is a proper array...');
-    await User.findByIdAndUpdate(
-      decoded.userId,
-      { $unset: { address: "" } },
-      { strict: false }
-    );
-    
-    await User.findByIdAndUpdate(
-      decoded.userId,
-      { $set: { address: [] } },
-      { strict: false }
-    );
+    console.log('Current user addresses count:', user.address.length);
 
     // Create new address object
     const newAddress = {
@@ -76,7 +67,7 @@ export async function POST(request) {
 
     console.log('About to add address:', newAddress);
     
-    // Now safely add the address
+    // Add the new address to the existing array
     const updatedUser = await User.findByIdAndUpdate(
       decoded.userId,
       { 

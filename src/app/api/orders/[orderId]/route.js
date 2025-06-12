@@ -86,7 +86,6 @@ export async function PATCH(request, { params }) {
     // Save the updated order
     const updatedOrder = await order.save();
 
-    console.log(`✅ Order ${orderId} updated successfully`);
 
     return NextResponse.json({
       success: true,

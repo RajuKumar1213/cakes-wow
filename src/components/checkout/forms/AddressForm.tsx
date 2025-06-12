@@ -66,17 +66,20 @@ export const AddressForm: React.FC<AddressFormProps> = ({
         } else {
             console.log('No user found, waiting for auth context...');
         }
-    }, [user, checkAuth]);
-
-    // Handle UI updates once we have user data
+    }, [user, checkAuth]);    // Handle UI updates once we have user data
     useEffect(() => {
-        console.log('User data changed, addresses:', user?.address?.length);
+        console.log('=== Address Effect Triggered ===');
+        console.log('User data changed, addresses count:', user?.address?.length);
+        console.log('User addresses:', user?.address);
+        console.log('Selected address:', selectedAddress?._id);
         
         // If user has addresses and none is selected, show address list
         if (user?.address && user.address.length > 0 && !selectedAddress) {
+            console.log('User has addresses, hiding form');
             setShowAddressForm(false);
         } else if (!user?.address || user.address.length === 0) {
             // If no addresses, show form
+            console.log('No addresses found, showing form');
             setShowAddressForm(true);
         }
 
@@ -87,6 +90,7 @@ export const AddressForm: React.FC<AddressFormProps> = ({
 
         // Set loading to false once user data is processed
         setIsLoadingAddresses(false);
+        console.log('=== End Address Effect ===');
     }, [user?.address, selectedAddress, user?.phoneNumber, formData.phoneNumber]);
     
     useEffect(() => {
@@ -189,7 +193,8 @@ export const AddressForm: React.FC<AddressFormProps> = ({
                 success = await updateAddress(editingAddress._id, formData);
             } else {
                 success = await addAddress(formData);
-            } if (success) {
+            }            if (success) {
+                console.log('Address added successfully, waiting for user context to update...');
                 setShowAddressForm(false);
                 setEditingAddress(null);
                 setFormData({
@@ -202,6 +207,9 @@ export const AddressForm: React.FC<AddressFormProps> = ({
                     alternatePhoneNumber: '',
                     addressType: 'Home'
                 });
+                console.log('Current user addresses after add:', user?.address?.length);
+            } else {
+                console.error('Failed to add address');
             }
         } catch (error) {
             console.error('Error saving address:', error);

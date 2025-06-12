@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 import dbConnect from "@/lib/mongodb";
 import Order from "@/models/Order.models";
-import { generateOrderId } from "@/lib/serverOrderUtils";
-import { generateOrderConfirmationMessage, generateAdminNotificationMessage, sendOrderConfirmationWithOwnerNotification } from "@/lib/whatsapp";
 
 // Initialize Razorpay instance
 const razorpay = new Razorpay({
@@ -21,23 +19,12 @@ export async function POST(request) {
 
     const requestBody = await request.json();
     const { orderId, paymentMethod } = requestBody;
-    
-    // Debug: Log exactly what we received
-    console.log("🔍 API Request Debug:", {
-      fullRequestBody: requestBody,
-      orderId: orderId,
-      orderIdType: typeof orderId,
-      paymentMethod: paymentMethod,
-      hasOrderId: !!orderId
-    });
-
-    console.log("Creating Razorpay order for existing order:", orderId);
 
     // Validate required fields
     if (!orderId) {
       console.error("❌ Order ID validation failed:", {
         orderId: orderId,
-        requestBody: requestBody
+        requestBody: requestBody,
       });
       return NextResponse.json(
         { error: "Order ID is required" },
@@ -54,13 +41,13 @@ export async function POST(request) {
     // Update payment method
     if (paymentMethod) {
       order.paymentMethod = paymentMethod;
-    }    // Calculate online discount for online payments (2% discount)
+    } // Calculate online discount for online payments (2% discount)
     let finalAmount = order.totalAmount;
-    if (paymentMethod === 'online') {
+    if (paymentMethod === "online") {
       const discount = Math.round(order.totalAmount * 0.02); // 2% discount
       order.onlineDiscount = discount;
       finalAmount = order.totalAmount - discount;
-    }    // Create Razorpay order for online payments
+    } // Create Razorpay order for online payments
     const razorpayOrderOptions = {
       amount: Math.round(finalAmount * 100), // Amount in paisa (after discount)
       currency: "INR",
@@ -75,18 +62,13 @@ export async function POST(request) {
         discount: order.onlineDiscount || 0,
         paymentMethod: paymentMethod,
         deliveryDate: order.customerInfo.deliveryDate,
-        deliveryArea: order.customerInfo.area
+        deliveryArea: order.customerInfo.area,
       },
     };
 
-    console.log(
-      "Creating Razorpay order with options:",
-      razorpayOrderOptions
-    );
 
     const razorpayOrder = await razorpay.orders.create(razorpayOrderOptions);
 
-    console.log("Razorpay order created:", razorpayOrder);
 
     // Update order with Razorpay order ID
     order.razorpayOrderId = razorpayOrder.id;

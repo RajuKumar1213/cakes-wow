@@ -19,13 +19,6 @@ export async function POST(request) {
       backend_order_id,
     } = await request.json();
 
-    console.log("Payment verification request:", {
-      razorpay_payment_id,
-      razorpay_order_id,
-      razorpay_signature,
-      backend_order_id,
-    });
-
     // Validate required fields
     if (
       !razorpay_payment_id ||
@@ -52,11 +45,7 @@ export async function POST(request) {
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
 
-    console.log("Signature verification:", {
-      received_signature: razorpay_signature,
-      generated_signature,
-      matches: generated_signature === razorpay_signature,
-    });
+   
 
     if (generated_signature !== razorpay_signature) {
       console.error("Payment signature verification failed");
@@ -68,77 +57,18 @@ export async function POST(request) {
 
     // Update order with payment details
     order.paymentStatus = "paid";
-    order.status = "confirmed";    order.razorpayPaymentId = razorpay_payment_id;
+    order.status = "confirmed";
+    order.razorpayPaymentId = razorpay_payment_id;
     order.razorpayOrderId = razorpay_order_id;
-    order.razorpaySignature = razorpay_signature;    
+    order.razorpaySignature = razorpay_signature;
     order.paymentCompletedAt = new Date();
     const updatedOrder = await order.save();
-    console.log("Order updated successfully:", {
-      orderId: updatedOrder.orderId,
-      paymentStatus: updatedOrder.paymentStatus,
-      status: updatedOrder.status,
-    });
-    
-    // Send WhatsApp confirmation to customer after successful payment
-    console.log("🚀 Sending WhatsApp order success message...");
-    try {
-      const whatsappResult = await sendCustomerOrderSuccessMessage(
-        updatedOrder.customerInfo.mobileNumber, 
-        updatedOrder
-      );
-      if (whatsappResult.success) {
-        console.log("✅ WhatsApp success message sent successfully:", {
-          phone: whatsappResult.phone,
-          orderId: whatsappResult.orderId,
-          customer: whatsappResult.customer,
-          template: whatsappResult.template
-        });
-          // Store notification status in order
-        updatedOrder.notifications = {
-          whatsapp: {
-            sent: true,
-            sentAt: new Date(),
-            phone: whatsappResult.phone,
-            customer: whatsappResult.customer,
-            orderId: whatsappResult.orderId,
-            broadcastName: whatsappResult.broadcastName,
-            template: whatsappResult.template,
-            message: whatsappResult.message
-          }
-        };
-      } else {
-        console.error("❌ WhatsApp confirmation failed:", whatsappResult.error);
-        
-        // Store failure status
-        updatedOrder.notifications = {
-          whatsapp: {
-            sent: false,
-            error: whatsappResult.error,
-            phone: whatsappResult.phone,
-            orderId: whatsappResult.orderId,
-            attemptedAt: new Date(),
-            details: whatsappResult.details
-          }        };
-      }
-      
-      // Save notification status
-      await updatedOrder.save();
-      
-    } catch (whatsappError) {
-      console.error("❌ WhatsApp confirmation error:", whatsappError.message);
-      
-      // Store error status
-      updatedOrder.notifications = {
-        whatsapp: {
-          sent: false,
-          error: whatsappError.message,
-          attemptedAt: new Date()
-        }
-      };
-      
-      await updatedOrder.save();
-    }
-    
+
+    await sendCustomerOrderSuccessMessage(
+      updatedOrder.customerInfo.mobileNumber,
+      updatedOrder
+    );
+
     return NextResponse.json({
       success: true,
       message: "Payment verified successfully",
