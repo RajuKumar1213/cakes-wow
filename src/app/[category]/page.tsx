@@ -208,6 +208,7 @@ const CategoryPage = () => {
       setAvailableTags(tags);
     }
   };
+  
   // Initial load of category
   useEffect(() => {
     if (categorySlug && !error) {

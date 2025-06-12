@@ -26,6 +26,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Login from "./Login";
 
+
 const Header = () => {
   const { user, logout } = useAuth();
   const { totalItems } = useCart();

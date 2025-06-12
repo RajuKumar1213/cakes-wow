@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
 import AdminNavbar from "@/components/AdminNavbar";
-
-import axios, { all } from "axios";
 import {
   Plus,
   Search,
@@ -122,19 +120,24 @@ export default function AdminProducts() {
       fetchAddOns();
     }
   }, [loading, editingCategory, loadData, editingAddOn]);
-
   const fetchData = async () => {
     setLoadingData(true);
     try {
       const [productsRes, categoriesRes, allCategoriesRes] = await Promise.all([
-        axios.get("/api/products?limit=1000"),
-        axios.get("/api/categories"),
-        axios.get("/api/categories?format=all"),
+        fetch("/api/products?limit=100"),
+        fetch("/api/categories"),
+        fetch("/api/categories?format=all"),
       ]);
 
-      setAllCategories(allCategoriesRes.data.data || []);
-      setProducts(productsRes.data.data.products || []);
-      setCategories(categoriesRes.data.data || []);
+      const [productsData, categoriesData, allCategoriesData] = await Promise.all([
+        productsRes.json(),
+        categoriesRes.json(),
+        allCategoriesRes.json(),
+      ]);
+
+      setAllCategories(allCategoriesData.data || []);
+      setProducts(productsData.data.products || []);
+      setCategories(categoriesData.data || []);
     } catch (error) {
       console.error("Failed to fetch data:", error);
       showError("Error", "Failed to load data");
@@ -142,10 +145,12 @@ export default function AdminProducts() {
       setLoadingData(false);
     }
   };
+  
   const fetchAddOns = async () => {
     try {
-      const res = await axios.get("/api/addons");
-      setAddons(res.data.data || []);
+      const res = await fetch("/api/addons");
+      const data = await res.json();
+      setAddons(data.data || []);
     } catch (error) {
       showError("Error", "Failed to load add-ons");
     }
@@ -222,7 +227,6 @@ export default function AdminProducts() {
     }
   };
 
-
   const handleSaveProduct = async () => {
     // This function is called by ProductForm's onSuccess callback
     setShowProductForm(false);
@@ -230,15 +234,16 @@ export default function AdminProducts() {
     await fetchData(); // Refresh the data
   };
 
-  // const handleSaveCategory = async (categoryData: any) => {
   const handleDeleteProduct = async (id: string) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
     try {
       setDeleteLoading(true);
-      const response = await axios.delete(`/api/products/${id}`);
-      console.log(response.data);
-      if (response.data.success) {
-
+      const response = await fetch(`/api/products/${id}`, {
+        method: 'DELETE',
+      });
+      const data = await response.json();
+      console.log(data);
+      if (data.success) {
         showSuccess("Success", "Product deleted successfully!");
       }
     } catch (error) {
@@ -248,11 +253,12 @@ export default function AdminProducts() {
       setDeleteLoading(false);
     }
   };
-
   const handleDeleteCategory = async (id: string) => {
     if (!confirm("Are you sure you want to delete this category?")) return;
     try {
-      await axios.delete(`/api/categories?id=${id}`);
+      const response = await fetch(`/api/categories?id=${id}`, {
+        method: 'DELETE',
+      });
       showSuccess("Success", "Category deleted successfully!");
       // Refresh categories after deletion
       fetchData();
@@ -265,8 +271,11 @@ export default function AdminProducts() {
     if (!confirm("Are you sure you want to delete this add-on?")) return;
     try {
       setDeleteLoading(true);
-      const response = await axios.delete(`/api/addons/${id}`);
-      if (response.data.success) {
+      const response = await fetch(`/api/addons/${id}`, {
+        method: 'DELETE',
+      });
+      const data = await response.json();
+      if (data.success) {
         showSuccess("Success", "Add-on deleted successfully!");
         fetchAddOns();
       }

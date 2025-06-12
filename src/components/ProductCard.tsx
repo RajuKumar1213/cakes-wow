@@ -152,9 +152,10 @@ const ProductCard = ({
   if (viewMode === "list") {
     return (
       <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 border border-gray-100 overflow-hidden">
-        <Link href={`/products/${slug}`}>
+        <Link href={`/${slug}`}>
           <div className="flex p-3 gap-3">
-            {/* Image */}            <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-white border border-gray-100">
+            {/* Image */}            
+            <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-white border border-gray-100">
               <Image
                 src={imageUrls[0] || "/placeholder-cake.jpg"}
                 alt={name}
@@ -275,7 +276,7 @@ const ProductCard = ({
             </span>
           </div>
           <span className="text-xs text-gray-500 ml-1 sm:ml-2">({reviewCount})</span>
-        </div>        
+        </div>
         <div className="flex items-center justify-between mb-2 sm:mb-3">
           <div className="flex items-center space-x-1 sm:space-x-2">
             <span className="text-sm sm:text-base font-bold text-gray-900">

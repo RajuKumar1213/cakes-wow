@@ -12,10 +12,12 @@ import {
   Share2,
   Check,
 } from "lucide-react";
-import { Breadcrumb, Footer, Header, AddOns, AddOnModal } from "@/components";
+import { Breadcrumb, Footer, Header, AddOnModal } from "@/components";
 import { useCart, AddOn } from "@/contexts/CartContext";
 import { useToast } from "@/contexts/ToastContext";
-import axios from "axios";
+import useSWR from "swr";
+
+const fetcher = (...args: [RequestInfo, RequestInit?]) => fetch(...args).then(res => res.json())
 
 interface Product {
   _id: string;
@@ -59,6 +61,9 @@ interface Product {
 }
 
 const ProductPage = () => {
+
+
+
   const params = useParams();
   const router = useRouter();
   const productSlug = params.slug as string;
@@ -68,11 +73,9 @@ const ProductPage = () => {
     removeFromWishlist,
     isInWishlist,
     isInCart,
-    items,
   } = useCart();
   const { showSuccess } = useToast();
   const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedWeight, setSelectedWeight] = useState<string>(""); const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
@@ -81,42 +84,20 @@ const ProductPage = () => {
   const [activeTab, setActiveTab] = useState<
     "description" | "ingredients" | "nutrition" | "reviews"
   >("description");
+
+  const { data, isLoading } = useSWR(`/api/products/${productSlug}`, fetcher);
+  console.log(data?.data);
+
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        setLoading(true);
+    if (data?.success) {
+      setProduct(data?.data);
 
-        // Add timeout to API request
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-
-        const response = await axios.get(`/api/products/${productSlug}`, {
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-        const data = response.data;
-
-        if (data.success) {
-          setProduct(data.data);
-          if (data.data.weightOptions.length > 0) {
-            setSelectedWeight(data.data.weightOptions[0].weight);
-          }
-        }
-      } catch (error: any) {
-        if (error.name === "AbortError") {
-          console.error("Request timeout - API taking too long");
-        } else {
-          console.error("Error fetching product:", error);
-        }
-      } finally {
-        setLoading(false);
+      if (data.data.weightOptions?.length > 0) {
+        setSelectedWeight(data.data.weightOptions[0].weight);
       }
-    };
-
-    if (productSlug) {
-      fetchProduct();
     }
-  }, [productSlug]);
+  }, [data]);
+
 
   const handleQuantityChange = (action: "increase" | "decrease") => {
     if (action === "increase") {
@@ -199,15 +180,16 @@ const ProductPage = () => {
         "heart"
       );
     }
-  }; const handleAddOnToggle = (addOnId: string, addOn: AddOn) => {
-    const isSelected = selectedAddOns.some(selected => selected._id === addOn._id);
-
-    if (isSelected) {
-      setSelectedAddOns(prev => prev.filter(selected => selected._id !== addOn._id));
-    } else {
-      setSelectedAddOns(prev => [...prev, addOn]);
-    }
   };
+  // const handleAddOnToggle = (addOnId: string, addOn: AddOn) => {
+  //   const isSelected = selectedAddOns.some(selected => selected._id === addOn._id);
+
+  //   if (isSelected) {
+  //     setSelectedAddOns(prev => prev.filter(selected => selected._id !== addOn._id));
+  //   } else {
+  //     setSelectedAddOns(prev => [...prev, addOn]);
+  //   }
+  // };
 
   const handleModalSkip = () => {
     // Skip add-ons and go directly to cart
@@ -224,7 +206,8 @@ const ProductPage = () => {
   const handleModalClose = () => {
     setShowAddOnModal(false);
   };
-  if (loading) {
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
@@ -327,21 +310,74 @@ const ProductPage = () => {
     <>
       <Header />
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50">
-        <div className="max-w-7xl mx-auto px-2 sm:px-3 lg:px-8 py-1 sm:py-2 lg:py-6">
-          <div className="mb-1 sm:mb-2 lg:mb-4">
+        <div className="max-w-7xl mx-auto px-2 sm:px-3 lg:px-8 py-2 lg:py-4">
+          <div className=" sm:mb-2 lg:mb-2">
             <Breadcrumb items={breadcrumbItems} />
           </div>
 
           <div className="bg-white rounded-lg sm:rounded-xl shadow-lg overflow-hidden border border-gray-100">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 lg:gap-8 p-2 sm:p-3 lg:p-8">                {/* Product Images */}                <div className="flex gap-2 lg:gap-3">
-                {/* Thumbnail Images - Left Side */}
+              {/* Thumbnail Images - Left Side */}
+              {product.imageUrls.length > 1 && (
+                <div className="hidden sm:flex flex-col gap-1.5 lg:gap-2">
+                  {product.imageUrls.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`relative w-14 h-14 lg:w-16 lg:h-16 rounded-md border-2 overflow-hidden transition-all duration-300 hover:scale-105 ${selectedImageIndex === index
+                        ? "border-pink-500 shadow-md"
+                        : "border-gray-200 hover:border-gray-300"
+                        }`}
+                    >
+                      <Image
+                        src={image}
+                        alt={`${product.name} ${index + 1}`}
+                        fill
+                        className="object-contain p-0.5"
+                        sizes="64px"
+                        loading="lazy"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Main Image */}
+              <div className="flex-1">
+                <div className="relative aspect-square w-full bg-gray-50 rounded-lg sm:rounded-xl overflow-hidden">
+                  <Image
+                    src={
+                      product.imageUrls[selectedImageIndex] ||
+                      "/placeholder-cake.jpg"
+                    }
+                    alt={product.name}
+                    fill
+                    className="object-contain p-2"
+                    priority={selectedImageIndex === 0}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 45vw"
+                    placeholder="blur"
+                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyLDdemcxqeK/8AUyQkKUSPH/Z"
+                  />
+                  {getDiscountPercentage() > 0 && (
+                    <div className="absolute top-2 left-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-2 py-1 rounded-lg text-xs font-bold shadow-lg">
+                      {getDiscountPercentage()}% OFF
+                    </div>
+                  )}
+                  {product.isBestseller && (
+                    <div className="absolute top-2 right-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-lg text-xs font-bold shadow-lg">
+                      ⭐ Bestseller
+                    </div>
+                  )}
+                </div>
+
+                {/* Mobile Thumbnail Images - Below Main Image */}
                 {product.imageUrls.length > 1 && (
-                  <div className="hidden sm:flex flex-col gap-1.5 lg:gap-2">
+                  <div className="grid grid-cols-4 gap-1 sm:gap-1.5 mt-2 sm:hidden">
                     {product.imageUrls.map((image, index) => (
                       <button
                         key={index}
                         onClick={() => setSelectedImageIndex(index)}
-                        className={`relative w-14 h-14 lg:w-16 lg:h-16 rounded-md border-2 overflow-hidden transition-all duration-300 hover:scale-105 ${selectedImageIndex === index
+                        className={`relative aspect-square rounded-md border-2 overflow-hidden transition-all duration-300 hover:scale-105 ${selectedImageIndex === index
                           ? "border-pink-500 shadow-md"
                           : "border-gray-200 hover:border-gray-300"
                           }`}
@@ -350,69 +386,16 @@ const ProductPage = () => {
                           src={image}
                           alt={`${product.name} ${index + 1}`}
                           fill
-                          className="object-contain p-0.5"
-                          sizes="64px"
+                          className="object-contain p-1"
+                          sizes="25vw"
                           loading="lazy"
                         />
                       </button>
                     ))}
                   </div>
                 )}
-                
-                {/* Main Image */}
-                <div className="flex-1">
-                  <div className="relative aspect-square w-full bg-gray-50 rounded-lg sm:rounded-xl overflow-hidden">
-                    <Image
-                      src={
-                        product.imageUrls[selectedImageIndex] ||
-                        "/placeholder-cake.jpg"
-                      }
-                      alt={product.name}
-                      fill
-                      className="object-contain p-2"
-                      priority={selectedImageIndex === 0}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 45vw"
-                      placeholder="blur"
-                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyLDdemcxqeK/8AUyQkKUSPH/Z"
-                    />
-                    {getDiscountPercentage() > 0 && (
-                      <div className="absolute top-2 left-2 bg-gradient-to-r from-red-500 to-red-600 text-white px-2 py-1 rounded-lg text-xs font-bold shadow-lg">
-                        {getDiscountPercentage()}% OFF
-                      </div>
-                    )}
-                    {product.isBestseller && (
-                      <div className="absolute top-2 right-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-lg text-xs font-bold shadow-lg">
-                        ⭐ Bestseller
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Mobile Thumbnail Images - Below Main Image */}
-                  {product.imageUrls.length > 1 && (
-                    <div className="grid grid-cols-4 gap-1 sm:gap-1.5 mt-2 sm:hidden">
-                      {product.imageUrls.map((image, index) => (
-                        <button
-                          key={index}
-                          onClick={() => setSelectedImageIndex(index)}
-                          className={`relative aspect-square rounded-md border-2 overflow-hidden transition-all duration-300 hover:scale-105 ${selectedImageIndex === index
-                            ? "border-pink-500 shadow-md"
-                            : "border-gray-200 hover:border-gray-300"
-                            }`}
-                        >
-                          <Image
-                            src={image}
-                            alt={`${product.name} ${index + 1}`}
-                            fill
-                            className="object-contain p-1"
-                            sizes="25vw"
-                            loading="lazy"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>              {/* Product Details */}
+              </div>
+            </div>              {/* Product Details */}
               <div className="space-y-3 lg:space-y-4">
                 <div className="space-y-2">
                   <h1 className="text-xl lg:text-2xl font-bold text-gray-900 leading-tight">
@@ -447,7 +430,7 @@ const ProductPage = () => {
                     {product.shortDescription}
                   </p>
                 </div>
-                
+
                 {/* Pricing */}
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl lg:text-3xl font-bold text-pink-600">
@@ -780,37 +763,7 @@ const ProductPage = () => {
                 )}
               </div>
             </div>
-
-            {/* Sticky cart bar that appears when product is in cart */}
-            {/* {isInCart(product?._id || "") && (
-              <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-gray-200 p-3 z-50">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-12 h-12 relative rounded overflow-hidden mr-3">
-                      <Image
-                        src={product.imageUrls[0]}
-                        alt={product.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">Added to your cart</p>
-                      <p className="text-xs text-gray-500">
-                        {product.name} ({selectedWeight})
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={goToCart}
-                    className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center"
-                  >
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    View Cart
-                  </button>
-                </div>
-              </div>
-            )} */}          </div>
+          </div>
         </div>
       </div>
 

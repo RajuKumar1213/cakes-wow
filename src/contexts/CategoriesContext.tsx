@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
-import axios from 'axios';
 
 // Types
 interface Category {
@@ -93,13 +92,13 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
-      
-      const response = await axios.get('/api/categories');
-       console.log(response.data);
-      if (response.data.success) {
+
+      const response = await fetch('/api/categories');
+      const data = await response.json();
+      if (data.success) {
         // The API returns grouped categories by default
-        const groupedData = response.data.data;
-        
+        const groupedData = data.data;
+
         // Create flat array of categories for other uses
         const flatCategories: Category[] = [];
         Object.keys(groupedData).forEach(group => {
