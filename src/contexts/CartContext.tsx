@@ -25,6 +25,7 @@ export interface CartItem {
   selectedWeight?: string;
   weightOptions?: { weight: string; price: number }[];
   selectedAddOns?: AddOn[];
+  preparationTime?: string; // e.g., "4-6 hours", "3 hours"
 }
 
 export interface WishlistItem {
@@ -106,12 +107,16 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       const existingItemIndex = state.items.findIndex(item => item.id === itemId);
       
       let newItems: CartItem[];
-      
-      if (existingItemIndex >= 0) {
-        // Update existing item quantity
+        if (existingItemIndex >= 0) {
+        // Update existing item quantity and preserve preparation time
         newItems = state.items.map((item, index) =>
           index === existingItemIndex
-            ? { ...item, quantity: item.quantity + quantity, selectedAddOns: selectedAddOns || item.selectedAddOns }
+            ? { 
+                ...item, 
+                quantity: item.quantity + quantity, 
+                selectedAddOns: selectedAddOns || item.selectedAddOns,
+                preparationTime: product.preparationTime || item.preparationTime // Ensure prep time is updated
+              }
             : item
         );
       } else {
@@ -119,8 +124,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         const weightOption = selectedWeight 
           ? product.weightOptions?.find((w: any) => w.weight === selectedWeight)
           : null;
-        
-        const newItem: CartItem = {
+          const newItem: CartItem = {
           id: itemId,
           productId: product._id,
           name: product.name,
@@ -133,6 +137,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
           selectedWeight,
           weightOptions: product.weightOptions,
           selectedAddOns: selectedAddOns || [],
+          preparationTime: product.preparationTime, // Add preparation time from product
           _id: undefined
         };
         

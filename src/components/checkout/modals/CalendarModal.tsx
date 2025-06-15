@@ -1,5 +1,11 @@
 import React from 'react';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useCart } from '@/contexts/CartContext';
+import { 
+  getMaxPreparationTime, 
+  shouldShowTodayInCalendar,
+  getEarliestDeliveryDate
+} from '@/utils/deliveryTimeUtils';
 
 interface CalendarModalProps {
   isOpen: boolean;
@@ -22,6 +28,17 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
   onMonthChange,
   generateCalendarDays,
 }) => {
+  const { items: cartItems } = useCart();
+  
+  // Calculate maximum preparation time from cart
+  const maxPrepTime = getMaxPreparationTime(cartItems);
+  
+  // Get the earliest available delivery date
+  const earliestDeliveryDate = getEarliestDeliveryDate(maxPrepTime);
+  
+  // Check if today should be shown
+  const showToday = shouldShowTodayInCalendar(maxPrepTime);
+
   // Prevent background scroll when modal is open
   React.useEffect(() => {
     if (isOpen) {
@@ -36,7 +53,6 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
     };
   }, [isOpen]);
   if (!isOpen) return null;
-
   // Fix for timezone issues - use local date formatting instead of ISO string
   const formatDate = (date: Date) => {
     const year = date.getFullYear();
@@ -47,6 +63,9 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
   
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  
+  // Set minimum selectable date based on preparation time
+  const minSelectableDate = showToday ? today : earliestDeliveryDate;
 
   return (
     <div
@@ -60,12 +79,14 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
       >
         {/* Header - Fixed */}
         <div className="flex items-center justify-between mb-4 md:mb-6 flex-shrink-0">
-          <div>
-            <h3 className="text-sm md:text-lg font-semibold text-gray-900">
+          <div>            <h3 className="text-sm md:text-lg font-semibold text-gray-900">
               Choose Delivery Date
             </h3>
             <p className="text-gray-600 text-xs mt-1">
-              Pick the perfect day for your sweet delivery 🎂
+              {!showToday 
+                ? `Due to ${maxPrepTime}h prep time, delivery available from ${earliestDeliveryDate.toLocaleDateString()}`
+                : 'Pick the perfect day for your sweet delivery 🎂'
+              }
             </p>
           </div>
           <button
@@ -124,26 +145,26 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
           </div>
 
           {/* Calendar Days */}
-          <div className="grid grid-cols-7 gap-1 mb-4">
-            {generateCalendarDays().map((date, index) => {
+          <div className="grid grid-cols-7 gap-1 mb-4">            {generateCalendarDays().map((date, index) => {
               const isSelected = selectedDate && 
                 formatDate(selectedDate) === formatDate(date);
               const isToday = formatDate(date) === formatDate(today);
-              const isPast = date < today;
+              const isPast = date < minSelectableDate; // Use minSelectableDate instead of today
               const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
+              const isDisabledDueToPrep = !showToday && isToday; // Disable today if prep time doesn't allow it
 
               return (
                 <button
                   key={index}
-                  onClick={() => !isPast && onDateSelect(formatDate(date))}
-                  disabled={isPast}
+                  onClick={() => !isPast && !isDisabledDueToPrep && onDateSelect(formatDate(date))}
+                  disabled={isPast || isDisabledDueToPrep}
                   className={`
                     aspect-square rounded-lg text-xs md:text-sm font-medium transition-all duration-200 transform hover:scale-105
                     ${isSelected
                       ? "bg-orange-500 text-white shadow-lg"
-                      : isToday
+                      : isToday && !isDisabledDueToPrep
                       ? "bg-orange-100 text-orange-700 ring-2 ring-orange-500"
-                      : isPast
+                      : isPast || isDisabledDueToPrep
                       ? "text-gray-300 opacity-50 cursor-not-allowed"
                       : isCurrentMonth
                       ? "text-gray-700 hover:bg-orange-50 hover:text-orange-600"

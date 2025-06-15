@@ -580,30 +580,14 @@ const ProductPage = () => {
                           Delivery Information
                         </h3>
                         <p className="text-xs text-green-700 mt-1">
-                          ⏰ {product.preparationTime} • 🆓 Free delivery on orders above ₹500
+                          ⏰ {product.preparationTime} • Preparation time
+                          may vary based on order volume.
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Tags */}
-                  {product.tags.length > 0 && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-gray-900 block">
-                        Tags
-                      </label>
-                      <div className="flex flex-wrap gap-1.5">
-                        {product.tags.map((tag, index) => (
-                          <span
-                            key={index}
-                            className="bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs font-medium"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                 
                 </div>
               </div>
             </div>
@@ -620,28 +604,8 @@ const ProductPage = () => {
                 >
                   Description
                 </button>
-                {product.ingredients.length > 0 && (
-                  <button
-                    onClick={() => setActiveTab("ingredients")}
-                    className={`px-4 py-2 text-sm font-medium ${activeTab === "ingredients"
-                      ? "text-pink-600 border-b-2 border-pink-600"
-                      : "text-gray-500 hover:text-gray-700"
-                      }`}
-                  >
-                    Ingredients
-                  </button>
-                )}
-                {product.nutritionalInfo && (
-                  <button
-                    onClick={() => setActiveTab("nutrition")}
-                    className={`px-4 py-2 text-sm font-medium ${activeTab === "nutrition"
-                      ? "text-pink-600 border-b-2 border-pink-600"
-                      : "text-gray-500 hover:text-gray-700"
-                      }`}
-                  >
-                    Nutritional Info
-                  </button>
-                )}
+               
+               
                 <button
                   onClick={() => setActiveTab("reviews")}
                   className={`px-4 py-2 text-sm font-medium ${activeTab === "reviews"
@@ -658,81 +622,6 @@ const ProductPage = () => {
                   <div className="prose prose-sm max-w-none">
                     <p className="text-gray-600 leading-relaxed">
                       {product.description}
-                    </p>
-                  </div>
-                )}
-
-                {activeTab === "ingredients" &&
-                  product.ingredients.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-medium mb-2">Ingredients</h3>
-                      <ul className="list-disc pl-5 space-y-1">
-                        {product.ingredients.map((ingredient, index) => (
-                          <li key={index} className="text-gray-600">
-                            {ingredient}
-                          </li>
-                        ))}
-                      </ul>
-
-                      {product.allergens.length > 0 && (
-                        <div className="mt-4">
-                          <h4 className="text-base font-medium mb-1">
-                            Allergen Information
-                          </h4>
-                          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
-                            <p className="text-sm text-yellow-800 font-medium mb-1">
-                              May contain:
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {product.allergens.join(", ")}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                {activeTab === "nutrition" && product.nutritionalInfo && (
-                  <div>
-                    <h3 className="text-lg font-medium mb-3">
-                      Nutritional Information
-                    </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {product.nutritionalInfo.calories && (
-                        <div className="bg-gray-50 p-3 rounded-lg text-center">
-                          <p className="text-sm text-gray-500">Calories</p>
-                          <p className="text-lg font-medium">
-                            {product.nutritionalInfo.calories}
-                          </p>
-                        </div>
-                      )}
-                      {product.nutritionalInfo.protein && (
-                        <div className="bg-gray-50 p-3 rounded-lg text-center">
-                          <p className="text-sm text-gray-500">Protein</p>
-                          <p className="text-lg font-medium">
-                            {product.nutritionalInfo.protein}
-                          </p>
-                        </div>
-                      )}
-                      {product.nutritionalInfo.carbs && (
-                        <div className="bg-gray-50 p-3 rounded-lg text-center">
-                          <p className="text-sm text-gray-500">Carbs</p>
-                          <p className="text-lg font-medium">
-                            {product.nutritionalInfo.carbs}
-                          </p>
-                        </div>
-                      )}
-                      {product.nutritionalInfo.fat && (
-                        <div className="bg-gray-50 p-3 rounded-lg text-center">
-                          <p className="text-sm text-gray-500">Fat</p>
-                          <p className="text-lg font-medium">
-                            {product.nutritionalInfo.fat}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-3">
-                      *Approximate values per serving
                     </p>
                   </div>
                 )}

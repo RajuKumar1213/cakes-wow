@@ -10,8 +10,7 @@ import {
 } from "lucide-react";
 
 // Delivery types configuration
-export const deliveryTypes = [
-  {
+export const deliveryTypes = [  {
     id: "free",
     name: "Standard Delivery",
     price: 0,
@@ -19,14 +18,10 @@ export const deliveryTypes = [
     icon: "🚚",
     popular: true,
     timeSlots: [
-      { time: "9 AM - 11 AM", available: true },
       { time: "11 AM - 1 PM", available: true },
       { time: "1 PM - 3 PM", available: true },
-      { time: "3 PM - 5 PM", available: true },
-      { time: "5 PM - 7 PM", available: true },
-      { time: "7 PM - 9 PM", available: true },
-      { time: "8 PM - 10 PM", available: true },
-      { time: "9 PM - 11 PM", available: true },
+      { time: "3 PM - 6 PM", available: true },
+      { time: "6 PM - 9 PM", available: true },
     ],
   },  {
     id: "midnight",
@@ -35,31 +30,23 @@ export const deliveryTypes = [
     description: "Perfect for surprises",
     icon: "🌙",
     timeSlots: [{ time: "11 PM - 12 AM", available: true }],
-  },{
+  },  {
     id: "fixtime",
-    name: "Fixtime Delivery",
+    name: "Fixed Time Delivery",
     price: 150,
     description: "Guaranteed time delivery",
     icon: "🎯",
     premium: true,
     timeSlots: [
-      { time: "8 AM - 9 AM", available: true },
       { time: "9 AM - 10 AM", available: true },
       { time: "10 AM - 11 AM", available: true },
-      { time: "11 AM - 12 PM", available: true },
-      { time: "12 PM - 1 PM", available: true },
-      { time: "1 PM - 2 PM", available: true },
-      { time: "2 PM - 3 PM", available: true },
-      { time: "3 PM - 4 PM", available: true },
-      { time: "4 PM - 5 PM", available: true },
-      { time: "5 PM - 6 PM", available: true },
-      { time: "6 PM - 7 PM", available: true },
-      { time: "7 PM - 8 PM", available: true },
-      { time: "8 PM - 9 PM", available: true },
+      { time: "11 AM - 1 PM", available: true },
+      { time: "1 PM - 3 PM", available: true },
+      { time: "3 PM - 6 PM", available: true },
+      { time: "6 PM - 9 PM", available: true },
       { time: "9 PM - 10 PM", available: true },
-      { time: "10 PM - 11 PM", available: true },
     ],
-  },  {
+  },{
     id: "earlymorning",
     name: "Early Morning ",
     price: 200,

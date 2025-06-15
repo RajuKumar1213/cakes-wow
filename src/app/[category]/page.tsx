@@ -62,7 +62,7 @@ async function fetchProducts(categorySlug: string): Promise<{ products: Product[
     console.log(`🔍 [${process.env.NODE_ENV}] Fetching products from:`, apiUrl);
     
     const response = await fetch(apiUrl, {
-      next: { revalidate: 1800 }, // Revalidate every 30 minutes
+      // next: { revalidate: 1800 }, // Revalidate every 30 minutes
       headers: {
         'Content-Type': 'application/json',
       },
