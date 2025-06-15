@@ -63,15 +63,28 @@ export async function POST(request) {
         { error: "At least one item is required" },
         { status: 400 }
       );
+    }    // Generate unique order ID
+    const orderId = await generateOrderId();    // Process add-ons if they exist
+    let processedAddons = [];
+    if (orderData.selectedAddOns && Array.isArray(orderData.selectedAddOns) && orderData.selectedAddOns.length > 0) {
+      processedAddons = orderData.selectedAddOns.map(addon => ({
+        addOnId: addon._id || addon.addOnId,
+        name: addon.name,
+        price: addon.price,
+        quantity: orderData.addOnQuantities?.[addon._id] || 1,
+        image: addon.image || "",
+      }));
+      console.log('🎁 Processing addons:', processedAddons);
+      console.log('🎁 Original addon data:', orderData.selectedAddOns);
+    } else {
+      console.log('🎁 No addons in order data');
     }
-
-    // Generate unique order ID
-    const orderId = await generateOrderId();
 
     // Create order in database with payment pending status
     const order = new Order({
       orderId,
       items: orderData.items,
+      addons: processedAddons,
       customerInfo: orderData.customerInfo,
       totalAmount: orderData.totalAmount,
       subtotal: orderData.subtotal || orderData.totalAmount,
@@ -84,17 +97,15 @@ export async function POST(request) {
       estimatedDeliveryDate: new Date(orderData.customerInfo.deliveryDate),
       timeSlot: orderData.customerInfo.timeSlot,
       notes: orderData.notes || "",
-    });
-
-    // Save order to database
+    });    // Save order to database
     const savedOrder = await order.save();
+    console.log('💾 Saved order addons:', savedOrder.addons);
 
     // Return success response with order details
     return NextResponse.json(
       {
         success: true,
-        message: "Order created successfully",
-        order: {
+        message: "Order created successfully",        order: {
           id: savedOrder._id.toString(),
           orderId: savedOrder.orderId,
           totalAmount: savedOrder.totalAmount,
@@ -103,6 +114,8 @@ export async function POST(request) {
           customerInfo: savedOrder.customerInfo,
           estimatedDeliveryDate: savedOrder.estimatedDeliveryDate,
           timeSlot: savedOrder.timeSlot,
+          items: savedOrder.items,
+          addons: savedOrder.addons,
         },
       },
       { status: 201 }

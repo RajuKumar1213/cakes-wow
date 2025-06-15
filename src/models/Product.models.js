@@ -17,10 +17,6 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  shortDescription: {
-    type: String,
-    default: '',
-  },
   price: {
     type: Number,
     min: 0,
@@ -33,15 +29,10 @@ const productSchema = new mongoose.Schema({
   imageUrls: [{
     type: String,
     required: true,
-  }],
-  categories: [{
+  }],  categories: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category',
     required: true,
-  }],
-  tags: [{
-    type: String,
-    trim: true,
   }],
   weightOptions: [{
     weight: {
@@ -75,45 +66,13 @@ const productSchema = new mongoose.Schema({
     default: 0,
     min: 0,
     max: 5,
-  },
-  reviewCount: {
+  },  reviewCount: {
     type: Number,
     default: 0,
     min: 0,
-  },
-  stockQuantity: {
-    type: Number,
-    default: 100,
-    min: 0,
-  },
-  minimumOrderQuantity: {
-    type: Number,
-    default: 1,
-    min: 1,
-  },
-  preparationTime: {
+  },  preparationTime: {
     type: String,
     default: '4-6 hours', // Delivery preparation time
-  },
-  ingredients: [{
-    type: String,
-    trim: true,
-  }],
-  allergens: [{
-    type: String,
-    trim: true,
-  }],
-  nutritionalInfo: {
-    calories: Number,
-    protein: String,
-    carbs: String,
-    fat: String,
-  },
-  metaTitle: String,
-  metaDescription: String,
-  sortOrder: {
-    type: Number,
-    default: 0,
   },
 }, {
   timestamps: true,
@@ -122,12 +81,11 @@ const productSchema = new mongoose.Schema({
 // Indexes for better performance
 productSchema.index({ isAvailable: 1, slug: 1 }); // Compound index for product page queries
 productSchema.index({ categories: 1 });
-productSchema.index({ tags: 1 });
 productSchema.index({ price: 1 });
 // Note: isAvailable index is covered by compound index above
 productSchema.index({ isBestseller: 1 });
 productSchema.index({ isFeatured: 1 });
-productSchema.index({ name: 'text', description: 'text', tags: 'text' });
+productSchema.index({ name: 'text', description: 'text' });
 productSchema.index({ createdAt: -1 }); // For sorting by newest
 productSchema.index({ rating: -1, reviewCount: -1 }); // For sorting by popularity
 

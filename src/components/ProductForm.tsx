@@ -6,20 +6,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "../contexts/ToastContext";
 import axios from "axios";
+import { Search, X } from "lucide-react";
 
 // Base schema without images for form validation
 const baseProductSchema = z.object({
   name: z.string().min(1, "Product name is required").max(100, "Name too long"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
-  shortDescription: z.string().optional(),
-  price: z.number().min(0, "Price must be greater than 0").optional(),
+  description: z.string().min(10, "Description must be at least 10 characters"),  price: z.number().min(0, "Price must be 0 or greater").optional(),
   discountedPrice: z.number().min(0).optional(),
   categories: z.array(z.string()).min(1, "Please select at least one category"),
-  tags: z.array(z.string()).optional(),
   weightOptions: z
     .array(
-      z.object({
-        weight: z.string().min(1, "Weight is required"),
+      z.object({        weight: z.string().min(1, "Weight is required"),
         price: z.number().min(0.01, "Price must be greater than 0"),
         discountedPrice: z.number().min(0).optional(),
       })
@@ -29,26 +26,7 @@ const baseProductSchema = z.object({
   isAvailable: z.boolean(),
   isBestseller: z.boolean(),
   isFeatured: z.boolean(),
-  stockQuantity: z.number().min(0, "Stock quantity cannot be negative"),
-  minimumOrderQuantity: z
-    .number()
-    .min(1, "Minimum order quantity must be at least 1"),
   preparationTime: z.string().min(1, "Preparation time is required"),
-  ingredients: z
-    .array(z.string())
-    .min(1, "Please list at least one ingredient"),
-  allergens: z.array(z.string()).optional(),
-  nutritionalInfo: z
-    .object({
-      calories: z.number().min(0).optional(),
-      protein: z.string().optional(),
-      carbs: z.string().optional(),
-      fat: z.string().optional(),
-    })
-    .optional(),
-  metaTitle: z.string().optional(),
-  metaDescription: z.string().optional(),
-  sortOrder: z.number().min(0).optional(),
   // Remove images from form schema - we'll handle them separately
 });
 
@@ -74,15 +52,34 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [weightOptions, setWeightOptions] = useState([
     { weight: "", price: 0, discountedPrice: 0 },
-  ]);
-  const [ingredients, setIngredients] = useState<string[]>([]);
-  const [newIngredient, setNewIngredient] = useState("");
-  const [allergens, setAllergens] = useState<string[]>([]);
-  const [newAllergen, setNewAllergen] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
-  const [newTag, setNewTag] = useState("");  // Determine if editing and has existing images
+  ]); const [categorySearch, setCategorySearch] = useState("");// Determine if editing and has existing images
   const isEditing = !!product;
-  const hasExistingImages = !!(product?.imageUrls && product.imageUrls.length > 0); const {
+  const hasExistingImages = !!(product?.imageUrls && product.imageUrls.length > 0);
+  // Group and filter categories
+  const groupedCategories = useMemo(() => {
+    if (!categories || categories.length === 0) return {};
+
+    // Filter categories based on search
+    const filteredCategories = categories.filter((cat: any) =>
+      cat.name?.toLowerCase().includes(categorySearch.toLowerCase()) ||
+      cat.group?.toLowerCase().includes(categorySearch.toLowerCase()) ||
+      cat.type?.toLowerCase().includes(categorySearch.toLowerCase())
+    );
+
+    // Group by group then by type
+    const grouped = filteredCategories.reduce((acc: Record<string, Record<string, any[]>>, cat: any) => {
+      const group = cat.group || 'Other';
+      const type = cat.type || 'General';
+
+      if (!acc[group]) acc[group] = {};
+      if (!acc[group][type]) acc[group][type] = [];
+
+      acc[group][type].push(cat);
+      return acc;
+    }, {} as Record<string, Record<string, any[]>>);
+
+    return grouped;
+  }, [categories, categorySearch]); const {
     register,
     handleSubmit,
     control,
@@ -90,45 +87,30 @@ const ProductForm: React.FC<ProductFormProps> = ({
     setValue,
     trigger,
     getValues,
-    formState: { errors, isValid },
-    reset, } = useForm<ProductFormData>({
+    formState: { errors, isValid }, reset, } = useForm<ProductFormData>({
       resolver: zodResolver(baseProductSchema),
       mode: "onChange",
       defaultValues: {
         name: "",
         description: "",
-        shortDescription: "",
         price: 0,
         discountedPrice: 0,
         isAvailable: true,
         isBestseller: false,
         isFeatured: false,
-        stockQuantity: 100,
-        minimumOrderQuantity: 1,
-        sortOrder: 0,
         categories: [],
-        tags: [],
         weightOptions: [{ weight: "", price: 0, discountedPrice: 0 }],
-        ingredients: [],
-        allergens: [],
         preparationTime: "",
-        nutritionalInfo: {
-          calories: 0,
-          protein: "",
-          carbs: "",
-          fat: "",
-        },
-        metaTitle: "",
-        metaDescription: "",
         // Remove images from form default values since we handle them separately
       },
     });
+
+
   useEffect(() => {
     if (product) {
       // Set form values
       setValue("name", product.name || "");
       setValue("description", product.description || "");
-      setValue("shortDescription", product.shortDescription || "");
       setValue("price", product.price || 0);
       setValue("discountedPrice", product.discountedPrice || 0);
 
@@ -137,41 +119,28 @@ const ProductForm: React.FC<ProductFormProps> = ({
         typeof cat === "object" && cat._id ? cat._id : cat
       );
       setValue("categories", categoryIds);
-      setValue("tags", product.tags || []);
+
+      // Handle weight options - ensure discountedPrice is properly converted
+      const safeWeightOptions = (product.weightOptions || []).map((option: any) => ({
+        weight: option.weight || "",
+        price: typeof option.price === 'number' ? option.price : 0,
+        discountedPrice: typeof option.discountedPrice === 'number' ? option.discountedPrice : 0
+      }));
+
+      // Ensure we have at least one weight option
+      const finalWeightOptions = safeWeightOptions.length > 0
+        ? safeWeightOptions
+        : [{ weight: "", price: 0, discountedPrice: 0 }];
+
+      setValue("weightOptions", finalWeightOptions);
+      setWeightOptions(finalWeightOptions);
+
       setValue(
-        "weightOptions",
-        product.weightOptions || [{ weight: "", price: 0, discountedPrice: 0 }]
-      ); setValue(
         "isAvailable",
         product.isAvailable !== undefined ? product.isAvailable : true
       );
-      setValue("isBestseller", product.isBestseller || false);
-      setValue("isFeatured", product.isFeatured || false);
-      setValue("stockQuantity", product.stockQuantity || 100);
-      setValue("minimumOrderQuantity", product.minimumOrderQuantity || 1);
+      setValue("isBestseller", product.isBestseller || false); setValue("isFeatured", product.isFeatured || false);
       setValue("preparationTime", product.preparationTime || "");
-      setValue("sortOrder", product.sortOrder || 0);
-      setValue("ingredients", product.ingredients || []);
-      setValue("allergens", product.allergens || []);
-      setValue(
-        "nutritionalInfo",
-        product.nutritionalInfo || {
-          calories: 0,
-          protein: "",
-          carbs: "",
-          fat: "",
-        }
-      );
-      setValue("metaTitle", product.metaTitle || "");
-      setValue("metaDescription", product.metaDescription || "");
-
-      // Set state variables
-      setWeightOptions(
-        product.weightOptions || [{ weight: "", price: 0, discountedPrice: 0 }]
-      );
-      setIngredients(product.ingredients || []);
-      setAllergens(product.allergens || []);
-      setTags(product.tags || []);
 
       // Handle existing images (URLs)
       if (product.imageUrls && product.imageUrls.length > 0) {
@@ -180,254 +149,196 @@ const ProductForm: React.FC<ProductFormProps> = ({
         // so we'll handle this case differently in form submission
       }
     }
-  }, [product, setValue]); const onSubmit = async (data: ProductFormData) => {
-    try {
-      console.log("=== ONSUBMIT FUNCTION CALLED ===");
+  },
 
-      // First, create a safe data object by extracting only the fields we need
-      // This prevents any React Hook Form internal properties from causing circular references
-      const safeData = {
-        name: data.name || "",
-        description: data.description || "",
-        shortDescription: data.shortDescription || "",
-        price: data.price || 0,
-        discountedPrice: data.discountedPrice || 0,
-        categories: Array.isArray(data.categories) ? [...data.categories] : [],
-        tags: Array.isArray(data.tags) ? [...data.tags] : [],
-        weightOptions: Array.isArray(data.weightOptions) ? data.weightOptions.map(opt => ({
-          weight: opt.weight || "",
-          price: opt.price || 0,
-          discountedPrice: opt.discountedPrice || 0
-        })) : [],
-        isAvailable: Boolean(data.isAvailable),
-        isBestseller: Boolean(data.isBestseller),
-        isFeatured: Boolean(data.isFeatured),
-        stockQuantity: data.stockQuantity || 0,
-        minimumOrderQuantity: data.minimumOrderQuantity || 1,
-        preparationTime: data.preparationTime || "",
-        sortOrder: data.sortOrder || 0,
-        ingredients: Array.isArray(data.ingredients) ? [...data.ingredients] : [],
-        allergens: Array.isArray(data.allergens) ? [...data.allergens] : [],
-        nutritionalInfo: data.nutritionalInfo ? {
-          calories: data.nutritionalInfo.calories || 0,
-          protein: data.nutritionalInfo.protein || "",
-          carbs: data.nutritionalInfo.carbs || "",
-          fat: data.nutritionalInfo.fat || ""
-        } : {},
-        metaTitle: data.metaTitle || "",
-        metaDescription: data.metaDescription || "",
-        imageFilesCount: imageFiles.length,
-        imagePreviewsCount: imagePreviews.length
-      };
-      // Now safely serialize the cleaned data
-      let cleanData;
+    [product, setValue]); const onSubmit = async (data: ProductFormData) => {
       try {
-        cleanData = JSON.parse(JSON.stringify(safeData));
-        console.log("✅ Data serialization successful");
-      } catch (serializationError) {
-        console.error("❌ Serialization failed, using fallback approach");
-        // Fallback: create clean data manually without JSON.parse/stringify
-        cleanData = {
-          name: String(safeData.name),
-          description: String(safeData.description),
-          shortDescription: String(safeData.shortDescription),
-          price: Number(safeData.price),
-          discountedPrice: Number(safeData.discountedPrice),
-          categories: [...safeData.categories],
-          tags: [...safeData.tags],
-          weightOptions: safeData.weightOptions.map(opt => ({
-            weight: String(opt.weight),
-            price: Number(opt.price),
-            discountedPrice: Number(opt.discountedPrice)
-          })),
-          isAvailable: Boolean(safeData.isAvailable),
-          isBestseller: Boolean(safeData.isBestseller),
-          isFeatured: Boolean(safeData.isFeatured),
-          stockQuantity: Number(safeData.stockQuantity),
-          minimumOrderQuantity: Number(safeData.minimumOrderQuantity),
-          preparationTime: String(safeData.preparationTime),
-          sortOrder: Number(safeData.sortOrder),
-          ingredients: [...safeData.ingredients],
-          allergens: [...safeData.allergens],
-          nutritionalInfo: {
-            calories: Number(safeData.nutritionalInfo.calories),
-            protein: String(safeData.nutritionalInfo.protein),
-            carbs: String(safeData.nutritionalInfo.carbs),
-            fat: String(safeData.nutritionalInfo.fat)
-          },
-          metaTitle: String(safeData.metaTitle),
-          metaDescription: String(safeData.metaDescription),
-          imageFilesCount: Number(safeData.imageFilesCount),
-          imagePreviewsCount: Number(safeData.imagePreviewsCount)
+        console.log("=== ONSUBMIT FUNCTION CALLED ===");      // First, create a safe data object by extracting only the fields we need
+        // This prevents any React Hook Form internal properties from causing circular references
+        const safeData = {
+          name: data.name || "",
+          description: data.description || "",
+          price: data.price || 0,
+          discountedPrice: data.discountedPrice || 0,
+          categories: Array.isArray(data.categories) ? [...data.categories] : [],
+          weightOptions: Array.isArray(data.weightOptions) ? data.weightOptions.map(opt => ({
+            weight: opt.weight || "",
+            price: opt.price || 0,
+            discountedPrice: opt.discountedPrice || 0
+          })) : [],
+          isAvailable: Boolean(data.isAvailable),
+          isBestseller: Boolean(data.isBestseller),
+          isFeatured: Boolean(data.isFeatured),
+          preparationTime: data.preparationTime || "",
+          imageFilesCount: imageFiles.length,
+          imagePreviewsCount: imagePreviews.length
         };
-      }
-      console.log("Form submitted with clean data:", cleanData);
-      console.log("Form validation errors count:", Object.keys(errors).length);
-      console.log("Is editing:", isEditing);
-      console.log("Has existing images:", hasExistingImages);
-      console.log("Image files count:", imageFiles.length);
-      console.log("Image previews count:", imagePreviews.length);
+        console.log("=== Original data from form ===");
+        console.log("data.name:", data.name, "Type:", typeof data.name);
+        console.log("data.description:", data.description, "Type:", typeof data.description);
+        console.log("data.categories:", data.categories);
+        console.log("data.weightOptions:", data.weightOptions);
+        console.log("Form errors:", errors);
+        console.log("Is form valid:", isValid);        // Add specific weight options validation debugging
+        if (errors.weightOptions && Array.isArray(errors.weightOptions)) {
+          errors.weightOptions.forEach((error: any, index: number) => {
+            if (error) {
+              // Weight option validation error
+            }
+          });
+        }        // Now safely serialize the cleaned data
+        let cleanData;
+        try {
+          cleanData = JSON.parse(JSON.stringify(safeData));
+        } catch (serializationError) {// Fallback: create clean data manually without JSON.parse/stringify
+          cleanData = {
+            name: String(safeData.name),
+            description: String(safeData.description),
+            price: Number(safeData.price),
+            discountedPrice: Number(safeData.discountedPrice),
+            categories: [...safeData.categories],
+            weightOptions: safeData.weightOptions.map(opt => ({
+              weight: String(opt.weight),
+              price: Number(opt.price),
+              discountedPrice: Number(opt.discountedPrice)
+            })),
+            isAvailable: Boolean(safeData.isAvailable),
+            isBestseller: Boolean(safeData.isBestseller),
+            isFeatured: Boolean(safeData.isFeatured),
+            preparationTime: String(safeData.preparationTime),
+            imageFilesCount: Number(safeData.imageFilesCount),
+            imagePreviewsCount: Number(safeData.imagePreviewsCount)
+          };        }
 
-      // Simple image validation without schema to avoid any circular reference issues
-      if (!isEditing || !hasExistingImages) {
-        // For new products or products without existing images, require at least one image
-        if (imageFiles.length === 0) {
-          showError("Images Required", "Please upload at least one image");
-          return;
+        // Simple image validationwithout schema to avoid any circular reference issues
+        if (!isEditing || !hasExistingImages) {
+          // For new products or products without existing images, require at least one image
+          if (imageFiles.length === 0) {
+            showError("Images Required", "Please upload at least one image");
+            return;
+          }
         }
-      }
-      console.log("Image validation passed!");
+        console.log("Image validation passed!");
+        setIsSubmitting(true);
+        const formData = new FormData();
 
-      setIsSubmitting(true);
-      const formData = new FormData();
+        // Add basic fields using cleanData to avoid any circular references
+        console.log("=== Frontend Form Data Debug ===");
+        console.log("cleanData.name:", cleanData.name, "Type:", typeof cleanData.name);
+        console.log("cleanData.description:", cleanData.description, "Type:", typeof cleanData.description);
+        console.log("cleanData.categories:", cleanData.categories);
+        console.log("cleanData.weightOptions:", cleanData.weightOptions);
 
-      // Add basic fields using cleanData to avoid any circular references
-      formData.append("name", cleanData.name);
-      formData.append("description", cleanData.description);
-      if (cleanData.shortDescription)
-        formData.append("shortDescription", cleanData.shortDescription);
-      if (cleanData.price) formData.append("price", cleanData.price.toString());
-      if (cleanData.discountedPrice)
-        formData.append("discountedPrice", cleanData.discountedPrice.toString());      // Add array fields - send each item separately for backend to use getAll()
-      cleanData.categories.forEach((categoryId: string) => {
-        formData.append("categories", categoryId);
-      });
+        formData.append("name", cleanData.name);
+        formData.append("description", cleanData.description);
+        if (cleanData.price) formData.append("price", cleanData.price.toString());
+        if (cleanData.discountedPrice)
+          formData.append("discountedPrice", cleanData.discountedPrice.toString());
 
-      cleanData.tags.forEach((tag: string) => {
-        formData.append("tags", tag);
-      });
-
-      // Send weight options as indexed fields
-      cleanData.weightOptions.forEach((option: any, index: number) => {
-        formData.append(`weightOptions[${index}][weight]`, option.weight);
-        formData.append(
-          `weightOptions[${index}][price]`,
-          option.price.toString()
-        );
-        if (option.discountedPrice && option.discountedPrice > 0) {
+        // Add array fields - send each item separately for backend to use getAll()
+        cleanData.categories.forEach((categoryId: string) => {
+          formData.append("categories", categoryId);
+        });      // Send weight options as indexed fields
+        console.log("=== Frontend Weight Options Debug ===");
+        console.log("cleanData.weightOptions:", cleanData.weightOptions);
+        cleanData.weightOptions.forEach((option: any, index: number) => {
+          console.log(`Sending weightOptions[${index}]:`, option);
+          formData.append(`weightOptions[${index}][weight]`, option.weight);
           formData.append(
-            `weightOptions[${index}][discountedPrice]`,
-            option.discountedPrice.toString()
+            `weightOptions[${index}][price]`,
+            option.price.toString()
           );
-        }
-      });
-
-      cleanData.ingredients.forEach((ingredient: string) => {
-        formData.append("ingredients", ingredient);
-      });
-
-      cleanData.allergens.forEach((allergen: string) => {
-        formData.append("allergens", allergen);
-      });// Add boolean fields
-      formData.append("isAvailable", cleanData.isAvailable.toString());
-      formData.append("isBestseller", cleanData.isBestseller.toString());
-      formData.append("isFeatured", cleanData.isFeatured.toString());
-
-      // Add numeric fields
-      formData.append("stockQuantity", cleanData.stockQuantity.toString());
-      formData.append(
-        "minimumOrderQuantity",
-        cleanData.minimumOrderQuantity.toString()
-      );
-      formData.append("preparationTime", cleanData.preparationTime);
-      if (cleanData.sortOrder !== undefined)
-        formData.append("sortOrder", cleanData.sortOrder.toString());
-
-      // Add nutritional info if provided
-      if (cleanData.nutritionalInfo) {
-        formData.append(
-          "nutritionalInfo",
-          JSON.stringify(cleanData.nutritionalInfo)
-        );
-      }
-
-      // Add SEO fields
-      if (cleanData.metaTitle) formData.append("metaTitle", cleanData.metaTitle);
-      if (cleanData.metaDescription)
-        formData.append("metaDescription", cleanData.metaDescription);// Handle images - both new uploads and existing URLs
-      if (imageFiles.length > 0) {
-        imageFiles.forEach((file, index) => {
-          // Ensure we're only appending actual File objects
-          if (file instanceof File) {
-            formData.append("images", file);
+          if (option.discountedPrice && option.discountedPrice > 0) {
+            formData.append(
+              `weightOptions[${index}][discountedPrice]`,
+              option.discountedPrice.toString()
+            );
           }
         });
-      }
 
-      // For existing products, always include existing image URLs
-      if (product && product.imageUrls && Array.isArray(product.imageUrls) && product.imageUrls.length > 0) {
-        product.imageUrls.forEach((url: string) => {
-          // Ensure we're only appending strings, not objects
-          if (typeof url === 'string') {
-            formData.append("imageUrls", url);
+        // Add boolean fields
+        formData.append("isAvailable", cleanData.isAvailable.toString());
+        formData.append("isBestseller", cleanData.isBestseller.toString());
+        formData.append("isFeatured", cleanData.isFeatured.toString());
+
+        // Add preparationTime
+        formData.append("preparationTime", cleanData.preparationTime);// Handle images - both new uploads and existing URLs
+        if (imageFiles.length > 0) {
+          imageFiles.forEach((file, index) => {
+            // Ensure we're only appending actual File objects
+            if (file instanceof File) {
+              formData.append("images", file);
+            }
+          });
+        }
+
+        // For existing products, always include existing image URLs
+        if (product && product.imageUrls && Array.isArray(product.imageUrls) && product.imageUrls.length > 0) {
+          product.imageUrls.forEach((url: string) => {
+            // Ensure we're only appending strings, not objects
+            if (typeof url === 'string') {
+              formData.append("imageUrls", url);
+            }
+          });
+        }
+
+        // if product add id
+        if (product) {
+          formData.append("_id", product._id);
+        }
+        if (product) {
+          const response = await axios.patch("/api/products", formData);
+
+          if (response.data.success) {
+            showSuccess("Success!", "Product updated successfully!");
+            // Don't reset form for updates, just close the form
+            if (onSuccess) {
+              onSuccess();
+            }
           }
-        });
-      }
-
-      // if product add id
-      if (product) {
-        formData.append("_id", product._id);
-      }
-      if (product) {
-        const response = await axios.patch("/api/products", formData);
-
-        if (response.data.success) {
-          showSuccess("Success!", "Product updated successfully!");
-          // Don't reset form for updates, just close the form
-          if (onSuccess) {
-            onSuccess();
+        } else {
+          const response = await axios.post("/api/products", formData);
+          if (response.data.success) {
+            showSuccess("Success!", "Product created successfully!");
+            // Reset form for new products          reset();
+            setImageFiles([]);
+            setImagePreviews([]);
+            setWeightOptions([{ weight: "", price: 0, discountedPrice: 0 }]);
+            if (fileInputRef.current) {
+              fileInputRef.current.value = "";
+            }
+            if (onSuccess) {
+              onSuccess();
+            }
           }
         }
-      } else {
-        const response = await axios.post("/api/products", formData);
-        if (response.data.success) {
-          showSuccess("Success!", "Product created successfully!");
-          // Reset form for new products
-          reset();
-          setImageFiles([]);
-          setImagePreviews([]);
-          setWeightOptions([{ weight: "", price: 0, discountedPrice: 0 }]);
-          setIngredients([]);
-          setAllergens([]);
-          setTags([]);
-          setNewIngredient("");
-          setNewAllergen("");
-          setNewTag("");
-          if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-          }
-          if (onSuccess) {
-            onSuccess();
-          }
+      } catch (error) {
+        // Enhanced error logging to prevent circular reference issues
+        console.error("Error submitting product - Type:", typeof error);
+
+        if (error instanceof Error) {
+          console.error("Error name:", error.name);
+          console.error("Error message:", error.message);
+          console.error("Error stack (first 500 chars):", error.stack?.substring(0, 500));
+        } else {
+          console.error("Unknown error type:", String(error));
         }
-      }
-    } catch (error) {
-      // Enhanced error logging to prevent circular reference issues
-      console.error("Error submitting product - Type:", typeof error);
 
-      if (error instanceof Error) {
-        console.error("Error name:", error.name);
-        console.error("Error message:", error.message);
-        console.error("Error stack (first 500 chars):", error.stack?.substring(0, 500));
-      } else {
-        console.error("Unknown error type:", String(error));
+        if (axios.isAxiosError(error)) {
+          const errorMessage = error.response?.data?.error ||
+            error.response?.data?.message ||
+            error.message ||
+            "Failed to submit form";
+          showError("Error", errorMessage);
+        } else if (error instanceof Error) {
+          showError("Error", error.message);
+        } else {
+          showError("Error", "Failed to submit form");
+        }
+      } finally {
+        setIsSubmitting(false);
       }
-
-      if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.error ||
-          error.response?.data?.message ||
-          error.message ||
-          "Failed to submit form";
-        showError("Error", errorMessage);
-      } else if (error instanceof Error) {
-        showError("Error", error.message);
-      } else {
-        showError("Error", "Failed to submit form");
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    };
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -507,65 +418,32 @@ const ProductForm: React.FC<ProductFormProps> = ({
     setWeightOptions(updated);
     setValue("weightOptions", updated);
   };
-
   const updateWeightOption = (index: number, field: string, value: any) => {
-    const updated = weightOptions.map((option, i) =>
-      i === index ? { ...option, [field]: value } : option
-    );
+    const updated = weightOptions.map((option, i) => {
+      if (i === index) {
+        let processedValue = value;
+
+        // Ensure numeric fields are properly converted
+        if (field === 'price' || field === 'discountedPrice') {
+          processedValue = typeof value === 'string' ? parseFloat(value) || 0 : (typeof value === 'number' ? value : 0);
+        }
+
+        return { ...option, [field]: processedValue };
+      }
+      return option;
+    });
     setWeightOptions(updated);
     setValue("weightOptions", updated);
+    // Trigger validation for weight options after update
+    trigger("weightOptions");
   };
-
-  const addIngredient = () => {
-    if (newIngredient.trim() && !ingredients.includes(newIngredient.trim())) {
-      const updated = [...ingredients, newIngredient.trim()];
-      setIngredients(updated);
-      setValue("ingredients", updated);
-      setNewIngredient("");
-    }
-  };
-
-  const removeIngredient = (index: number) => {
-    const updated = ingredients.filter((_, i) => i !== index);
-    setIngredients(updated);
-    setValue("ingredients", updated);
-  };
-
-  const addAllergen = () => {
-    if (newAllergen.trim() && !allergens.includes(newAllergen.trim())) {
-      const updated = [...allergens, newAllergen.trim()];
-      setAllergens(updated);
-      setValue("allergens", updated);
-      setNewAllergen("");
-    }
-  };
-
-  const removeAllergen = (index: number) => {
-    const updated = allergens.filter((_, i) => i !== index);
-    setAllergens(updated);
-    setValue("allergens", updated);
-  };
-
-  const addTag = () => {
-    if (newTag.trim() && !tags.includes(newTag.trim())) {
-      const updated = [...tags, newTag.trim()];
-      setTags(updated);
-      setValue("tags", updated);
-      setNewTag("");
-    }
-  };
-
-  const removeTag = (index: number) => {
-    const updated = tags.filter((_, i) => i !== index);
-    setTags(updated);
-    setValue("tags", updated);
-  };
+  // Removed helper functions for ingredients, allergens, and tags
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[95vh] flex flex-col relative">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-2 flex items-center justify-between rounded-t-xl">
+          <h1 className="text-xl font-semibold text-gray-900">
             {product ? "Edit Product" : "Create New Product"}
           </h1>
           <button
@@ -587,8 +465,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
               />
             </svg>
           </button>
-        </div>
-        <div className="p-6">
+        </div>        <div className="flex-1 overflow-y-auto p-6 pb-20">{/* Added bottom padding for fixed buttons */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -631,23 +508,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
                       {errors.name && (
                         <p className="text-red-500 text-sm mt-1">
                           {errors.name.message}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Short Description
-                      </label>
-                      <input
-                        {...register("shortDescription")}
-                        type="text"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                        placeholder="Brief product description"
-                      />
-                      {errors.shortDescription && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors.shortDescription.message}
                         </p>
                       )}
                     </div>
@@ -700,7 +560,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Regular Price (₹)
-                        </label>                        <input
+                        </label>
+                        <input
                           {...register("price", {
                             setValueAs: (value) => {
                               if (value === "" || value === null || value === undefined) {
@@ -725,7 +586,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Discounted Price (₹)
-                        </label>{" "}                        <input
+                        </label>{" "}
+                        <input
                           {...register("discountedPrice", {
                             setValueAs: (value) => {
                               if (value === "" || value === null || value === undefined) {
@@ -847,130 +709,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
                     >
                       + Add Weight Option
                     </button>
-                  </div>
-                </div>
+                  </div>                </div>
 
-                {/* Category & Tags Card */}
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-                  <div className="flex items-center space-x-3 mb-6">
-                    <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-blue-400 rounded-lg flex items-center justify-center">
-                      <svg
-                        className="w-5 h-5 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                        />
-                      </svg>
-                    </div>
-                    <h2 className="text-xl font-semibold text-gray-900">
-                      Categories & Tags
-                    </h2>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Categories
-                      </label>
-                      <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-                        {" "}
-                        {categories.map((cat) => (
-                          <Controller
-                            key={cat._id || cat}
-                            name="categories"
-                            control={control}
-                            render={({ field }) => {
-                              return (
-                                <label className="flex items-center space-x-2 cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    checked={field.value?.includes(
-                                      cat._id || cat
-                                    )}
-                                    onChange={(e) => {
-                                      const current = field.value || [];
-                                      if (e.target.checked) {
-                                        field.onChange([
-                                          ...current,
-                                          cat._id || cat,
-                                        ]);
-                                      } else {
-                                        field.onChange(
-                                          current.filter(
-                                            (c) => c !== (cat._id || cat)
-                                          )
-                                        );
-                                      }
-                                    }}
-                                    className="rounded border-gray-300 text-orange-500 focus:ring-orange-500"
-                                  />
-                                  <span className="text-sm text-gray-700">
-                                    {cat.name || cat}
-                                  </span>
-                                </label>
-                              );
-                            }}
-                          />
-                        ))}
-                      </div>
-                      {errors.categories && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors.categories.message}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Tags
-                      </label>
-                      <div className="flex space-x-2 mb-2">
-                        <input
-                          type="text"
-                          value={newTag}
-                          onChange={(e) => setNewTag(e.target.value)}
-                          placeholder="Add a tag"
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                          onKeyPress={(e) =>
-                            e.key === "Enter" && (e.preventDefault(), addTag())
-                          }
-                        />
-                        <button
-                          type="button"
-                          onClick={addTag}
-                          className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-                        >
-                          Add
-                        </button>
-                      </div>
-                      {tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {tags.map((tag, index) => (
-                            <span
-                              key={index}
-                              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
-                            >
-                              {tag}
-                              <button
-                                type="button"
-                                onClick={() => removeTag(index)}
-                                className="ml-2 text-orange-500 hover:text-orange-700"
-                              >
-                                ×
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
               </div>{" "}
               {/* Right Column */}
               <div className="space-y-6">
@@ -1031,16 +771,14 @@ const ProductForm: React.FC<ProductFormProps> = ({
                           PNG, JPG up to 5 images
                         </p>
                       </button>
-                    </div>
-
-                    {imagePreviews.length > 0 && (
+                    </div>                    {imagePreviews.length > 0 && (
                       <div className="grid grid-cols-2 gap-4">
                         {imagePreviews.map((preview, index) => (
-                          <div key={index} className="relative">
+                          <div key={index} className="relative aspect-square">
                             <img
                               src={preview}
                               alt={`Preview ${index + 1}`}
-                              className="w-full h-32 object-cover rounded-lg"
+                              className="w-full h-full object-cover rounded-lg"
                             />
                             <button
                               type="button"
@@ -1080,47 +818,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
                   </div>
 
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Stock Quantity
-                        </label>
-                        <input
-                          {...register("stockQuantity", {
-                            valueAsNumber: true,
-                          })}
-                          type="number"
-                          min="0"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                          placeholder="100"
-                        />
-                        {errors.stockQuantity && (
-                          <p className="text-red-500 text-sm mt-1">
-                            {errors.stockQuantity.message}
-                          </p>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Min Order Qty
-                        </label>
-                        <input
-                          {...register("minimumOrderQuantity", {
-                            valueAsNumber: true,
-                          })}
-                          type="number"
-                          min="1"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                          placeholder="1"
-                        />
-                        {errors.minimumOrderQuantity && (
-                          <p className="text-red-500 text-sm mt-1">
-                            {errors.minimumOrderQuantity.message}
-                          </p>
-                        )}
-                      </div>
-                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Preparation Time
@@ -1136,31 +833,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                           {errors.preparationTime.message}
                         </p>
                       )}
-                    </div>{" "}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Sort Order
-                      </label>
-                      <input
-                        {...register("sortOrder", {
-                          valueAsNumber: true,
-                          setValueAs: (value) => {
-                            return isNaN(value) || value === ""
-                              ? undefined
-                              : value;
-                          },
-                        })}
-                        type="number"
-                        min="0"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                        placeholder="0"
-                      />
-                      {errors.sortOrder && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors.sortOrder.message}
-                        </p>
-                      )}
-                    </div>                    {/* Boolean toggles */}
+                    </div>{" "}{/* Boolean toggles */}
                     <div className="space-y-3">
                       <Controller
                         name="isAvailable"
@@ -1283,242 +956,89 @@ const ProductForm: React.FC<ProductFormProps> = ({
                       />
                     </div>
                   </div>
+                </div>              </div>
+            </div>
+
+            {/* Categories Section - Placed at the bottom */}
+            <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-8 h-8 bg-gradient-to-r from-teal-400 to-blue-400 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
                 </div>
-
-                {/* Ingredients & Allergens Card */}
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-                  <div className="flex items-center space-x-3 mb-6">
-                    <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-teal-400 rounded-lg flex items-center justify-center">
-                      <svg
-                        className="w-5 h-5 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                      </svg>
-                    </div>
-                    <h2 className="text-xl font-semibold text-gray-900">
-                      Ingredients & Allergens
-                    </h2>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Ingredients
-                      </label>
-                      <div className="flex space-x-2 mb-2">
-                        <input
-                          type="text"
-                          value={newIngredient}
-                          onChange={(e) => setNewIngredient(e.target.value)}
-                          placeholder="Add an ingredient"
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                          onKeyPress={(e) =>
-                            e.key === "Enter" &&
-                            (e.preventDefault(), addIngredient())
-                          }
-                        />
-                        <button
-                          type="button"
-                          onClick={addIngredient}
-                          className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                        >
-                          Add
-                        </button>
-                      </div>
-                      {ingredients.length > 0 && (
-                        <div className="space-y-1 max-h-32 overflow-y-auto">
-                          {ingredients.map((ingredient, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between bg-gray-50 rounded px-3 py-1"
-                            >
-                              <span className="text-sm text-gray-800">
-                                {ingredient}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => removeIngredient(index)}
-                                className="text-red-500 hover:text-red-700 ml-2"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {errors.ingredients && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors.ingredients.message}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Allergens
-                      </label>
-                      <div className="flex space-x-2 mb-2">
-                        <input
-                          type="text"
-                          value={newAllergen}
-                          onChange={(e) => setNewAllergen(e.target.value)}
-                          placeholder="Add an allergen"
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                          onKeyPress={(e) =>
-                            e.key === "Enter" &&
-                            (e.preventDefault(), addAllergen())
-                          }
-                        />
-                        <button
-                          type="button"
-                          onClick={addAllergen}
-                          className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors"
-                        >
-                          Add
-                        </button>
-                      </div>
-                      {allergens.length > 0 && (
-                        <div className="space-y-1 max-h-32 overflow-y-auto">
-                          {allergens.map((allergen, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between bg-gray-50 rounded px-3 py-1"
-                            >
-                              <span className="text-sm text-gray-800">
-                                {allergen}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => removeAllergen(index)}
-                                className="text-red-500 hover:text-red-700 ml-2"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {errors.allergens && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors.allergens.message}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Nutritional Info & SEO Card */}
-                <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
-                  <div className="flex items-center space-x-3 mb-6">
-                    <div className="w-8 h-8 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-lg flex items-center justify-center">
-                      <svg
-                        className="w-5 h-5 text-white"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                        />
-                      </svg>
-                    </div>
-                    <h2 className="text-xl font-semibold text-gray-900">
-                      Nutrition & SEO
-                    </h2>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      {" "}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Calories
-                        </label>
-                        <input
-                          {...register("nutritionalInfo.calories", {
-                            valueAsNumber: true,
-                            setValueAs: (value) => {
-                              return isNaN(value) || value === ""
-                                ? undefined
-                                : value;
-                            },
-                          })}
-                          type="number"
-                          min="0"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                          placeholder="e.g., 250"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Protein
-                        </label>
-                        <input
-                          {...register("nutritionalInfo.protein")}
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                          placeholder="e.g., 4g"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Carbs
-                        </label>
-                        <input
-                          {...register("nutritionalInfo.carbs")}
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                          placeholder="e.g., 30g"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Fat
-                        </label>
-                        <input
-                          {...register("nutritionalInfo.fat")}
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                          placeholder="e.g., 10g"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Meta Title
-                      </label>
-                      <input
-                        {...register("metaTitle")}
-                        type="text"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                        placeholder="SEO meta title (optional)"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Meta Description
-                      </label>
-                      <textarea
-                        {...register("metaDescription")}
-                        rows={2}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                        placeholder="SEO meta description (optional)"
-                      />
-                    </div>
-                  </div>
-                </div>
+                <h2 className="text-xl font-semibold text-gray-900">Product Categories</h2>
               </div>
-            </div>            {/* Debug Section */}
+
+              <div className="space-y-4">
+                {/* Search Box */}
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={categorySearch}
+                    onChange={(e) => setCategorySearch(e.target.value)}
+                    placeholder="Search categories..."
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  {categorySearch && (
+                    <button
+                      type="button"
+                      onClick={() => setCategorySearch("")}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3"
+                    >
+                      <X className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Categories Selection */}
+                <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-1">
+                  <div className="grid grid-cols-1 gap-4">
+                    {Object.entries(groupedCategories).map(([group, typeGroups]) => (
+                      <div key={group} className="mb-4">
+                        <div className="bg-gradient-to-r from-gray-100 to-gray-50 p-2 font-medium text-gray-700 rounded-lg mb-2">
+                          {group}
+                        </div>
+                        <div className="pl-2 space-y-4">
+                          {Object.entries(typeGroups).map(([type, cats]) => (
+                            <div key={`${group}-${type}`} className="mb-2">
+                              <div className="text-sm font-medium text-gray-600 mb-1">{type}</div>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+                                {cats.map((cat) => (
+                                  <label
+                                    key={cat._id}
+                                    className="flex items-start p-2 rounded-md hover:bg-gray-50 cursor-pointer group"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      value={cat._id}
+                                      {...register("categories")}
+                                      className="mt-0.5 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                    />
+                                    <span className="ml-2 text-sm text-gray-800 group-hover:text-blue-700 line-clamp-2">
+                                      {cat.name}
+                                    </span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                {errors.categories && (
+                  <p className="text-red-500 text-sm">{errors.categories.message}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Debug Section */}
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
               <h3 className="text-sm font-medium text-yellow-800 mb-2">Debug Info</h3>
               <div className="text-xs text-yellow-700 space-y-1">
@@ -1529,9 +1049,9 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 <p>Has Existing Images: {hasExistingImages ? 'Yes' : 'No'}</p>
                 <p>Image Files Count: {imageFiles.length}</p>
                 <p>Image Previews Count: {imagePreviews.length}</p>
-              </div>
-              <button
-                type="button" onClick={() => {
+              </div>              <button
+                type="button"
+                onClick={() => {
                   console.log("=== MANUAL DEBUG TRIGGER ===");
                   try {
                     const currentValues = getValues();
@@ -1546,12 +1066,9 @@ const ProductForm: React.FC<ProductFormProps> = ({
                       name: currentValues.name || "",
                       description: currentValues.description?.substring(0, 50) + "..." || "",
                       categoriesCount: Array.isArray(currentValues.categories) ? currentValues.categories.length : 0,
-                      tagsCount: Array.isArray(currentValues.tags) ? currentValues.tags.length : 0,
                       weightOptionsCount: Array.isArray(currentValues.weightOptions) ? currentValues.weightOptions.length : 0,
-                      ingredientsCount: Array.isArray(currentValues.ingredients) ? currentValues.ingredients.length : 0,
                       price: currentValues.price || 0,
-                      isAvailable: currentValues.isAvailable,
-                      stockQuantity: currentValues.stockQuantity || 0
+                      isAvailable: currentValues.isAvailable
                     };
                     console.log("Safe form values:", safeValues);
 
@@ -1564,92 +1081,100 @@ const ProductForm: React.FC<ProductFormProps> = ({
                     }
                   }
                 }}
-                className="mt-2 px-4 py-2 bg-yellow-600 text-white rounded text-xs"
-              >
+                className="mt-2 px-4 py-2 bg-yellow-600 text-white rounded text-xs"              >
                 Debug Form
               </button>
             </div>
-
-            {/* Submit Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6 border-t border-gray-200">
-              <button
-                type="button"
-                onClick={() => {
-                  reset();
-                  setImageFiles([]);
-                  setImagePreviews([]);
-                  setWeightOptions([
-                    { weight: "", price: 0, discountedPrice: 0 },
-                  ]);
-                  setIngredients([]);
-                  setAllergens([]);
-                  setTags([]);
-                  setNewIngredient("");
-                  setNewAllergen("");
-                  setNewTag("");
-                  if (fileInputRef.current) fileInputRef.current.value = "";
-                  if (onCancel) onCancel();
-                }}
-                className="px-8 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                onClick={async (e) => {
-                  console.log("=== SUBMIT BUTTON CLICKED ===");
-                  console.log("Form errors:", errors);
-                  console.log("Is valid:", isValid);
-                  console.log("Form data:", getValues());
-                  console.log("Is editing:", isEditing);
-                  console.log("Has existing images:", hasExistingImages);
-                  console.log("Image files count:", imageFiles.length);
-                  console.log("Image previews count:", imagePreviews.length);
-
-                  // Force validation
-                  const isFormValid = await trigger();
-                  console.log("Manual validation result:", isFormValid);
-                  console.log("Errors after validation:", errors);
-
-                  if (!isFormValid) {
-                    console.log("Form is invalid, preventing submission");
-                    e.preventDefault();
-                    return;
-                  }
-                }}
-                className="px-8 py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-lg hover:from-orange-600 hover:to-pink-600 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-              >
-                {isSubmitting ? (
-                  <>
-                    <svg
-                      className="animate-spin h-5 w-5 mr-2 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v8z"
-                      ></path>
-                    </svg>
-                    Saving...
-                  </>
-                ) : (
-                  <>{product ? "Update Product" : "Create Product"}</>
-                )}
-              </button>
-            </div>
           </form>
+        </div>
+
+        {/* Fixed Submit Buttons at Bottom */}
+        <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 rounded-b-xl flex flex-row gap-3 justify-start">
+          <button
+            type="button"
+            onClick={() => {
+              reset();
+              setImageFiles([]);
+              setImagePreviews([]);
+              setWeightOptions([
+                { weight: "", price: 0, discountedPrice: 0 },
+              ]);
+              if (fileInputRef.current) fileInputRef.current.value = "";
+              if (onCancel) onCancel();
+            }}
+            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+          >
+            Cancel
+          </button>            <button
+            type="button"
+            disabled={isSubmitting}
+            onClick={async () => {
+              console.log("=== SUBMIT BUTTON CLICKED ===");
+              console.log("Is editing:", isEditing);
+              console.log("Has existing images:", hasExistingImages);
+              console.log("Image files count:", imageFiles.length);
+              console.log("Image previews count:", imagePreviews.length);
+
+              try {
+                // Get current form data
+                const formData = getValues();
+                console.log("Current form data:", formData);
+
+                // Force validation first
+                const isFormValid = await trigger();
+                console.log("Manual validation result:", isFormValid);
+
+                if (errors && Object.keys(errors).length > 0) {
+                  console.log("Form errors:", errors);                  // Show detailed weight options errors
+                  if (errors.weightOptions && Array.isArray(errors.weightOptions)) {
+                    console.log("Weight options errors details:", errors.weightOptions);
+                    errors.weightOptions.forEach((error, index) => {
+                      if (error) {
+                        console.log(`Weight option ${index} errors:`, error);
+                      }
+                    });
+                  }
+                }
+
+                // Always attempt submission for now (to debug the issue)
+                console.log("Attempting submission...");
+                await onSubmit(formData);
+
+              } catch (error) {
+                console.error("Submit button error:", error);
+                showError("Error", "Failed to submit form");
+              }
+            }}
+            className="px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-md hover:from-orange-600 hover:to-pink-600 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+          >
+            {isSubmitting ? (
+              <>
+                <svg
+                  className="animate-spin h-4 w-4 mr-2 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8z"
+                  ></path>
+                </svg>
+                Saving...
+              </>
+            ) : (
+              <>{product ? "Update Product" : "Create Product"}</>
+            )}
+          </button>
         </div>
       </div>
     </div>

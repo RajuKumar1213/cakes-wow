@@ -33,6 +33,33 @@ const orderItemSchema = new mongoose.Schema({
   },
 });
 
+const orderAddOnSchema = new mongoose.Schema({
+  addOnId: {
+    type: String,
+    required: true,
+  },
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  price: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 1,
+    default: 1,
+  },
+  image: {
+    type: String,
+    default: "",
+  },
+});
+
 const customerInfoSchema = new mongoose.Schema({
   fullName: {
     type: String,
@@ -99,8 +126,7 @@ const customerInfoSchema = new mongoose.Schema({
 });
 
 const orderSchema = new mongoose.Schema(
-  {
-    orderId: {
+  {    orderId: {
       type: String,
       required: true,
       unique: true,
@@ -108,6 +134,7 @@ const orderSchema = new mongoose.Schema(
       index: true,
     },
     items: [orderItemSchema],
+    addons: [orderAddOnSchema],
     customerInfo: {
       type: customerInfoSchema,
       required: true,
@@ -241,7 +268,9 @@ orderSchema.index({ "customerInfo.area": 1 });
 
 // Virtual for order total items count
 orderSchema.virtual("totalItems").get(function () {
-  return this.items.reduce((total, item) => total + item.quantity, 0);
+  const itemsCount = this.items.reduce((total, item) => total + item.quantity, 0);
+  const addonsCount = this.addons.reduce((total, addon) => total + addon.quantity, 0);
+  return itemsCount + addonsCount;
 });
 
 // Virtual for order age in hours

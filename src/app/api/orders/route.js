@@ -126,14 +126,15 @@ export async function GET(request) {
     if (orderId) filter.orderId = orderId;
 
     // Calculate skip value for pagination
-    const skip = (page - 1) * limit;
-
-    // Get orders with pagination
+    const skip = (page - 1) * limit;    // Get orders with pagination
     const orders = await Order.find(filter)
       .sort({ orderDate: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
+
+    console.log('🔍 Orders API - Sample order addons:', orders[0]?.addons);
+    console.log('🔍 Orders API - Number of orders:', orders.length);
 
     // Get total count for pagination
     const totalOrders = await Order.countDocuments(filter);

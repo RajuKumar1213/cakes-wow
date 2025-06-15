@@ -76,10 +76,18 @@ export function validateImageUrls(urls) {
 export function createProductFilters(params) {
   const filters = { isAvailable: true };
 
-  // Category filter - Note: category should be ObjectId, not slug
-  // The API route should resolve category slug to ObjectId before calling this function
+  // Category filter - Enhanced with better validation
   if (params.category) {
-    filters.categories = params.category;
+    // Ensure we have a valid ObjectId
+    if (typeof params.category === 'string' && params.category.length === 24) {
+      filters.categories = params.category;
+    } else if (params.category && params.category._id) {
+      filters.categories = params.category._id;
+    } else if (params.category && typeof params.category === 'object') {
+      filters.categories = params.category;
+    } else {
+      console.warn('⚠️ Invalid category ObjectId provided:', params.category);
+    }
   }
   // Price range filter - handle both base price and weight option prices
   if (params.minPrice || params.maxPrice) {

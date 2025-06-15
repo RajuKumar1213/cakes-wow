@@ -36,7 +36,6 @@ interface Product {
   name: string;
   slug: string;
   description: string;
-  shortDescription: string;
   price: number;
   discountedPrice?: number;
   imageUrls: string[];
@@ -46,7 +45,7 @@ interface Product {
     slug: string;
     group: string;
     type: string;
-  }>; tags: string[];
+  }>;
   weightOptions: Array<{
     weight: string;
     price: number;
@@ -55,7 +54,6 @@ interface Product {
   isAvailable: boolean;
   isBestseller: boolean;
   isFeatured: boolean;
-  stockQuantity: number;
   preparationTime: string;
   rating: number;
   reviewCount: number;
@@ -106,7 +104,7 @@ export default function AdminProducts() {
     Category | undefined
   >(); const [loadingData, setLoadingData] = useState(true); const [deleteLoading, setDeleteLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
-  const [sortBy, setSortBy] = useState<'name' | 'price' | 'stock' | 'created' | 'group'>('created');
+  const [sortBy, setSortBy] = useState<'name' | 'price' | 'created' | 'group'>('created');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [loadData, setLoadData] = useState(false);
   const [addons, setAddons] = useState<AddOn[]>([]);
@@ -145,7 +143,7 @@ export default function AdminProducts() {
       setLoadingData(false);
     }
   };
-  
+
   const fetchAddOns = async () => {
     try {
       const res = await fetch("/api/addons");
@@ -178,18 +176,13 @@ export default function AdminProducts() {
     filtered.sort((a, b) => {
       let aValue, bValue;
 
-      switch (sortBy) {
-        case 'name':
+      switch (sortBy) {        case 'name':
           aValue = a.name.toLowerCase();
           bValue = b.name.toLowerCase();
           break;
         case 'price':
           aValue = a.price;
           bValue = b.price;
-          break;
-        case 'stock':
-          aValue = a.stockQuantity;
-          bValue = b.stockQuantity;
           break;
         case 'created':
           aValue = new Date(a.createdAt).getTime();
@@ -218,7 +211,7 @@ export default function AdminProducts() {
     }
     setFilteredAddons(filtered);
   }, [addons, searchTerm]);
-  const handleSort = (field: 'name' | 'price' | 'stock' | 'created' | 'group') => {
+  const handleSort = (field: 'name' | 'price' | 'created' | 'group') => {
     if (sortBy === field) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
@@ -353,19 +346,7 @@ export default function AdminProducts() {
                 <p className="text-sm font-medium text-gray-500">Featured</p>
                 <p className="text-2xl font-bold text-gray-900">
                   {products.filter((p) => p.isFeatured).length}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center">
-              <ImageIcon className="w-8 h-8 text-purple-600" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Low Stock</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {products.filter((p) => p.stockQuantity < 10).length}
-                </p>
-              </div>
+                </p>              </div>
             </div>
           </div>
         </div>
@@ -375,8 +356,8 @@ export default function AdminProducts() {
           <button
             onClick={() => setActiveTab("products")}
             className={`px-6 py-3 font-medium text-sm ${activeTab === "products"
-                ? "border-b-2 border-orange-500 text-orange-600"
-                : "text-gray-500 hover:text-gray-700"
+              ? "border-b-2 border-orange-500 text-orange-600"
+              : "text-gray-500 hover:text-gray-700"
               }`}
           >
             <Package className="w-4 h-4 inline mr-2" />
@@ -385,8 +366,8 @@ export default function AdminProducts() {
           <button
             onClick={() => setActiveTab("categories")}
             className={`px-6 py-3 font-medium text-sm ${activeTab === "categories"
-                ? "border-b-2 border-orange-500 text-orange-600"
-                : "text-gray-500 hover:text-gray-700"
+              ? "border-b-2 border-orange-500 text-orange-600"
+              : "text-gray-500 hover:text-gray-700"
               }`}
           >
             <CategoryIcon className="w-4 h-4 inline mr-2" />
@@ -395,8 +376,8 @@ export default function AdminProducts() {
           <button
             onClick={() => setActiveTab("addons")}
             className={`px-6 py-3 font-medium text-sm ${activeTab === "addons"
-                ? "border-b-2 border-orange-500 text-orange-600"
-                : "text-gray-500 hover:text-gray-700"
+              ? "border-b-2 border-orange-500 text-orange-600"
+              : "text-gray-500 hover:text-gray-700"
               }`}
           >
             <Tag className="w-4 h-4 inline mr-2" />
@@ -437,8 +418,8 @@ export default function AdminProducts() {
                 <button
                   onClick={() => setViewMode('table')}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${viewMode === 'table'
-                      ? 'bg-white text-orange-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-800'
+                    ? 'bg-white text-orange-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
                     }`}
                 >
                   <List className="w-4 h-4" />
@@ -447,8 +428,8 @@ export default function AdminProducts() {
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${viewMode === 'grid'
-                      ? 'bg-white text-orange-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-800'
+                    ? 'bg-white text-orange-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
                     }`}
                 >
                   <Grid3X3 className="w-4 h-4" />
@@ -491,73 +472,62 @@ export default function AdminProducts() {
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
-                  <tr>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                      onClick={() => handleSort('name')}
-                    >
-                      <div className="flex items-center gap-1">
-                        Product
-                        {sortBy === 'name' ? (
-                          sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
-                        ) : (
-                          <ArrowUpDown className="w-3 h-3 opacity-50" />
-                        )}
-                      </div>
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                      onClick={() => handleSort('price')}
-                    >
-                      <div className="flex items-center gap-1">
-                        Price
-                        {sortBy === 'price' ? (
-                          sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
-                        ) : (
-                          <ArrowUpDown className="w-3 h-3 opacity-50" />
-                        )}
-                      </div>
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                      onClick={() => handleSort('stock')}
-                    >
-                      <div className="flex items-center gap-1">
-                        Stock
-                        {sortBy === 'stock' ? (
-                          sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
-                        ) : (
-                          <ArrowUpDown className="w-3 h-3 opacity-50" />
-                        )}
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Categories
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Rating
-                    </th>
-                    <th
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                      onClick={() => handleSort('created')}
-                    >
-                      <div className="flex items-center gap-1">
-                        Created
-                        {sortBy === 'created' ? (
-                          sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
-                        ) : (
-                          <ArrowUpDown className="w-3 h-3 opacity-50" />
-                        )}
-                      </div>
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
+                    <tr>
+                      <th
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleSort('name')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Product
+                          {sortBy === 'name' ? (
+                            sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 opacity-50" />
+                          )}
+                        </div>
+                      </th>
+                      <th
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleSort('price')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Price
+                          {sortBy === 'price' ? (
+                            sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 opacity-50" />
+                          )}                        </div>
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Availability
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Categories
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Rating
+                      </th>
+                      <th
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleSort('created')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Created
+                          {sortBy === 'created' ? (
+                            sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                          ) : (
+                            <ArrowUpDown className="w-3 h-3 opacity-50" />
+                          )}
+                        </div>
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredProducts.map((product) => (
                       <tr key={product._id} className="hover:bg-gray-50">
@@ -581,10 +551,9 @@ export default function AdminProducts() {
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900 max-w-xs">
                                 {product.name}
-                              </div>
-                              <div className="text-sm text-gray-500 max-w-xs line-clamp-2">
-                                {product.shortDescription}
-                              </div>                                <div className="flex items-center gap-2 mt-1">
+                              </div>                              <div className="text-sm text-gray-500 max-w-xs line-clamp-2">
+                                {product.description.substring(0, 60)}...
+                              </div><div className="flex items-center gap-2 mt-1">
                                 {product.isFeatured && (
                                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
                                     Featured
@@ -612,19 +581,18 @@ export default function AdminProducts() {
                             <div className="text-xs text-blue-600">
                               {product.weightOptions.length} variants
                             </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className={`text-sm font-medium ${product.stockQuantity < 10
-                              ? 'text-red-600'
-                              : product.stockQuantity < 50
-                                ? 'text-yellow-600'
-                                : 'text-green-600'
-                            }`}>
-                            {product.stockQuantity}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {product.isAvailable ? 'Available' : 'Out of Stock'}
+                          )}                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900">
+                            {product.isAvailable ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                Available
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                Out of Stock
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -646,8 +614,8 @@ export default function AdminProducts() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${product.isAvailable
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
                             }`}>
                             {product.isAvailable ? 'Active' : 'Inactive'}
                           </span>
@@ -741,9 +709,8 @@ export default function AdminProducts() {
                   <div className="p-4">
                     <h2 className="font-semibold text-gray-900 mb-2 line-clamp-2">
                       {product.name}
-                    </h2>
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                      {product.shortDescription}
+                    </h2>                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                      {product.description.substring(0, 80)}...
                     </p>
 
                     <div className="flex items-center justify-between mb-3">
@@ -755,11 +722,9 @@ export default function AdminProducts() {
                           <span className="text-sm text-gray-500 line-through">
                             ₹{product.discountedPrice}
                           </span>
-                        )}
-                      </div>
-                      <span className={`text-sm font-medium ${product.stockQuantity < 10 ? 'text-red-600' : 'text-green-600'
-                        }`}>
-                        Stock: {product.stockQuantity}
+                        )}                      </div>
+                      <span className={`text-sm font-medium ${product.isAvailable ? 'text-green-600' : 'text-red-600'}`}>
+                        {product.isAvailable ? 'Available' : 'Out of Stock'}
                       </span>
                     </div>
 
@@ -781,8 +746,8 @@ export default function AdminProducts() {
 
                     <div className="flex items-center justify-between">                        <div className="flex items-center gap-2">
                       <span className={`text-xs px-2 py-1 rounded-full ${product.isAvailable
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
                         }`}>
                         {product.isAvailable ? 'Active' : 'Inactive'}
                       </span>
@@ -861,8 +826,8 @@ export default function AdminProducts() {
                   <button
                     onClick={() => setViewMode('table')}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${viewMode === 'table'
-                        ? 'bg-white text-orange-600 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-800'
+                      ? 'bg-white text-orange-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
                       }`}
                   >
                     <List className="w-4 h-4" />
@@ -871,8 +836,8 @@ export default function AdminProducts() {
                   <button
                     onClick={() => setViewMode('grid')}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${viewMode === 'grid'
-                        ? 'bg-white text-orange-600 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-800'
+                      ? 'bg-white text-orange-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
                       }`}
                   >
                     <Grid3X3 className="w-4 h-4" />
@@ -1053,8 +1018,8 @@ export default function AdminProducts() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${category.isActive
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
                               }`}>
                               {category.isActive ? 'Active' : 'Inactive'}
                             </span>
@@ -1130,8 +1095,8 @@ export default function AdminProducts() {
                       <div className="absolute top-2 right-2">
                         <span
                           className={`text-xs px-2 py-1 rounded-full ${category.isActive
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
                             }`}
                         >
                           {category.isActive ? "Active" : "Inactive"}

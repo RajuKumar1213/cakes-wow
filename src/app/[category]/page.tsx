@@ -57,18 +57,35 @@ async function fetchCategory(slug: string): Promise<Category | null> {
 async function fetchProducts(categorySlug: string): Promise<{ products: Product[], pagination: any }> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-    const response = await fetch(
-      `${baseUrl}/api/products?category=${categorySlug}&sortBy=rating&sortOrder=desc&limit=24&page=1`,
-      {
-        next: { revalidate: 1800 }, // Revalidate every 30 minutes
-      }
-    );
+    const apiUrl = `${baseUrl}/api/products?category=${categorySlug}&sortBy=rating&sortOrder=desc&limit=24&page=1`;
+    
+    console.log(`🔍 [${process.env.NODE_ENV}] Fetching products from:`, apiUrl);
+    
+    const response = await fetch(apiUrl, {
+      next: { revalidate: 1800 }, // Revalidate every 30 minutes
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     
     if (!response.ok) {
+      console.error(`❌ Products API failed:`, response.status, response.statusText);
       return { products: [], pagination: { page: 1, limit: 24, total: 0, pages: 0 } };
     }
     
     const data = await response.json();
+    console.log(`📦 Products API response:`, {
+      success: data.success,
+      productCount: data.data?.products?.length || 0,
+      categorySlug,
+      hasDebug: !!data.data?.debug
+    });
+    
+    // Log debug info if present (helpful for Netlify debugging)
+    if (data.data?.debug) {
+      console.log('🐛 API Debug Info:', data.data.debug);
+    }
+    
     return data.success ? {
       products: data.data.products || [],
       pagination: data.data.pagination || { page: 1, limit: 24, total: 0, pages: 0 }
@@ -158,7 +175,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
           <div className="max-w-7xl mx-auto px-4 py-3">
             <Breadcrumb items={breadcrumbItems} />
           </div>
-        </div>        {/* Client-side interactive component */}
+        </div>        
+        {/* Client-side interactive component */}
         <CategoryPageClient
           initialCategory={category}
           initialProducts={productsData.products}

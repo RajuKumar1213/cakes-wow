@@ -38,6 +38,14 @@ interface OrderItem {
   imageUrl: string;
 }
 
+interface OrderAddOn {
+  addOnId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+}
+
 interface CustomerInfo {
   fullName: string;
   mobileNumber: string;
@@ -57,6 +65,7 @@ interface Order {
   _id: string;
   orderId: string;
   items: OrderItem[];
+  addons: OrderAddOn[];
   customerInfo: CustomerInfo;
   totalAmount: number;
   subtotal: number;
@@ -192,10 +201,14 @@ const OrderCard = ({ order, onStatusChange, onViewDetails, isUpdating }: {
           <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
           <span>{formatDate(order.estimatedDeliveryDate)} at {order.timeSlot}</span>
         </div>
-        
-        <div className="flex items-center gap-2 text-gray-600">
+          <div className="flex items-center gap-2 text-gray-600">
           <Package className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-          <span>{order.items.length} item{order.items.length > 1 ? 's' : ''}</span>
+          <span>
+            {order.items.length} item{order.items.length > 1 ? 's' : ''}
+            {order.addons && order.addons.length > 0 && (
+              <span> + {order.addons.length} add-on{order.addons.length > 1 ? 's' : ''}</span>
+            )}
+          </span>
         </div>
 
         {order.paymentMethod && (
@@ -295,6 +308,18 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }: {
         </div>
 
         <div className="p-4 sm:p-6">
+          {/* Debug: Show complete order data in development */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mb-6 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <h4 className="font-mono text-xs text-yellow-800 mb-2">Debug: Order Structure</h4>
+              <div className="text-xs text-yellow-700">
+                <p>Order ID: {order.orderId}</p>
+                <p>Has addons field: {order.addons ? 'Yes' : 'No'}</p>
+                <p>Addons count: {order.addons?.length || 0}</p>
+                <p>Addons type: {typeof order.addons}</p>
+              </div>
+            </div>
+          )}
           {/* Order Status and Quick Actions */}
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -442,9 +467,53 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }: {
                     <p className="font-medium text-gray-900 text-sm sm:text-base">{formatPrice(item.price * item.quantity)}</p>
                   </div>
                 </div>
-              ))}
+              ))}            </div>
+          </div>          {/* Add-ons */}
+          {order.addons && order.addons.length > 0 && (
+            <div className="mb-6">
+              <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                <Gift className="w-4 h-4" />
+                Add-ons ({order.addons.length})
+              </h3>
+              <div className="space-y-3">
+                {order.addons.map((addon, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg bg-pink-50">
+                    {addon.image ? (
+                      <img
+                        src={addon.image}
+                        alt={addon.name}
+                        className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 bg-pink-200 rounded-lg flex items-center justify-center">
+                        <Gift className="w-6 h-6 text-pink-400" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">{addon.name}</h4>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                        <span>Qty: {addon.quantity}</span>
+                        <span className="font-medium">₹{addon.price} each</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-gray-900 text-sm sm:text-base">{formatPrice(addon.price * addon.quantity)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Debug: Show addon data if exists */}
+          {process.env.NODE_ENV === 'development' && order.addons && (
+            <div className="mb-6 p-3 bg-gray-100 rounded-lg">
+              <h4 className="font-mono text-xs text-gray-600 mb-2">Debug: Addon Data</h4>
+              <pre className="text-xs text-gray-700 overflow-auto">
+                {JSON.stringify(order.addons, null, 2)}
+              </pre>
+            </div>
+          )}
 
           {/* Order Summary */}
           <div className="border-t pt-6">
@@ -524,8 +593,9 @@ export default function AdminOrders() {
       
       const response = await fetch('/api/orders?limit=50&page=1');
       const data = await response.json();
-      
-      if (data.success) {
+        if (data.success) {
+        console.log('📦 Fetched orders data:', data.orders);
+        console.log('📦 First order addons:', data.orders[0]?.addons);
         setOrders(data.orders);
         setFilteredOrders(data.orders);
         
