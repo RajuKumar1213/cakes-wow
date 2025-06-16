@@ -5,7 +5,15 @@ import Category from '@/models/Category.models';
 
 export async function GET(request) {
   try {
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
     
     const { searchParams } = new URL(request.url);
     const categorySlug = searchParams.get('category') || 'gourment-cakes';

@@ -35,7 +35,15 @@ export async function POST(request) {
         { error: 'All required fields must be provided' },
         { status: 400 }
       );
-    }    await dbConnect();
+    }    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
 
     // Find user and add address
     const user = await User.findById(decoded.userId);

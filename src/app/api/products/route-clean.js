@@ -50,7 +50,15 @@ export async function GET(request) {
     const page = searchParams.get("page") || 1;
     const limit = searchParams.get("limit") || 12;
 
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
 
     // Handle category filter by slug first (before building filters)
     let categoryObjectId = null;
@@ -125,7 +133,15 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
 
     const formData = await request.formData();
 
@@ -319,7 +335,15 @@ export async function POST(request) {
 
 export async function PATCH(request) {
   try {
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
 
     const formData = await request.formData();
 
@@ -550,7 +574,15 @@ export async function DELETE(request) {
       );
     }
 
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
 
     const deletedProduct = await Product.findByIdAndDelete(id);
 

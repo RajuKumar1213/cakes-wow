@@ -5,7 +5,15 @@ import bcrypt from 'bcryptjs';
 
 export async function POST(request) {
   try {
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
     
     // Check if admin already exists
     const adminExists = await Admin.adminExists();
@@ -81,7 +89,15 @@ export async function POST(request) {
 // GET method to check if admin exists
 export async function GET() {
   try {
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
     
     const adminExists = await Admin.adminExists();
     const admin = adminExists ? await Admin.findOne({}).select('email createdAt') : null;

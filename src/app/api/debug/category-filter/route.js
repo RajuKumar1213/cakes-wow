@@ -8,7 +8,15 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const categorySlug = searchParams.get('category') || 'gourment-cakes';
     
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
     
     console.log('🔍 Debug - Environment:', {
       NODE_ENV: process.env.NODE_ENV,

@@ -38,7 +38,15 @@ export async function PUT(request, { params }) {
       );
     }
 
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
 
     // Find user and update address
     const user = await User.findById(decoded.userId);
@@ -120,7 +128,15 @@ export async function DELETE(request, { params }) {
 
     const { addressId } = params;
 
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
 
     // Find user and delete address
     const user = await User.findById(decoded.userId);

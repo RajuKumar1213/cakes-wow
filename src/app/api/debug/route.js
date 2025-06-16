@@ -5,7 +5,15 @@ import Category from '@/models/Category.models';
 
 export async function GET() {
   try {
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
     
     const productCount = await Product.countDocuments();
     const categoryCount = await Category.countDocuments();

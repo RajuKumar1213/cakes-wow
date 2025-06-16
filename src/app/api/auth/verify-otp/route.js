@@ -28,7 +28,15 @@ export async function POST(request) {
       );
     }
 
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
 
     // Use the robust OTP verification function
     const verificationResult = await verifyOTPRobust(phoneNumber, otp, Otp);

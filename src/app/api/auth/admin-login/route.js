@@ -6,7 +6,15 @@ import dbConnect from '@/lib/mongodb';
 
 export async function POST(request) {
   try {
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
     
     const { email, password } = await request.json();
 

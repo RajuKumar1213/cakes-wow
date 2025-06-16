@@ -41,7 +41,15 @@ export async function POST(request) {
         // Continue without user ID for guest orders
       }
     }    // Connect to database
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
 
     // Generate unique order ID
     const orderId = generateOrderId();

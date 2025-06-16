@@ -5,7 +5,15 @@ import Product from "@/models/Product.models";
 
 export async function GET(request) {
   try {
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
 
     // Get all categories
     const categories = await Category.find({}).lean();

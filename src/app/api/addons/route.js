@@ -8,9 +8,17 @@ import { existsSync } from 'fs';
 import mongoose from 'mongoose';
 
 // GET - Fetch all add-ons or single add-on by ID
-export async function GET(request) {
-  try {
-    await dbConnect();
+export async function GET(request) {  try {
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped",
+        data: []
+      });
+    }
     
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -68,7 +76,23 @@ export async function GET(request) {
 // POST - Create new add-on with image upload
 export async function POST(request) {
   try {
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
     
     const formData = await request.formData();
     const name = formData.get('name');
@@ -194,7 +218,23 @@ export async function POST(request) {
 // PUT - Update add-on by ID with optional image upload
 export async function PATCH(request) {
   try {
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
     
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -385,7 +425,23 @@ export async function PATCH(request) {
 // DELETE - Delete add-on by ID with Cloudinary cleanup
 export async function DELETE(request) {
   try {
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
     
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

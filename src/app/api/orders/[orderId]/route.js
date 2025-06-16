@@ -8,7 +8,15 @@ import Order from '@/models/Order.models';
  */
 export async function PATCH(request, { params }) {
   try {
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
 
     const { orderId } = params;
     const updateData = await request.json();
@@ -122,7 +130,15 @@ export async function PATCH(request, { params }) {
  */
 export async function GET(request, { params }) {
   try {
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
 
     const { orderId } = params;
     

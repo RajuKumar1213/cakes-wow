@@ -16,7 +16,15 @@ export async function GET(request, { params }) {
   try {
     const { slug } = await params;
 
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
     
     const queryStartTime = Date.now();
     
@@ -85,7 +93,15 @@ export async function PUT(request, { params }) {
       nutritionalInfo,
     } = body;
 
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
 
     // Find existing product by slug or ID
     const existingProduct = await Product.findOne({ 
@@ -203,7 +219,15 @@ export async function DELETE(request, { params }) {
   try {
     const { slug } = await params;
 
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
 
     // Find and delete product by slug or ID
     const deletedProduct = await Product.findOneAndDelete({ 

@@ -44,7 +44,15 @@ export async function POST(request) {
       );
     }
 
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
 
     // Generate OTP
     const otp = generateOTP();

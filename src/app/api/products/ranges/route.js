@@ -8,7 +8,15 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
 
-    await dbConnect();
+    const conn = await dbConnect();
+    
+    // Skip during build time
+    if (conn.isConnectSkipped) {
+      return NextResponse.json({
+        success: true,
+        message: "Build phase - operation skipped"
+      });
+    }
 
     // Build base filter for available products
     const filters = { isAvailable: true };
