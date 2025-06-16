@@ -14,7 +14,6 @@ import {
   TrendingUp,
   DollarSign,
   Calendar,
-  AlertCircle,
   FolderOpen,
   Plus,
 } from "lucide-react";
@@ -23,6 +22,12 @@ interface DashboardStats {
   totalProducts: number;
   totalCategories: number;
   totalUsers: number;
+  totalOrders: number;
+  totalRevenue: number;
+  ordersToday: number;
+  averageOrderValue: number;
+  revenueChange: number;
+  ordersChange: number;
   recentProducts: Array<{
     _id: string;
     name: string;
@@ -34,6 +39,21 @@ interface DashboardStats {
     name: string;
     group: string;
     createdAt: string;
+  }>;
+  recentOrders: Array<{
+    _id: string;
+    customerInfo: {
+      name?: string;
+      phone?: string;
+    };
+    totalAmount: number;
+    status: string;
+    createdAt: string;
+  }>;
+  topProducts: Array<{
+    name: string;
+    sales: number;
+    revenue: number;
   }>;
 }
 
@@ -120,17 +140,78 @@ export default function AdminDashboard() {
   //     router.push("/admin-login");
   //   }
   // }, [ router]);
-
   useEffect(() => {
     const fetchDashboardStats = async () => {
       try {
         setStatsLoading(true);
 
-        // Fetch products count and recent products
-        const [productsResponse, categoriesResponse] = await Promise.all([
+        // Fetch all data in parallel
+        const [productsResponse, categoriesResponse, ordersResponse] = await Promise.all([
           axios.get("/api/products?limit=5"),
           axios.get("/api/categories?format=all"),
-        ]);
+          axios.get("/api/orders"), // Get all orders for analytics
+        ]);        // Process orders data for analytics
+        const orders = ordersResponse.data.orders || [];
+        const totalRevenue = orders.reduce((sum: number, order: any) => sum + (order.totalAmount || 0), 0);
+        const totalOrders = orders.length;
+        const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+        // Calculate orders today
+        const today = new Date().toISOString().split('T')[0];
+        const ordersToday = orders.filter((order: any) => {
+          const orderDate = new Date(order.createdAt || 0).toISOString().split('T')[0];
+          return orderDate === today;
+        }).length;
+
+        // Calculate recent orders (last 5)
+        const recentOrders = orders
+          .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+          .slice(0, 5);
+
+        // Calculate top products based on order items
+        const productSales: { [key: string]: { name: string; sales: number; revenue: number } } = {};
+        
+        orders.forEach((order: any) => {
+          if (order.items && Array.isArray(order.items)) {
+            order.items.forEach((item: any) => {
+              const productName = item.name || 'Unknown Product';
+              if (!productSales[productName]) {
+                productSales[productName] = { name: productName, sales: 0, revenue: 0 };
+              }
+              productSales[productName].sales += item.quantity || 1;
+              productSales[productName].revenue += (item.price || 0) * (item.quantity || 1);
+            });
+          }
+        });
+        
+        const topProducts = Object.values(productSales)
+          .sort((a, b) => b.sales - a.sales)
+          .slice(0, 5);
+
+        // Calculate changes (last 7 days vs previous 7 days)
+        const now = new Date();
+        const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const previous7Days = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+        
+        const recentOrders7Days = orders.filter((order: any) => {
+          const orderDate = new Date(order.createdAt || 0);
+          return orderDate >= last7Days;
+        });
+        
+        const previousOrders7Days = orders.filter((order: any) => {
+          const orderDate = new Date(order.createdAt || 0);
+          return orderDate >= previous7Days && orderDate < last7Days;
+        });
+        
+        const recentRevenue = recentOrders7Days.reduce((sum: number, order: any) => sum + (order.totalAmount || 0), 0);
+        const previousRevenue = previousOrders7Days.reduce((sum: number, order: any) => sum + (order.totalAmount || 0), 0);
+        
+        const revenueChange = previousRevenue > 0 ? ((recentRevenue - previousRevenue) / previousRevenue) * 100 : 0;
+        const ordersChange = previousOrders7Days.length > 0 ? ((recentOrders7Days.length - previousOrders7Days.length) / previousOrders7Days.length) * 100 : 0;        // Get unique customers count
+        const uniqueCustomers = new Set(
+          orders.map((order: any) => order.customerInfo?.mobileNumber || order.customerInfo?.fullName)
+            .filter((contact: any) => contact && contact.trim() !== '')
+        ).size;
 
         const stats: DashboardStats = {
           totalProducts:
@@ -140,12 +221,20 @@ export default function AdminDashboard() {
           totalCategories: categoriesResponse.data.success
             ? categoriesResponse.data.data.length
             : 0,
-          totalUsers: 0, // TODO: Add users API when authentication system is complete
+          totalUsers: uniqueCustomers,
+          totalOrders,
+          totalRevenue,
+          ordersToday,
+          averageOrderValue,
+          revenueChange: Math.round(revenueChange * 100) / 100,
+          ordersChange: Math.round(ordersChange * 100) / 100,
           recentProducts:
             productsResponse.data.data?.products?.slice(0, 5) || [],
           recentCategories: categoriesResponse.data.success
             ? categoriesResponse.data.data.slice(0, 5)
             : [],
+          recentOrders,
+          topProducts: topProducts.length > 0 ? topProducts : [],
         };
 
         setDashboardStats(stats);
@@ -156,17 +245,23 @@ export default function AdminDashboard() {
           totalProducts: 0,
           totalCategories: 0,
           totalUsers: 0,
+          totalOrders: 0,
+          totalRevenue: 0,
+          ordersToday: 0,
+          averageOrderValue: 0,
+          revenueChange: 0,
+          ordersChange: 0,
           recentProducts: [],
           recentCategories: [],
+          recentOrders: [],
+          topProducts: [],
         });
       } finally {
         setStatsLoading(false);
       }
     };
 
-
-      fetchDashboardStats();
-  
+    fetchDashboardStats();
   }, []);
 
   if (loading) {
@@ -233,46 +328,140 @@ export default function AdminDashboard() {
             ))
           ) : (
             <>
-              {" "}
               <StatCard
-                title="Total Products"
-                value={dashboardStats?.totalProducts.toString() || "0"}
+                title="Total Revenue"
+                value={`₹${dashboardStats?.totalRevenue?.toLocaleString('en-IN') || '0'}`}
                 change={
-                  dashboardStats?.recentProducts.length
-                    ? `${dashboardStats.recentProducts.length} added recently`
-                    : "No recent products"
+                  dashboardStats?.revenueChange 
+                    ? `${dashboardStats.revenueChange > 0 ? '+' : ''}${dashboardStats.revenueChange}% vs last week`
+                    : "No data for comparison"
                 }
-                icon={Package}
-                changeType="neutral"
+                icon={DollarSign}
+                changeType={
+                  (dashboardStats?.revenueChange || 0) > 0 ? 'positive' : 
+                  (dashboardStats?.revenueChange || 0) < 0 ? 'negative' : 'neutral'
+                }
               />
               <StatCard
-                title="Total Categories"
-                value={dashboardStats?.totalCategories.toString() || "0"}
+                title="Total Orders"
+                value={dashboardStats?.totalOrders?.toString() || "0"}
                 change={
-                  dashboardStats?.recentCategories.length
-                    ? `${dashboardStats.recentCategories.length} categories active`
-                    : "No categories yet"
+                  dashboardStats?.ordersChange 
+                    ? `${dashboardStats.ordersChange > 0 ? '+' : ''}${dashboardStats.ordersChange}% vs last week`
+                    : "No data for comparison"
                 }
-                icon={FolderOpen}
-                changeType="neutral"
+                icon={ShoppingCart}
+                changeType={
+                  (dashboardStats?.ordersChange || 0) > 0 ? 'positive' : 
+                  (dashboardStats?.ordersChange || 0) < 0 ? 'negative' : 'neutral'
+                }
               />
               <StatCard
                 title="Orders Today"
-                value="0"
-                change="Order system pending"
-                icon={ShoppingCart}
+                value={dashboardStats?.ordersToday?.toString() || "0"}
+                change={`Avg: ₹${dashboardStats?.averageOrderValue?.toLocaleString('en-IN', { maximumFractionDigits: 0 }) || '0'} per order`}
+                icon={Calendar}
                 changeType="neutral"
               />
               <StatCard
-                title="Total Revenue"
-                value="₹0"
-                change="Analytics coming soon"
-                icon={DollarSign}
+                title="Total Customers"
+                value={dashboardStats?.totalUsers?.toString() || "0"}
+                change={
+                  dashboardStats?.recentOrders?.length
+                    ? `${dashboardStats.recentOrders.length} recent orders`
+                    : "No recent orders"
+                }
+                icon={Users}
                 changeType="neutral"
               />
             </>
           )}
         </div>{" "}
+        {/* Analytics Overview */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Top Products */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Package className="w-5 h-5 text-orange-600" />
+              Top Selling Products
+            </h3>
+            {statsLoading ? (
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {dashboardStats?.topProducts?.length ? (
+                  dashboardStats.topProducts.map((product, index) => (
+                    <div key={index} className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium text-gray-900">{product.name}</p>
+                        <p className="text-sm text-gray-600">{product.sales} sales</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-gray-900">₹{product.revenue.toLocaleString('en-IN')}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center py-4">No sales data available</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Recent Orders */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5 text-green-600" />
+              Recent Orders
+            </h3>
+            {statsLoading ? (
+              <div className="space-y-3">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {dashboardStats?.recentOrders?.length ? (
+                  dashboardStats.recentOrders.map((order) => (
+                    <div key={order._id} className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {order.customerInfo?.name || order.customerInfo?.phone || 'Anonymous'}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {new Date(order.createdAt).toLocaleDateString('en-IN')}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-gray-900">₹{order.totalAmount.toLocaleString('en-IN')}</p>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          order.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                          order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {order.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center py-4">No recent orders</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
         {/* Quick Actions */}
         <div className="mb-8">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -303,15 +492,7 @@ export default function AdminDashboard() {
               title="User Management"
               description="Manage customer accounts and permissions"
               icon={Users}
-              onClick={() => router.push("/admin/users")}
-            />
-            <QuickAction
-              title="Analytics"
-              description="View detailed business analytics and reports"
-              icon={BarChart3}
-              onClick={() => router.push("/admin/analytics")}
-              color="blue"
-            />
+              onClick={() => router.push("/admin/users")}            />
           </div>
         </div>{" "}
         {/* Recent Activity */}

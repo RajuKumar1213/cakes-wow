@@ -5,8 +5,6 @@ export interface ICategory extends Document {
   slug: string;
   group: string;
   type: string;
-  description?: string;
-  imageUrl?: string;
   isActive: boolean;
   sortOrder: number;
   createdAt: Date;
@@ -32,20 +30,11 @@ const categorySchema = new Schema<ICategory>(
       required: true,
       trim: true,
       // Removed enum restriction - now accepts any string
-    },
-    type: {
+    },    type: {
       type: String,
       required: true,
       trim: true,
       // Removed enum restriction - now accepts any string
-    },
-    description: {
-      type: String,
-      default: "",
-    },
-    imageUrl: {
-      type: String,
-      default: "",
     },
     isActive: {
       type: Boolean,

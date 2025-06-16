@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Category from "@/models/Category.models";
-import { uploadOnCloudinary } from "@/helpers/uploadOnCloudinary";
-import fs from 'fs';
-import path from 'path';
 
 // TypeScript interfaces
 interface CategoryDocument {
@@ -12,8 +9,6 @@ interface CategoryDocument {
   slug: string;
   group: string;
   type: string;
-  description?: string;
-  imageUrl?: string;
   isActive: boolean;
   sortOrder: number;
   createdAt: Date;
@@ -26,8 +21,6 @@ interface GroupedCategories {
     name: string;
     slug: string;
     type: string;
-    description?: string;
-    imageUrl?: string;
   }[];
 }
 
@@ -71,14 +64,11 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
       const group = category.group;
       if (!acc[group]) {
         acc[group] = [];
-      }
-      acc[group].push({
+      }      acc[group].push({
         _id: category._id.toString(),
         name: category.name,
         slug: category.slug,
         type: category.type,
-        description: category.description,
-        imageUrl: category.imageUrl,
       });
       return acc;
     }, {} as GroupedCategories);
@@ -103,8 +93,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const name = formData.get('name') as string;
     const group = formData.get('group') as string;
     const type = formData.get('type') as string;
-    const description = (formData.get('description') as string) || '';
-    const imageFile = formData.get('imageUrl') as File | null; // This will be the file
 
     // Validate input
     if (!group || !type) {
@@ -112,71 +100,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         { success: false, error: "Group and type are required" },
         { status: 400 }
       );
-    }
-
-    let imageUrl = '';
-
-    // Handle image upload if provided
-    if (imageFile && imageFile.size > 0) {
-      try {
-        // Validate file type
-        if (!imageFile.type.startsWith('image/')) {
-          return NextResponse.json(
-            { success: false, error: "Only image files are allowed" },
-            { status: 400 }
-          );
-        }
-
-        // Validate file size (5MB limit)
-        if (imageFile.size > 5 * 1024 * 1024) {
-          return NextResponse.json(
-            { success: false, error: "File size must be less than 5MB" },
-            { status: 400 }
-          );
-        }
-
-        // Convert file to buffer and save temporarily
-        const bytes = await imageFile.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        
-        // Create temp file path
-        const tempDir = './public/temp';
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(imageFile.name);
-        const baseName = path.basename(imageFile.name, ext);
-        const fileName = `${baseName}-${uniqueSuffix}${ext}`;
-        const tempFilePath = path.join(tempDir, fileName);
-        
-        // Ensure temp directory exists
-        if (!fs.existsSync(tempDir)) {
-          fs.mkdirSync(tempDir, { recursive: true });
-        }
-        
-        // Write file to temp location
-        fs.writeFileSync(tempFilePath, buffer);
-        
-        // Upload to cloudinary
-        const cloudinaryResponse = await uploadOnCloudinary(tempFilePath);
-        
-        if (cloudinaryResponse && cloudinaryResponse.secure_url) {
-          imageUrl = cloudinaryResponse.secure_url;
-        } else {
-          // Clean up temp file if cloudinary upload failed
-          if (fs.existsSync(tempFilePath)) {
-            fs.unlinkSync(tempFilePath);
-          }
-          return NextResponse.json(
-            { success: false, error: "Failed to upload image to cloud storage" },
-            { status: 500 }
-          );
-        }
-      } catch (uploadError) {
-        console.error('Image upload error:', uploadError);
-        return NextResponse.json(
-          { success: false, error: "Failed to process image upload" },
-          { status: 500 }
-        );
-      }
     }
 
     // Generate slug from name
@@ -200,8 +123,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       slug,
       group,
       type,
-      description,
-      imageUrl,
     });
 
     await category.save();
@@ -234,15 +155,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
 export async function PATCH(request: NextRequest): Promise<NextResponse<ApiResponse<CategoryDocument>>> {
   try {
-    await dbConnect();
-
-    const formData = await request.formData();
+    await dbConnect();    const formData = await request.formData();
     const id = formData.get('id') as string;
     const name = formData.get('name') as string;
     const group = formData.get('group') as string;
     const type = formData.get('type') as string;
-    const description = (formData.get('description') as string) || '';
-    const imageFile = formData.get('imageUrl') as File | null;
 
     // Validate required fields
     if (!id) {
@@ -264,73 +181,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
     if (!existingCategory) {
       return NextResponse.json(
         { success: false, error: "Category not found" },
-        { status: 404 }
-      );
-    }
-
-    let imageUrl = existingCategory.imageUrl || '';
-
-    // Handle image upload if a new file is provided
-    if (imageFile && imageFile.size > 0) {
-      try {
-        // Validate file type
-        if (!imageFile.type.startsWith('image/')) {
-          return NextResponse.json(
-            { success: false, error: "Only image files are allowed" },
-            { status: 400 }
-          );
-        }
-
-        // Validate file size (5MB limit)
-        if (imageFile.size > 5 * 1024 * 1024) {
-          return NextResponse.json(
-            { success: false, error: "File size must be less than 5MB" },
-            { status: 400 }
-          );
-        }
-
-        // Convert file to buffer and save temporarily
-        const bytes = await imageFile.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        
-        // Create temp file path
-        const tempDir = './public/temp';
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(imageFile.name);
-        const baseName = path.basename(imageFile.name, ext);
-        const fileName = `${baseName}-${uniqueSuffix}${ext}`;
-        const tempFilePath = path.join(tempDir, fileName);
-        
-        // Ensure temp directory exists
-        if (!fs.existsSync(tempDir)) {
-          fs.mkdirSync(tempDir, { recursive: true });
-        }
-        
-        // Write file to temp location
-        fs.writeFileSync(tempFilePath, buffer);
-        
-        // Upload to cloudinary
-        const cloudinaryResponse = await uploadOnCloudinary(tempFilePath);
-        
-        if (cloudinaryResponse && cloudinaryResponse.secure_url) {
-          imageUrl = cloudinaryResponse.secure_url;
-        } else {
-          // Clean up temp file if cloudinary upload failed
-          if (fs.existsSync(tempFilePath)) {
-            fs.unlinkSync(tempFilePath);
-          }
-          return NextResponse.json(
-            { success: false, error: "Failed to upload image to cloud storage" },
-            { status: 500 }
-          );
-        }
-      } catch (uploadError) {
-        console.error('Image upload error:', uploadError);
-        return NextResponse.json(
-          { success: false, error: "Failed to process image upload" },
-          { status: 500 }
-        );
-      }
+        { status: 404 }      );
     }
 
     // Generate new slug if name changed
@@ -350,9 +201,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
         slug = `${baseSlug}-${counter}`;
         counter++;
       }
-    }
-
-    // Update category
+    }    // Update category
     const updatedCategory = await Category.findByIdAndUpdate(
       id,
       {
@@ -360,8 +209,6 @@ export async function PATCH(request: NextRequest): Promise<NextResponse<ApiRespo
         slug,
         group,
         type,
-        description,
-        imageUrl,
         updatedAt: new Date(),
       },
       { new: true, runValidators: true }

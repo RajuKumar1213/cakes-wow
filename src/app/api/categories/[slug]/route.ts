@@ -35,8 +35,6 @@ export async function GET(
         _id: String(category._id),
         name: category.name,
         slug: category.slug,
-        description: category.description || "",
-        imageUrl: category.imageUrl || "",
         isActive: category.isActive,
       }
     });

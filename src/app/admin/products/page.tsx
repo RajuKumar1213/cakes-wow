@@ -10,11 +10,7 @@ import {
   Search,
   Edit,
   Trash2,
-  ArrowLeft,
   Package,
-  Save,
-  X,
-  Upload,
   Image as ImageIcon,
   Tag,
   Folder as CategoryIcon,
@@ -122,7 +118,7 @@ export default function AdminProducts() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
-  const [itemsPerPage] = useState(10); // Fixed items per page
+  const [itemsPerPage] = useState(30); // Fixed items per page
 
   // Initialize by loading the default active tab
   useEffect(() => {
@@ -947,7 +943,8 @@ export default function AdminProducts() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent w-full sm:w-64"
                   />
-                </div>                {/* Group Filter */}
+                </div>                
+                {/* Group Filter */}
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
@@ -959,29 +956,7 @@ export default function AdminProducts() {
                   ))}
                 </select>
 
-                {/* View Mode Toggle */}
-                <div className="flex items-center bg-gray-100 rounded-lg p-1">
-                  <button
-                    onClick={() => setViewMode('table')}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${viewMode === 'table'
-                      ? 'bg-white text-orange-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-800'
-                      }`}
-                  >
-                    <List className="w-4 h-4" />
-                    Table
-                  </button>
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${viewMode === 'grid'
-                      ? 'bg-white text-orange-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-800'
-                      }`}
-                  >
-                    <Grid3X3 className="w-4 h-4" />
-                    Grid
-                  </button>
-                </div>
+               
               </div>
 
               <button
@@ -1028,16 +1003,14 @@ export default function AdminProducts() {
                 <p className="text-gray-600">Loading categories...</p>
               </div>
             </div>
-          ) : viewMode === 'table' ? (
-            /* Categories Table */
+          ) :  (
+       
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Category
-                      </th>
+                      
                       <th
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
                         onClick={() => handleSort('name')}
@@ -1063,12 +1036,8 @@ export default function AdminProducts() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Type
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Description
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
+                      
+                   
                       <th
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
                         onClick={() => handleSort('created')}
@@ -1084,7 +1053,8 @@ export default function AdminProducts() {
                         Actions
                       </th>
                     </tr>
-                  </thead>                  <tbody className="bg-white divide-y divide-gray-200">
+                  </thead>                  
+                  <tbody className="bg-white divide-y divide-gray-200">
                     {Array.isArray(categories) ? categories
                       .filter(cat =>
                         (searchTerm === '' || cat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1119,23 +1089,7 @@ export default function AdminProducts() {
                       })
                       .map((category) => (
                         <tr key={category._id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              {category.imageUrl ? (
-                                <Image
-                                  src={category.imageUrl}
-                                  alt={category.name}
-                                  width={40}
-                                  height={40}
-                                  className="w-10 h-10 rounded-lg object-cover"
-                                />
-                              ) : (
-                                <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
-                                  <CategoryIcon className="w-5 h-5 text-gray-400" />
-                                </div>
-                              )}
-                            </div>
-                          </td>
+                          
                           <td className="px-6 py-4">
                             <div className="text-sm font-medium text-gray-900">
                               {category.name}
@@ -1154,19 +1108,7 @@ export default function AdminProducts() {
                               {category.type}
                             </span>
                           </td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm text-gray-900 max-w-xs truncate">
-                              {category.description || 'No description'}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${category.isActive
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                              }`}>
-                              {category.isActive ? 'Active' : 'Inactive'}
-                            </span>
-                          </td>
+                       
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {new Date(category.createdAt).toLocaleDateString('en-US', {
                               day: '2-digit',
@@ -1204,89 +1146,7 @@ export default function AdminProducts() {
                 </table>
               </div>
             </div>
-          ) : (              /* Categories Grid */
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {Array.isArray(categories) ? categories
-                .filter(cat =>
-                  (searchTerm === '' || cat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    cat.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    cat.group.toLowerCase().includes(searchTerm.toLowerCase())) &&
-                  (selectedCategory === 'all' || cat.group === selectedCategory)
-                )
-                .map((category) => (
-                  <div
-                    key={category._id}
-                    className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
-                  >
-                    <div className="relative">
-                      {category.imageUrl ? (
-                        <Image
-                          src={category.imageUrl}
-                          alt={category.name}
-                          width={150}
-                          height={150}
-                          className="w-full h-44 object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-44 bg-gray-200 flex items-center justify-center">
-                          <CategoryIcon className="w-8 h-8 text-gray-400" />
-                        </div>
-                      )}
-
-                      <div className="absolute top-2 right-2">
-                        <span
-                          className={`text-xs px-2 py-1 rounded-full ${category.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                            }`}
-                        >
-                          {category.isActive ? "Active" : "Inactive"}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-gray-900 mb-2">
-                        {category.name}
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                        {category.description}
-                      </p>
-
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full">
-                          {category.group}
-                        </span>
-                        <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">
-                          {category.type}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="text-xs text-gray-500">
-                          {new Date(category.createdAt).toLocaleDateString()}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => {
-                              setEditingCategory(category);
-                              setShowCategoryForm(true);
-                            }}
-                            className="text-blue-600 hover:text-blue-800 transition-colors"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteCategory(category._id)}
-                            className="text-red-600 hover:text-red-800 transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>                  </div>
-                )) : []}
-            </div>
-          )}
+          ) }
 
           {Array.isArray(categories) && categories.length === 0 && !categoriesLoading && (
             <div className="text-center py-12">

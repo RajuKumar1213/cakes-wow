@@ -3,7 +3,6 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { X, Save, Plus } from "lucide-react";
-import Image from "next/image";
 import { Spinner } from "./Loading";
 import axios from "axios";
 import { useToast } from "@/contexts/ToastContext";
@@ -16,10 +15,6 @@ const categorySchema = z.object({
     .min(1, "Category name is required")
     .max(100, "Name must be less than 100 characters")
     .regex(/^[a-zA-Z0-9\s\-&'()]+$/, "Name contains invalid characters").optional(),
-  description: z
-    .string()
-    .max(500, "Description must be less than 500 characters")
-    .optional(),
   group: z
     .string()
     .min(1, "Group is required")
@@ -43,17 +38,12 @@ export default function CategoryForm({ category, onCancel, setLoadData }) {
     watch,
     reset,
   } = useForm({
-    resolver: zodResolver(categorySchema),
-    defaultValues: {
+    resolver: zodResolver(categorySchema),    defaultValues: {
       name: category?.name || "",
-      description: category?.description || "",
       group: category?.group || "",
       type: category?.type || "",
     },
   });
-
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(category?.imageUrl || "");
   const [existingGroups, setExistingGroups] = useState([]);
   const [existingTypes, setExistingTypes] = useState([]);
   const [showCustomGroup, setShowCustomGroup] = useState(false);
@@ -84,17 +74,14 @@ export default function CategoryForm({ category, onCancel, setLoadData }) {
 
     fetchExistingOptions();
   }, []);
-
   // Reset form when category prop changes
   useEffect(() => {
     if (category) {
       reset({
         name: category.name || "",
-        description: category.description || "",
         group: category.group || "",
         type: category.type || "",
       });
-      setImagePreview(category.imageUrl || "");
     }
   }, [category, reset]);
 
@@ -112,50 +99,14 @@ export default function CategoryForm({ category, onCancel, setLoadData }) {
       setShowCustomType(true);
     } else if (watchedType && existingTypes.includes(watchedType)) {
       setShowCustomType(false);
-    }
-  }, [watchedType, existingTypes]);
-
-  const handleFileChange = (e) => {
-    setImagePreview("");
-    setImageFile(null);
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file size (5MB limit)
-      if (file.size > 5 * 1024 * 1024) {
-        alert("File size must be less than 5MB");
-        return;
-      }
-
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        alert("Only image files are allowed");
-        return;
-      }
-
-      setImageFile(file);
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
+    }  }, [watchedType, existingTypes]);
   const onSubmit = async (data) => {
     try {
-      // Create FormData for file upload
+      // Create FormData for API submission
       const formDataToSend = new FormData();
       formDataToSend.append("name", data.name);
       formDataToSend.append("group", data.group);
       formDataToSend.append("type", data.type);
-      formDataToSend.append("description", data.description || "");
-
-      // Add image file if selected
-      if (imageFile) {
-        formDataToSend.append("imageUrl", imageFile);
-      }
-      
 
       //update the category if it exists, otherwise create a new one
       if(category) {
@@ -369,56 +320,8 @@ export default function CategoryForm({ category, onCancel, setLoadData }) {
             />
             {errors.name && (
               <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
-            )}
-          </div>
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description
-            </label>
-            <Controller
-              name="description"
-              control={control}
-              render={({ field }) => (
-                <textarea
-                  {...field}
-                  rows={3}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent ${
-                    errors.description ? "border-red-500" : "border-gray-300"
-                  }`}
-                  placeholder="Enter category description (optional)"
-                />
-              )}
-            />
-            {errors.description && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.description.message}
-              </p>
-            )}
-          </div>{" "}
+            )}          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Category Image
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            />
-            {imagePreview && (
-              <div className="mt-2">
-                <Image
-                  src={imagePreview}
-                  alt="Category preview"
-                  className="w-32 h-24 object-cover rounded-lg border"
-                  width={128}
-                  height={96}
-                />
-              </div>
-            )}
-          </div>{" "}
           <div className="flex items-center gap-3 mt-6 pt-6 border-t">
             <button
               type="submit"
@@ -554,16 +457,12 @@ export default function CategoryForm({ category, onCancel, setLoadData }) {
               <div className="bg-orange-100 p-3 rounded-md border border-orange-300">
                 <h4 className="font-semibold text-orange-800 mb-2">
                   ✨ Complete Example:
-                </h4>
-                <div className="bg-white p-2 rounded border text-gray-700">
+                </h4>                <div className="bg-white p-2 rounded border text-gray-700">
                   <strong>Name:</strong> "Pink Heart Romantic Cake"
                   <br />
                   <strong>Group:</strong> "For Girlfriend"
                   <br />
                   <strong>Type:</strong> "Romantic"
-                  <br />
-                  <strong>Description:</strong> "Beautiful pink heart-shaped
-                  cake perfect for expressing love..."
                 </div>
               </div>
 
