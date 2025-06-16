@@ -137,7 +137,7 @@ export const getCurrentTimeInMinutes = (): number => {
 export const getMinimumDeliveryTime = (preparationHours: number): number => {
   const currentTimeMinutes = getCurrentTimeInMinutes();
   const preparationMinutes = preparationHours * 60;
-  const bufferMinutes = 15; // Reduced buffer to 15 minutes for more precise scheduling
+  const bufferMinutes = 10; // Reduced buffer to 10 minutes for more flexibility
   
   return currentTimeMinutes + preparationMinutes + bufferMinutes;
 };
@@ -150,16 +150,29 @@ export const isSlotAvailable = (
   selectedDate: string, 
   preparationHours: number
 ): boolean => {
+  // For future dates, all slots are available
+  if (!isToday(selectedDate)) {
+    return true;
+  }
+  
+  // For today, check if slot start time is after minimum delivery time
   const slotStartTime = getSlotStartTime(slot);
   const minimumDeliveryTime = getMinimumDeliveryTime(preparationHours);
   
-  // If it's today, check if slot start time is after minimum delivery time
-  if (isToday(selectedDate)) {
-    return slotStartTime >= minimumDeliveryTime;
+  // Handle late night slots (12 AM - early morning) that are technically "tomorrow"
+  // but we show them as available for "today" selection
+  if (slotStartTime < 6 * 60) { // Slots before 6 AM are considered next day
+    // If minimum delivery time goes past midnight, these slots might be available
+    if (minimumDeliveryTime >= 24 * 60) {
+      const nextDayMinTime = minimumDeliveryTime - 24 * 60;
+      return slotStartTime >= nextDayMinTime;
+    }
+    // If minimum delivery time is still today, these early morning slots are not available
+    return false;
   }
   
-  // For future dates, all slots are available
-  return true;
+  // For regular slots today, check if slot start time is after minimum delivery time
+  return slotStartTime >= minimumDeliveryTime;
 };
 
 /**
@@ -200,19 +213,9 @@ export const getEarliestDeliveryDate = (preparationHours: number): Date => {
   const now = new Date();
   const minimumDeliveryTime = getMinimumDeliveryTime(preparationHours);
   
-  // Convert minutes to hours for easier comparison
-  const minimumDeliveryHour = Math.floor(minimumDeliveryTime / 60);
-  const minimumDeliveryMinutes = minimumDeliveryTime % 60;
-  
-  // If minimum delivery time exceeds 22:00 (10 PM), suggest tomorrow
-  if (minimumDeliveryHour >= 22) {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow;
-  }
-  
-  // If minimum delivery time is very late (after 9 PM), suggest tomorrow
-  if (minimumDeliveryHour >= 21) {
+  // If minimum delivery time is past midnight (>= 1440 minutes = 24:00),
+  // then we need next day delivery
+  if (minimumDeliveryTime >= 1440) {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow;
@@ -225,11 +228,28 @@ export const getEarliestDeliveryDate = (preparationHours: number): Date => {
  * Check if calendar should show today as available
  */
 export const shouldShowTodayInCalendar = (preparationHours: number): boolean => {
-  const minimumDeliveryTime = getMinimumDeliveryTime(preparationHours);
-  const minimumDeliveryHour = Math.floor(minimumDeliveryTime / 60);
+  // Get today's date as a string
+  const today = new Date();
+  const todayString = today.toISOString().split('T')[0];
   
-  // Don't show today if minimum delivery time is after 9 PM
-  return minimumDeliveryHour < 21;
+  // Check if any standard delivery slots are available for today
+  const standardSlots = [
+    "11 AM - 1 PM",
+    "1 PM - 3 PM", 
+    "3 PM - 6 PM",
+    "6 PM - 9 PM",
+    "9 PM - 10 PM",
+    "10 PM - 11 PM",
+    "11 PM - 12 AM",
+    "12 AM - 1 AM"
+  ];
+  
+  // If any slot is available, show today
+  const hasAvailableSlot = standardSlots.some(slot => 
+    isSlotAvailable(slot, todayString, preparationHours)
+  );
+  
+  return hasAvailableSlot;
 };
 
 /**

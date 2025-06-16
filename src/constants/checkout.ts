@@ -25,8 +25,7 @@ export const deliveryTypes = [
       { time: "6 PM - 9 PM", available: true },
     ],
   },
-  
-  {
+    {
     id: "fixtime",
     name: "Fixed Time Delivery",
     price: 150,
@@ -41,15 +40,18 @@ export const deliveryTypes = [
       { time: "3 PM - 6 PM", available: true },
       { time: "6 PM - 9 PM", available: true },
       { time: "9 PM - 10 PM", available: true },
+      { time: "10 PM - 11 PM", available: true },
     ],
-  },
-  {
+  },{
     id: "midnight",
     name: "Midnight Delivery",
     price: 149,
     description: "Perfect for surprises",
     icon: "🌙",
-    timeSlots: [{ time: "11 PM - 12 AM", available: true }],
+    timeSlots: [
+      { time: "11 PM - 12 AM", available: true },
+      { time: "12 AM - 1 AM", available: true }
+    ],
   },
   {
     id: "earlymorning",

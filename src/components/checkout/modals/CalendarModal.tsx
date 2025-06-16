@@ -63,9 +63,14 @@ export const CalendarModal: React.FC<CalendarModalProps> = ({
   
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
-  // Set minimum selectable date based on preparation time
-  const minSelectableDate = showToday ? today : earliestDeliveryDate;
+
+  let minSelectableDate: Date;
+  if (showToday) {
+    minSelectableDate = today;
+  } else {
+    minSelectableDate = new Date(earliestDeliveryDate);
+    minSelectableDate.setHours(0, 0, 0, 0); // Ensure it's at midnight
+  }
 
   return (
     <div
