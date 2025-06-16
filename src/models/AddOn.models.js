@@ -1,6 +1,4 @@
-// Apply mongoose fix for Vercel deployment
-require("../lib/mongoose-fix");
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const addOnSchema = new mongoose.Schema({
   name: {
@@ -30,4 +28,4 @@ const addOnSchema = new mongoose.Schema({
 
 const AddOn = mongoose.models.AddOn || mongoose.model('AddOn', addOnSchema);
 
-module.exports = AddOn;
+export default AddOn;
