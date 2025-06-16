@@ -2,20 +2,22 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { 
-  LogOut, 
-  LayoutDashboard, 
-  Package, 
-  Users, 
-  ShoppingCart, 
+import {
+  LogOut,
+  LayoutDashboard,
+  Package,
+  Users,
+  ShoppingCart,
   BarChart3,
   Settings,
   Menu,
   X,
   User,
-  ChevronDown
+  ChevronDown,
+  Phone
 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
+import WhatsAppModal from '@/components/WhatsAppModal';
 import axios from 'axios';
 
 interface AdminInfo {
@@ -27,10 +29,10 @@ const AdminNavbar = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { showSuccess, showError } = useToast();
-  const [adminInfo, setAdminInfo] = useState<AdminInfo | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [adminInfo, setAdminInfo] = useState<AdminInfo | null>(null); const [loading, setLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
 
   // Navigation items
   const navigationItems = [
@@ -51,7 +53,7 @@ const AdminNavbar = () => {
       href: '/admin/orders',
       icon: ShoppingCart,
       current: pathname.startsWith('/admin/orders')
-    },    {
+    }, {
       name: 'Users',
       href: '/admin/users',
       icon: Users,
@@ -84,13 +86,13 @@ const AdminNavbar = () => {
   const handleLogout = async () => {
     try {
       const response = await axios.post('/api/auth/admin-logout');
-      
+
       if (response.status === 200) {
         showSuccess('Success', 'Logged out successfully');
         // Clear any client-side storage if needed
         localStorage.removeItem('admin_token');
         sessionStorage.removeItem('admin_token');
-        
+
         // Redirect to admin login
         router.push('/admin-login');
       } else {
@@ -99,7 +101,7 @@ const AdminNavbar = () => {
     } catch (error) {
       console.error('Logout error:', error);
       showError('Error', 'An error occurred during logout');
-      
+
       // Force redirect even if API call fails
       localStorage.removeItem('admin_token');
       sessionStorage.removeItem('admin_token');
@@ -134,11 +136,10 @@ const AdminNavbar = () => {
                   <button
                     key={item.name}
                     onClick={() => handleNavigation(item.href)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      item.current
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${item.current
                         ? 'bg-orange-100 text-orange-700 border border-orange-200'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
+                      }`}
                   >
                     <Icon className="w-4 h-4" />
                     {item.name}
@@ -169,12 +170,23 @@ const AdminNavbar = () => {
               {/* Dropdown Menu */}
               {isProfileDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">                  <div className="px-4 py-3 border-b border-gray-100">
-                    <div className="text-sm font-medium text-gray-900">
-                      {adminInfo?.email || 'Admin'}
-                    </div>
-                    <div className="text-xs text-gray-500">Administrator</div>
+                  <div className="text-sm font-medium text-gray-900">
+                    {adminInfo?.email || 'Admin'}
                   </div>
-                  
+                  <div className="text-xs text-gray-500">Administrator</div>
+                </div>
+
+                  <button
+                    onClick={() => {
+                      setIsWhatsAppModalOpen(true);
+                      setIsProfileDropdownOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <Phone className="w-4 h-4" />
+                    WhatsApp Number
+                  </button>
+
                   <button
                     onClick={() => {
                       handleLogout();
@@ -213,20 +225,28 @@ const AdminNavbar = () => {
                   <button
                     key={item.name}
                     onClick={() => handleNavigation(item.href)}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-base font-medium transition-colors ${
-                      item.current
+                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-base font-medium transition-colors ${item.current
                         ? 'bg-orange-100 text-orange-700 border border-orange-200'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
+                      }`}
                   >
                     <Icon className="w-5 h-5" />
                     {item.name}
                   </button>
                 );
               })}
-            </div>
-              {/* Mobile User Actions */}
+            </div>              {/* Mobile User Actions */}
             <div className="mt-4 pt-4 border-t border-gray-200 space-y-1">
+              <button
+                onClick={() => {
+                  setIsWhatsAppModalOpen(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-lg text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              >
+                <Phone className="w-5 h-5" />
+                WhatsApp Number
+              </button>
               <button
                 onClick={() => {
                   handleLogout();
@@ -240,15 +260,25 @@ const AdminNavbar = () => {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Click outside to close dropdown */}
+      </div>      {/* Click outside to close dropdown */}
       {isProfileDropdownOpen && (
         <div
           className="fixed inset-0 z-40"
           onClick={() => setIsProfileDropdownOpen(false)}
         />
       )}
+
+      {/* WhatsApp Modal */}
+      <WhatsAppModal
+        isOpen={isWhatsAppModalOpen}
+        onClose={() => setIsWhatsAppModalOpen(false)} onSuccess={(message) => {
+          showSuccess("Success", message);
+          setIsWhatsAppModalOpen(false);
+        }}
+        onError={(message) => {
+          showError("Error", message);
+        }}
+      />
     </nav>
   );
 };

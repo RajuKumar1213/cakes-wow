@@ -126,7 +126,8 @@ const customerInfoSchema = new mongoose.Schema({
 });
 
 const orderSchema = new mongoose.Schema(
-  {    orderId: {
+  {    
+    orderId: {
       type: String,
       required: true,
       unique: true,

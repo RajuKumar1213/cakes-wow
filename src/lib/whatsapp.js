@@ -1,73 +1,118 @@
 import dotenv from "dotenv";
+import axios from "axios";
 dotenv.config();
 
-
-export async function sendCustomerOrderSuccessMessage(phoneNumber, orderData) {
+// Helper function to fetch admin WhatsApp number
+async function getAdminWhatsAppNumber() {
   try {
-    // Clean phone number (remove any non-digit characters)
-    // const cleanPhoneNumber = phoneNumber.replace(/[^\d]/g, "");
-    const cleanPhoneNumber = String(phoneNumber).replace(/[^\d]/g, "");
+    const response = await axios.get(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/admin/whatsapp`
+    );
+    if (response.data.success && response.data.whatsappNumber) {
+      return response.data.whatsappNumber;
+    }
+    return null;
+  } catch (error) {
+    console.error("Failed to fetch admin WhatsApp number:", error);
+    return null;
+  }
+}
 
+// Function to send admin notification about new order
+export async function sendAdminOrderNotification(orderData) {
+  try {
+    // Get admin WhatsApp number
+    const adminWhatsApp = await getAdminWhatsAppNumber();
 
-    // Validate that we have a clean 10-digit phone number
-    if (cleanPhoneNumber.length < 10) {
-      throw new Error(`Invalid phone number format: ${phoneNumber}`);
+    if (!adminWhatsApp) {
+      console.log(
+        "⚠️ Admin WhatsApp number not configured, skipping notification"
+      );
+      return {
+        success: false,
+        error: "Admin WhatsApp number not configured",
+      };
     }
 
-    // Format it with country code if not already included (for India)
+    // Clean and format admin phone number
+    const cleanPhoneNumber = String(adminWhatsApp).replace(/[^\d]/g, "");
+
+    if (cleanPhoneNumber.length < 10) {
+      throw new Error(`Invalid admin phone number format: ${adminWhatsApp}`);
+    }
+
     const formattedNumber =
       cleanPhoneNumber.length === 10
         ? `91${cleanPhoneNumber}`
         : cleanPhoneNumber;
 
-    console.log("📱 Sending customer order success message:", {
-      phone: formattedNumber,
-      template: "customer_success_order",
-      orderId: orderData.orderId,
-      customerName: orderData.customerInfo?.fullName || "Customer",
-    });
+    // console.log("📱 Sending admin order notification:", {
+    //   phone: formattedNumber,
+    //   template: "new_order_alert",
+    //   orderId: orderData.orderId,
+    //   customerName: orderData.customerInfo?.fullName || "Customer",
+    // });
 
-        // Generate unique broadcast name with timestamp
-    const timestamp = new Date()
+    // Generate unique broadcast name with date
+    const currentDate = new Date()
       .toISOString()
-      .replace(/[-:.]/g, "")
-      .slice(0, 14);
-    const broadcastName = `customer_success_order_${timestamp}`;
+      .split("T")[0]
+      .replace(/-/g, "");
+    const broadcastName = `new_order_alert_${currentDate}`;
 
+    // Prepare delivery time string
+    const deliveryTime = orderData.deliveryInfo?.deliveryDate
+      ? `${orderData.deliveryInfo.deliveryDate} ${
+          orderData.deliveryInfo.deliveryTime || ""
+        }`
+      : "Not specified";
+
+    // Prepare address string
+    const address = orderData.deliveryInfo?.address
+      ? `${orderData.deliveryInfo.address.street || ""}, ${
+          orderData.deliveryInfo.address.area || ""
+        }, ${orderData.deliveryInfo.address.city || ""}`.replace(
+          /^,\s*|,\s*$/g,
+          ""
+        )
+      : "Not specified"; // Get the first product image for the notification
+    const productImage =
+      orderData.items?.[0]?.imageUrl ||
+      "https://cakes-wow.vercel.app/images/cake-default.jpg"; // fallback image
 
     const whatsappData = {
-      template_name: "customer_success_order",
+      template_name: "new_order_alert",
       broadcast_name: broadcastName,
       parameters: [
         {
-          name: "1",
-          value: orderData.customerInfo?.fullName || "Customer",
-        },
-        {
-          name: "2",
+          name: "orderId",
           value: orderData.orderId,
         },
         {
-          name: "3",
-          value: orderData.items
-            .map(
-              (item) =>
-                `${item.name} (${item.selectedWeight || "N/A"}) - ₹${item.price} x ${item.quantity}`
-            )
-            .join(", ") || "Order items",
+          name: "customerName",
+          value: orderData.customerInfo?.fullName || "Customer",
         },
         {
-          name: "4",
-          value: `${process.env.NEXT_PUBLIC_API_URL}/order/${orderData.orderId}`,
+          name: "amount",
+          value: String(orderData.totalAmount || orderData.amount || "0"),
         },
         {
-          name: "5",
-          value: `cakeswowsupport@cakeswow.com`,
+          name: "deliveryTime",
+          value: deliveryTime,
+        },
+        {
+          name: "address",
+          value: address,
         },
       ],
     };
 
-     const response = await fetch(
+    // console.log(
+    //   "📡 WATI API Request Data:",
+    //   JSON.stringify(whatsappData, null, 2)
+    // );
+
+    const response = await fetch(
       `${process.env.WATI_API_ENDPOINT}/api/v1/sendTemplateMessage?whatsappNumber=${formattedNumber}`,
       {
         method: "POST",
@@ -80,10 +125,152 @@ export async function sendCustomerOrderSuccessMessage(phoneNumber, orderData) {
       }
     );
 
-    console.log("WhatsApp API response:", response);
+    const responseData = await response.json();
 
+    if (response.ok) {
+      // console.log("✅ Admin order notification sent successfully");
+      return {
+        success: true,
+        phone: formattedNumber,
+        orderId: orderData.orderId,
+        response: responseData,
+      };
+    } else {
+      console.error("❌ Failed to send admin notification:", responseData);
+      return {
+        success: false,
+        error: responseData.message || "Failed to send notification",
+        phone: formattedNumber,
+        orderId: orderData.orderId,
+      };
+    }
   } catch (error) {
-    console.error("WhatsApp Success Message sending failed:", error);
+    console.error("WhatsApp Admin Notification failed:", error);
+    return {
+      success: false,
+      error: error.message,
+      orderId: orderData?.orderId || "unknown",
+      details: error.stack,
+    };
+  }
+}
+
+export async function sendCustomerOrderSuccessMessage(phoneNumber, orderData) {
+  try {
+    // Clean phone number (remove any non-digit characters)
+    const cleanPhoneNumber = String(phoneNumber).replace(/[^\d]/g, "");
+
+    // Validate that we have a clean 10-digit phone number
+    if (cleanPhoneNumber.length < 10) {
+      throw new Error(`Invalid phone number format: ${phoneNumber}`);
+    }
+
+    // Format it with country code if not already included (for India)
+    const formattedNumber =
+      cleanPhoneNumber.length === 10
+        ? `91${cleanPhoneNumber}`
+        : cleanPhoneNumber;
+
+    // Generate unique broadcast name with date
+    const currentDate = new Date()
+      .toISOString()
+      .split("T")[0]
+      .replace(/-/g, "");
+    const broadcastName = `customer_order_alert_${currentDate}`;
+
+    // Prepare delivery time string
+    const deliveryTime = orderData.deliveryInfo?.deliveryDate
+      ? `${orderData.deliveryInfo.deliveryDate} ${
+          orderData.deliveryInfo.deliveryTime || ""
+        }`
+      : "Will be confirmed shortly";
+
+    // Prepare delivery address string
+    const deliveryAddress = orderData.deliveryInfo?.address
+      ? `${orderData.deliveryInfo.address.street || ""}, ${
+          orderData.deliveryInfo.address.area || ""
+        }, ${orderData.deliveryInfo.address.city || ""}`.replace(
+          /^,\s*|,\s*$/g,
+          ""
+        )
+      : "As provided";
+
+    // Prepare item details string
+    const itemDetails =
+      orderData.items
+        .map(
+          (item) =>
+            `${item.name} (${item.selectedWeight || "N/A"}) - ₹${
+              item.price
+            } x ${item.quantity}`
+        )
+        .join(", ") || "Order items";
+
+    // Get the first product image for the notification
+    const productImage =
+      orderData.items?.[0]?.imageUrl ||
+      "/logo.webp"; // fallback image
+    const whatsappData = {
+      template_name: "customer_order_alert",
+      broadcast_name: broadcastName,
+      parameters: [
+        {
+          name: "image",
+          value: productImage,
+        },
+        {
+          name: "customerName",
+          value: orderData.customerInfo?.fullName || "Customer",
+        },
+        {
+          name: "orderId",
+          value: orderData.orderId,
+        },
+        {
+          name: "amount",
+          value: String(orderData.totalAmount || orderData.amount || "0"),
+        },
+        {
+          name: "itemDetails",
+          value: itemDetails,
+        },
+        {
+          name: "deliveryTime",
+          value: deliveryTime,
+        },
+        {
+          name: "deliveryAddress",
+          value: deliveryAddress,
+        },
+      ],
+    };
+
+    const response = await fetch(
+      `${process.env.WATI_API_ENDPOINT}/api/v1/sendTemplateMessage?whatsappNumber=${formattedNumber}`,
+      {
+        method: "POST",
+        headers: {
+          accept: "*/*",
+          Authorization: `${process.env.WATI_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(whatsappData),
+      }
+    );
+
+    const responseData = await response.json();
+
+    await sendAdminOrderNotification(orderData);
+
+    return {
+      success: response.ok,
+      customerNotification: responseData,
+      // adminNotification: adminNotificationResult,
+      phone: formattedNumber,
+      orderId: orderData.orderId,
+    };
+  } catch (error) {
+    console.error("WhatsApp Customer Message sending failed:", error);
     return {
       success: false,
       error: error.message,
@@ -93,67 +280,3 @@ export async function sendCustomerOrderSuccessMessage(phoneNumber, orderData) {
     };
   }
 }
-
-// send message along with image 
-
-
-// sendCustomerOrderSuccessMessage(9546953892, {
-//   _id: { $oid: "68495a7a793d2b754a1c0aea" },
-//   orderId: "CWO20250611001",
-//   items: [
-//     {
-//       productId: { $oid: "68427cdd1e04789414413a88" },
-//       name: "Blueberry Cheesecake",
-//       price: { $numberInt: "222" },
-//       quantity: { $numberInt: "1" },
-//       selectedWeight: "0.5 Kg",
-//       imageUrl:
-//         "https://res.cloudinary.com/dykqvsfd1/image/upload/v1749187802/gdf6lfuehiqrquqkj4xr.webp",
-//       _id: { $oid: "68495a7a793d2b754a1c0aeb" },
-//     },
-//   ],
-//   customerInfo: {
-//     fullName: "Rajiv kumar",
-//     mobileNumber: "9546953892",
-//     deliveryDate: { $date: { $numberLong: "1749600000000" } },
-//     timeSlot: "11 PM - 12 AM",
-//     area: "Abhilekhagaram",
-//     pinCode: "500068",
-//     fullAddress: "ranchi, doranda",
-//     deliveryOccasion: "",
-//     relation: "",
-//     senderName: "",
-//     messageOnCard: "",
-//     specialInstructions: "",
-//     _id: { $oid: "68495a7a793d2b754a1c0aec" },
-//   },
-//   totalAmount: { $numberDouble: "424.96" },
-//   subtotal: { $numberInt: "222" },
-//   deliveryCharge: { $numberInt: "149" },
-//   onlineDiscount: { $numberInt: "8" },
-//   status: "confirmed",
-//   paymentStatus: "paid",
-//   paymentMethod: "online",
-//   razorpayOrderId: "order_Qfr97P7kiUaB0C",
-//   razorpayPaymentId: "pay_Qfr9DgtWIxbkOI",
-//   razorpaySignature:
-//     "f719a52c2a2d7970c4d49e8f0b83eaac67e21dbfaa7f584776f138a840dd09e3",
-//   paymentCompletedAt: { $date: { $numberLong: "1749637779137" } },
-//   orderDate: { $date: { $numberLong: "1749637754240" } },
-//   estimatedDeliveryDate: { $date: { $numberLong: "1749600000000" } },
-//   timeSlot: "11 PM - 12 AM",
-//   notes: "",
-//   trackingInfo: {
-//     orderPlaced: {
-//       status: "Order placed successfully",
-//       timestamp: { $date: { $numberLong: "1749637754243" } },
-//     },
-//     confirmed: {
-//       timestamp: { $date: { $numberLong: "1749637779139" } },
-//       status: "Order confirmed and being prepared",
-//     },
-//   },
-//   createdAt: { $date: { $numberLong: "1749637754244" } },
-//   updatedAt: { $date: { $numberLong: "1749637779139" } },
-//   __v: { $numberInt: "0" },
-// });
