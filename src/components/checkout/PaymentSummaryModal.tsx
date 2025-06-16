@@ -17,14 +17,11 @@ interface PaymentSummaryModalProps {
       name: string;
       quantity: number;
       price: number;
-    }>;
-    subtotal: number;
+    }>;    subtotal: number;
     addOnsTotal: number;
     deliveryCharge: number;
     deliveryType: string;
-    onlineDiscount: number;
     totalAmount: number;
-    finalAmountOnline: number;
   };
 }
 
@@ -136,25 +133,12 @@ export const PaymentSummaryModal: React.FC<PaymentSummaryModalProps> = ({
                 <span className={`font-medium ${orderSummary.deliveryCharge > 0 ? 'text-gray-900' : 'text-green-600'}`}>
                   {orderSummary.deliveryCharge > 0 ? `₹${orderSummary.deliveryCharge}` : 'FREE'}
                 </span>
-              </div>
-
-              {/* Online Payment Discount */}
-              {orderSummary.onlineDiscount > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-green-600">Online Payment Discount</span>
-                  <span className="font-medium text-green-600">-₹{orderSummary.onlineDiscount}</span>
-                </div>
-              )}              {/* Total Line */}
+              </div>              {/* Total Line */}
               <div className="border-t pt-3">
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total Amount</span>
                   <div className="text-right">
-                    <span className="text-green-600">₹{orderSummary.finalAmountOnline.toFixed(0)}</span>
-                    {orderSummary.onlineDiscount > 0 && (
-                      <div className="text-xs text-green-600">
-                        You save ₹{orderSummary.onlineDiscount}!
-                      </div>
-                    )}
+                    <span className="text-green-600">₹{orderSummary.totalAmount.toFixed(0)}</span>
                   </div>
                 </div>
               </div>
@@ -171,13 +155,9 @@ export const PaymentSummaryModal: React.FC<PaymentSummaryModalProps> = ({
               onClick={onPayOnline}
               className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-4 px-4 rounded-lg transition-all duration-300 transform hover:scale-[1.01] shadow-md hover:shadow-lg flex items-center justify-center gap-2"
             >
-              <CreditCard className="w-5 h-5" />
-              <div className="text-center">
+              <CreditCard className="w-5 h-5" />              <div className="text-center">
                 <div className="text-sm">Pay Now</div>
-                <div className="text-lg font-bold">₹{orderSummary.finalAmountOnline.toFixed(0)}</div>
-                {orderSummary.onlineDiscount > 0 && (
-                  <div className="text-xs text-green-100">Save ₹{orderSummary.onlineDiscount}</div>
-                )}
+                <div className="text-lg font-bold">₹{orderSummary.totalAmount.toFixed(0)}</div>
               </div>
             </button>
 

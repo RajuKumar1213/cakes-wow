@@ -38,12 +38,11 @@ const CartReviewStepContent: React.FC = () => {
         });
         
         setAddOnQuantities(quantities);
-      } else {
-        setSelectedAddOns([]);
+      } else {        setSelectedAddOns([]);
         setAddOnQuantities({});
       }
     } catch (error) {
-      console.error('Error loading selected add-ons:', error);
+      // Error loading add-ons - silent fail
     }
   }, []);
 
@@ -116,11 +115,10 @@ const CartReviewStepContent: React.FC = () => {
   };
   // Handle proceed to checkout (create order and go to step 3)
   const handleProceedToCheckout = async () => {
-    try {
-      // Calculate totals
+    try {      // Calculate totals
       const addOnsTotal = getAddOnsTotal();
       const deliveryPrice = getDeliveryPrice();
-      const finalTotal = orderSummary.subtotal + addOnsTotal + deliveryPrice + orderSummary.platformFee + orderSummary.gst;      // Prepare order data
+      const finalTotal = orderSummary.subtotal + addOnsTotal + deliveryPrice;// Prepare order data
       const orderData = {
         items: cart.map(item => ({
           productId: item.productId || item._id,
@@ -144,20 +142,13 @@ const CartReviewStepContent: React.FC = () => {
           senderName: state.orderForm.senderName || '',
           messageOnCard: state.orderForm.messageOnCard || '',
           specialInstructions: state.orderForm.specialInstructions || '',
-        },
-        totalAmount: finalTotal,
+        },        totalAmount: finalTotal,
         subtotal: orderSummary.subtotal,
         deliveryCharge: deliveryPrice,
-        onlineDiscount: 0, // Will be calculated based on payment method
         notes: state.orderForm.specialInstructions || '',
         // Include add-ons in notes for reference
         selectedAddOns: selectedAddOns,
-        addOnQuantities: addOnQuantities,
-      };
-
-      console.log('Creating order with data:', orderData);
-      console.log('Customer Info:', orderData.customerInfo);
-      console.log('Mobile Number:', orderData.customerInfo.mobileNumber, 'Type:', typeof orderData.customerInfo.mobileNumber);
+        addOnQuantities: addOnQuantities,      };
 
       // Create order in database
       const response = await fetch('/api/orders/create', {
@@ -171,19 +162,13 @@ const CartReviewStepContent: React.FC = () => {
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to create order');
-      }
-
-      const result = await response.json();
-      console.log('Order created successfully:', result);
+      }      const result = await response.json();
 
       // Store order details in context for payment step
-      localStorage.setItem('pending-order', JSON.stringify(result.order));
-
-      // Proceed to payment step
+      localStorage.setItem('pending-order', JSON.stringify(result.order));      // Proceed to payment step
       dispatch({ type: 'SET_STEP', payload: 3 });
       
     } catch (error) {
-      console.error('Failed to create order:', error);
       // Show error message to user (you might want to add a toast notification here)
       alert('Failed to create order. Please try again.');
     }
@@ -372,8 +357,7 @@ const CartReviewStepContent: React.FC = () => {
                   <span>{formatPrice(getAddOnsTotal())}</span>
                 </div>
               )}
-              
-              <div className="flex justify-between">
+                <div className="flex justify-between">
                 <span>
                   {getSelectedDeliveryType() ? 
                     `${getSelectedDeliveryType()?.name} (${getSelectedDeliveryType()?.description})` :
@@ -383,18 +367,10 @@ const CartReviewStepContent: React.FC = () => {
                 <span>
                   {getDeliveryPrice() === 0 ? 'FREE' : formatPrice(getDeliveryPrice())}
                 </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Platform fee</span>
-                <span>{formatPrice(orderSummary.platformFee)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>GST (18%)</span>
-                <span>{formatPrice(orderSummary.gst)}</span>
               </div>              <div className="border-t pt-2 mt-2">
                 <div className="flex justify-between font-semibold text-base">
                   <span>Total</span>
-                  <span>{formatPrice(orderSummary.subtotal + getAddOnsTotal() + getDeliveryPrice() + orderSummary.platformFee + orderSummary.gst)}</span>
+                  <span>{formatPrice(orderSummary.subtotal + getAddOnsTotal() + getDeliveryPrice())}</span>
                 </div>
               </div>
             </div>            {getDeliveryPrice() === 0 && (

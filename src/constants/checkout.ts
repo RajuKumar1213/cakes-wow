@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 
 // Delivery types configuration
-export const deliveryTypes = [  {
+export const deliveryTypes = [
+  {
     id: "free",
     name: "Standard Delivery",
     price: 0,
@@ -23,14 +24,9 @@ export const deliveryTypes = [  {
       { time: "3 PM - 6 PM", available: true },
       { time: "6 PM - 9 PM", available: true },
     ],
-  },  {
-    id: "midnight",
-    name: "Midnight Delivery",
-    price: 149,
-    description: "Perfect for surprises",
-    icon: "🌙",
-    timeSlots: [{ time: "11 PM - 12 AM", available: true }],
-  },  {
+  },
+  
+  {
     id: "fixtime",
     name: "Fixed Time Delivery",
     price: 150,
@@ -46,7 +42,16 @@ export const deliveryTypes = [  {
       { time: "6 PM - 9 PM", available: true },
       { time: "9 PM - 10 PM", available: true },
     ],
-  },{
+  },
+  {
+    id: "midnight",
+    name: "Midnight Delivery",
+    price: 149,
+    description: "Perfect for surprises",
+    icon: "🌙",
+    timeSlots: [{ time: "11 PM - 12 AM", available: true }],
+  },
+  {
     id: "earlymorning",
     name: "Early Morning ",
     price: 200,
@@ -81,7 +86,8 @@ export const paymentMethods = [
     description: "All major banks supported",
     icon: Building2,
     charge: 0,
-  },  {
+  },
+  {
     id: "wallet",
     name: "Digital Wallets",
     description: "Paytm, Mobikwik, Amazon Pay",

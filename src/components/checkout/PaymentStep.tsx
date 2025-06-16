@@ -100,11 +100,8 @@ export const PaymentStep: React.FC = () => {
       </div>
     );
   }
-
-  // Calculate online discount for display
-  const originalAmount = pendingOrder.totalAmount;
-  const onlineDiscount = selectedPaymentMethod === 'online' ? Math.round(originalAmount * 0.02) : 0;
-  const finalAmount = originalAmount - onlineDiscount;
+  // Use the total amount directly (no discount)
+  const finalAmount = pendingOrder.totalAmount;
 
   return (
     <div className="p-3 md:p-6">
@@ -132,7 +129,7 @@ export const PaymentStep: React.FC = () => {
                 <div className="flex-1">
                   <div className="font-medium text-sm md:text-base">Online Payment</div>
                   <div className="text-xs md:text-sm text-gray-600">UPI, Card, Net Banking</div>
-                  <div className="text-xs md:text-sm text-green-600 font-medium">Save 2% with online payment!</div>
+                
                 </div>
               </label>
             </div>
@@ -146,17 +143,10 @@ export const PaymentStep: React.FC = () => {
               <div className="flex justify-between">
                 <span>Order ID:</span>
                 <span className="font-medium">{pendingOrder.orderId}</span>
-              </div>
-              <div className="flex justify-between">
+              </div>              <div className="flex justify-between">
                 <span>Items Total:</span>
                 <span>{formatPrice(pendingOrder.totalAmount)}</span>
               </div>
-              {selectedPaymentMethod === 'online' && onlineDiscount > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span>Online Discount (2%):</span>
-                  <span>-{formatPrice(onlineDiscount)}</span>
-                </div>
-              )}
               <hr className="my-2" />
               <div className="flex justify-between font-semibold text-lg">
                 <span>Total:</span>
@@ -191,14 +181,9 @@ export const PaymentStep: React.FC = () => {
               <span>Area:</span>
               <span>{pendingOrder.customerInfo.area}</span>
             </div>
-          </div>
-
-          <div className="mt-4 p-3 bg-white rounded border border-pink-200">
+          </div>          <div className="mt-4 p-3 bg-white rounded border border-pink-200">
             <div className="text-xs md:text-sm text-gray-600 mb-1">Amount to Pay:</div>
             <div className="text-lg md:text-xl font-bold text-pink-600">{formatPrice(finalAmount)}</div>
-            {selectedPaymentMethod === 'online' && onlineDiscount > 0 && (
-              <div className="text-xs text-green-600">You save {formatPrice(onlineDiscount)}!</div>
-            )}
           </div>
         </div>
       </div>

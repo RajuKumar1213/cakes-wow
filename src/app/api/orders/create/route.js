@@ -85,11 +85,10 @@ export async function POST(request) {
       orderId,
       items: orderData.items,
       addons: processedAddons,
-      customerInfo: orderData.customerInfo,
-      totalAmount: orderData.totalAmount,
+      customerInfo: orderData.customerInfo,      totalAmount: orderData.totalAmount,
       subtotal: orderData.subtotal || orderData.totalAmount,
       deliveryCharge: orderData.deliveryCharge || 0,
-      onlineDiscount: orderData.onlineDiscount || 0,
+      onlineDiscount: 0, // No discount applied
       status: "pending",
       paymentStatus: "pending",
       paymentMethod: orderData.paymentMethod || "online", // Default to online, will be updated later

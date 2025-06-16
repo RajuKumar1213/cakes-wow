@@ -36,30 +36,24 @@ export async function POST(request) {
     const order = await Order.findById(orderId);
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
-    }
-
-    // Update payment method
+    }    // Update payment method
     if (paymentMethod) {
       order.paymentMethod = paymentMethod;
-    } // Calculate online discount for online payments (2% discount)
-    let finalAmount = order.totalAmount;
-    if (paymentMethod === "online") {
-      const discount = Math.round(order.totalAmount * 0.02); // 2% discount
-      order.onlineDiscount = discount;
-      finalAmount = order.totalAmount - discount;
-    } // Create Razorpay order for online payments
+    }
+
+    // Clear any existing online discount and use the original total amount
+    order.onlineDiscount = 0;
+    const finalAmount = order.totalAmount;    // Create Razorpay order for online payments
     const razorpayOrderOptions = {
-      amount: Math.round(finalAmount * 100), // Amount in paisa (after discount)
+      amount: Math.round(finalAmount * 100), // Amount in paisa
       currency: "INR",
-      receipt: `order_rcpt_${order.orderId}`,
-      notes: {
+      receipt: `order_rcpt_${order.orderId}`,      notes: {
         orderId: order.orderId,
         customerName: order.customerInfo.fullName,
         customerMobile: order.customerInfo.mobileNumber,
         productNames: order.items.map((item) => item.name).join(", "),
         originalAmount: order.totalAmount,
         finalAmount: finalAmount,
-        discount: order.onlineDiscount || 0,
         paymentMethod: paymentMethod,
         deliveryDate: order.customerInfo.deliveryDate,
         deliveryArea: order.customerInfo.area,
@@ -78,12 +72,10 @@ export async function POST(request) {
     return NextResponse.json(
       {
         success: true,
-        message: "Payment order created successfully",
-        order: {
+        message: "Payment order created successfully",        order: {
           orderId: order.orderId,
           totalAmount: finalAmount,
           originalAmount: order.totalAmount,
-          onlineDiscount: order.onlineDiscount,
           status: order.status,
           paymentStatus: order.paymentStatus,
         },

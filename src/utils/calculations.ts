@@ -96,15 +96,11 @@ export const calculateOrderSummary = (
 ) => {
   const subtotal = calculateSubtotal(cartItems);
   const deliveryCharges = calculateDeliveryCharges(deliveryType, subtotal);
-  const platformFee = calculatePlatformFee(subtotal);
-  const gst = calculateGST(subtotal, deliveryCharges);
-  const total = calculateTotal(subtotal, deliveryCharges, platformFee, gst, discount);
+  const total = subtotal + deliveryCharges - discount;
 
   return {
     subtotal,
     deliveryCharges,
-    platformFee,
-    gst,
     discount,
     total,
     itemCount: cartItems.reduce((count, item) => count + item.quantity, 0)
