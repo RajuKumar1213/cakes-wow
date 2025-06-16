@@ -2,16 +2,19 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Product from "@/models/Product.models";
 import Category from "@/models/Category.models";
-import {  uploadBufferToCloudinary } from "@/helpers/uploadOnCloudinary";
+import { uploadOnCloudinary, uploadBufferToCloudinary } from "@/helpers/uploadOnCloudinary";
+import fs from "fs";
 import path from "path";
 import {
+  createProductFilters,
   createSortOptions,
   calculatePagination,
   formatProductResponse,
+  generateUniqueSlug,
   validatePrice,
+  validateImageUrls,
   validateWeightOptions,
 } from "@/lib/productUtils";
-import { createEnhancedProductFilters } from "@/lib/enhancedProductUtils";
 
 // Check if Cloudinary environment variables are configured
 function checkCloudinaryConfig() {
@@ -68,8 +71,10 @@ export async function GET(request) {
           },
         });
       }
-    }    // Build filters using enhanced filtering
-    const filters = createEnhancedProductFilters({
+    }
+
+    // Build filters
+    const filters = createProductFilters({
       category: categoryObjectId,
       weights,
       minPrice,
@@ -85,56 +90,14 @@ export async function GET(request) {
     // Create sort options
     const sort = createSortOptions(sortBy, sortOrder);
 
-    // Handle aggregation for price filtering
-    let products, total;
-    
-    if (filters._useAggregation) {
-      // Use aggregation pipeline for price filtering
-      const aggregationSteps = filters._aggregationSteps || [];
-      delete filters._useAggregation;
-      delete filters._aggregationSteps;
-      
-      // Build aggregation pipeline
-      const pipeline = [
-        ...aggregationSteps,
-        { $match: filters },
-        { $sort: sort },
-        { $skip: skip },
-        { $limit: limitNum },
-        {
-          $lookup: {
-            from: 'categories',
-            localField: 'categories',
-            foreignField: '_id',
-            as: 'categories'
-          }
-        }
-      ];
-      
-      // Get total count
-      const countPipeline = [
-        ...aggregationSteps,
-        { $match: filters },
-        { $count: "total" }
-      ];
-      
-      const [productsResult, countResult] = await Promise.all([
-        Product.aggregate(pipeline),
-        Product.aggregate(countPipeline)
-      ]);
-      
-      products = productsResult;
-      total = countResult.length > 0 ? countResult[0].total : 0;
-    } else {
-      // Use regular find for other filters
-      total = await Product.countDocuments(filters);
-      products = await Product.find(filters)
-        .populate("categories", "name slug group type")
-        .sort(sort)
-        .skip(skip)
-        .limit(limitNum)
-        .lean();
-    }
+    // Get total count and products
+    const total = await Product.countDocuments(filters);
+    const products = await Product.find(filters)
+      .populate("categories", "name slug group type")
+      .sort(sort)
+      .skip(skip)
+      .limit(limitNum)
+      .lean();
 
     // Format products for response
     const formattedProducts = products.map((product) => ({
@@ -164,17 +127,16 @@ export async function POST(request) {
   try {
     await dbConnect();
 
-    const formData = await request.formData();    // Extract form data
+    const formData = await request.formData();
+
+    // Extract form data
     const name = formData.get("name");
     const description = formData.get("description");
-    const priceStr = formData.get("price");
-    const price = priceStr ? parseFloat(priceStr) : 0;
+    const price = parseFloat(formData.get("price")) || 0;
     
-    const discountedPriceStr = formData.get("discountedPrice");
-    const discountedPrice = (discountedPriceStr && parseFloat(discountedPriceStr) > 0)
-      ? parseFloat(discountedPriceStr)
+    const discountedPrice = formData.get("discountedPrice")
+      ? parseFloat(formData.get("discountedPrice"))
       : null;
-    
     const preparationTime = formData.get("preparationTime") || "4-6 hours";
     const isBestseller = formData.get("isBestseller") === "true";
     const isFeatured = formData.get("isFeatured") === "true";
@@ -187,60 +149,28 @@ export async function POST(request) {
     // Process weight options
     const weightOptions = [];
     let index = 0;
-    while (formData.has(`weightOptions[${index}][weight]`)) {
+    while (formData.get(`weightOptions[${index}][weight]`)) {
       const weight = formData.get(`weightOptions[${index}][weight]`);
-      const priceStr = formData.get(`weightOptions[${index}][price]`);
-      const price = priceStr ? parseFloat(priceStr) : 0;
-      const discountedPrice = formData.get(`weightOptions[${index}][discountedPrice]`);
+      const optionPrice = parseFloat(formData.get(`weightOptions[${index}][price]`));
+      const optionDiscountedPrice = formData.get(`weightOptions[${index}][discountedPrice]`)
+        ? parseFloat(formData.get(`weightOptions[${index}][discountedPrice]`))
+        : null;
       
-      console.log(`=== Weight Option ${index} Debug ===`);
-      console.log("weight:", weight, "Type:", typeof weight);
-      console.log("priceStr:", priceStr, "Type:", typeof priceStr);  
-      console.log("price:", price, "Type:", typeof price);
-      console.log("discountedPrice:", discountedPrice, "Type:", typeof discountedPrice);
-      
-      // Only add if weight is not empty
-      if (weight && weight.trim() !== '') {
-        const option = {
-          weight: weight.trim(),
-          price: price,
-        };
-        
-        // Only add discountedPrice if it exists and is greater than 0
-        if (discountedPrice && parseFloat(discountedPrice) > 0) {
-          option.discountedPrice = parseFloat(discountedPrice);
-        }
-        
-        weightOptions.push(option);
-        console.log(`✅ Added weight option ${index}:`, option);
-      } else {
-        console.log(`❌ Skipped empty weight option ${index}`);
-      }
-        index++;
-    }
-    
-    // Validate required fields
-    console.log("=== Backend Validation Debug ===");
-    console.log("name:", name, "Type:", typeof name, "Length:", name?.length);
-    console.log("description:", description, "Type:", typeof description, "Length:", description?.length);
-    console.log("categories:", categories, "Type:", typeof categories, "Length:", categories?.length);
-    console.log("weightOptions:", weightOptions, "Type:", typeof weightOptions, "Length:", weightOptions?.length);
-    console.log("Weight options content:", JSON.stringify(weightOptions, null, 2));
-    
-    if (!name || !description || !categories.length || weightOptions.length === 0) {
-      console.log("❌ Validation failed - missing fields:", {
-        hasName: !!name,
-        hasDescription: !!description,
-        categoriesLength: categories.length,
-        weightOptionsLength: weightOptions.length
+      weightOptions.push({
+        weight: weight,
+        price: optionPrice,
+        discountedPrice: optionDiscountedPrice,
       });
+      index++;
+    }
+
+    // Validate required fields
+    if (!name || !description || !categories.length || weightOptions.length === 0) {
       return NextResponse.json(
         { error: "Name, description, categories, and weight options are required" },
         { status: 400 }
       );
     }
-    
-    console.log("✅ All required fields present");
 
     // Check Cloudinary configuration before processing images
     const imageFiles = formData.getAll("images");
@@ -301,18 +231,19 @@ export async function POST(request) {
           console.error("Image upload error:", uploadError);
           return NextResponse.json(
             { error: `Failed to process image upload: ${uploadError.message}` },
-            { status: 500 }          );
+            { status: 500 }
+          );
         }
       }
     }
 
-    // Validate that we have at least one image (temporarily disabled for debugging)
-    // if (imageUrls.length === 0) {
-    //   return NextResponse.json(
-    //     { error: "At least one product image is required" },
-    //     { status: 400 }
-    //   );
-    // }
+    // Validate that we have at least one image
+    if (imageUrls.length === 0) {
+      return NextResponse.json(
+        { error: "At least one product image is required" },
+        { status: 400 }
+      );
+    }
 
     // Validate categories exist
     const categoryDocs = await Category.find({ _id: { $in: categories } });
@@ -322,7 +253,7 @@ export async function POST(request) {
         { status: 400 }
       );
     }
-    
+
     // Generate unique slug
     const baseSlug = name
       .toLowerCase()
@@ -333,29 +264,21 @@ export async function POST(request) {
 
     let slug = baseSlug;
     let counter = 1;
-    
-    // Ensure slug is unique
     while (await Product.findOne({ slug })) {
       slug = `${baseSlug}-${counter}`;
       counter++;
     }
-    
+
     // Validate weight options
     const validatedWeightOptions = validateWeightOptions(weightOptions);
-
-    // Validate price (optional)
-    const validatedPrice = price > 0 ? validatePrice(price) : 0;
-    const validatedDiscountedPrice = discountedPrice && discountedPrice > 0
-      ? validatePrice(discountedPrice)
-      : null;
 
     // Create product
     const product = new Product({
       name,
       slug,
       description,
-      price: validatedPrice,
-      discountedPrice: validatedDiscountedPrice,
+      price,
+      discountedPrice,
       imageUrls: imageUrls,
       categories,
       weightOptions: validatedWeightOptions,
@@ -376,14 +299,9 @@ export async function POST(request) {
         data: formatProductResponse(product),
       },
       { status: 201 }
-    );  } catch (error) {
+    );
+  } catch (error) {
     console.error("Create product error:", error);
-    console.error("Error details:", {
-      name: error.name,
-      message: error.message,
-      code: error.code,
-      stack: error.stack?.substring(0, 500)
-    });
 
     if (error.code === 11000) {
       return NextResponse.json(
@@ -392,13 +310,8 @@ export async function POST(request) {
       );
     }
 
-    // Return more detailed error for debugging
     return NextResponse.json(
-      { 
-        error: "Failed to create product", 
-        details: error.message,
-        errorName: error.name
-      },
+      { error: "Failed to create product" },
       { status: 500 }
     );
   }
@@ -423,15 +336,14 @@ export async function PATCH(request) {
     const existingProduct = await Product.findById(id);
     if (!existingProduct) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
-    }    // Extract form data
+    }
+
+    // Extract form data
     const name = formData.get("name");
     const description = formData.get("description");
-    const priceStr = formData.get("price");
-    const price = priceStr ? parseFloat(priceStr) : 0;
-    
-    const discountedPriceStr = formData.get("discountedPrice");
-    const discountedPrice = (discountedPriceStr && parseFloat(discountedPriceStr) > 0)
-      ? parseFloat(discountedPriceStr)
+    const price = parseFloat(formData.get("price"));
+    const discountedPrice = formData.get("discountedPrice")
+      ? parseFloat(formData.get("discountedPrice"))
       : null;
     const preparationTime = formData.get("preparationTime") || "4-6 hours";
     const isBestseller = formData.get("isBestseller") === "true";
@@ -440,36 +352,36 @@ export async function PATCH(request) {
 
     // Get arrays
     const categories = formData.getAll("categories");
-    const existingImageUrls = formData.getAll("imageUrls");    // Process weight options
+    const existingImageUrls = formData.getAll("imageUrls");
+
+    // Process weight options
     const weightOptions = [];
     let index = 0;
     while (formData.get(`weightOptions[${index}][weight]`)) {
       const weight = formData.get(`weightOptions[${index}][weight]`);
-      const price = parseFloat(formData.get(`weightOptions[${index}][price]`)) || 0;
-      const discountedPrice = formData.get(`weightOptions[${index}][discountedPrice]`);
+      const optionPrice = parseFloat(formData.get(`weightOptions[${index}][price]`));
+      const optionDiscountedPrice = formData.get(`weightOptions[${index}][discountedPrice]`)
+        ? parseFloat(formData.get(`weightOptions[${index}][discountedPrice]`))
+        : null;
       
-      const option = {
+      weightOptions.push({
         weight: weight,
-        price: price,
-      };
-      
-      // Only add discountedPrice if it exists and is greater than 0
-      if (discountedPrice && parseFloat(discountedPrice) > 0) {
-        option.discountedPrice = parseFloat(discountedPrice);
-      }      weightOptions.push(option);
+        price: optionPrice,
+        discountedPrice: optionDiscountedPrice,
+      });
       index++;
     }
 
     // Validate required fields
-    if (!name || !description || !categories.length) {
+    if (!name || !description || !price || !categories.length) {
       return NextResponse.json(
-        { error: "Name, description, and categories are required" },
+        { error: "Name, description, price, and categories are required" },
         { status: 400 }
       );
     }
 
-    // Validate price (optional)
-    const validatedPrice = price > 0 ? validatePrice(price) : 0;
+    // Validate price
+    const validatedPrice = validatePrice(price);
     const validatedDiscountedPrice = discountedPrice
       ? validatePrice(discountedPrice)
       : null;
@@ -506,7 +418,9 @@ export async function PATCH(request) {
               { error: "Each image must be less than 5MB" },
               { status: 400 }
             );
-          }          // Convert file to buffer
+          }
+
+          // Convert file to buffer
           const bytes = await imageFile.arrayBuffer();
           const buffer = Buffer.from(bytes);
 
@@ -526,7 +440,8 @@ export async function PATCH(request) {
               { error: "Failed to upload image to cloud storage" },
               { status: 500 }
             );
-          }        } catch (uploadError) {
+          }
+        } catch (uploadError) {
           console.error("Image upload error:", uploadError);
           return NextResponse.json(
             { error: `Failed to process image upload: ${uploadError.message}` },
@@ -572,7 +487,9 @@ export async function PATCH(request) {
     }
 
     // Validate weight options
-    const validatedWeightOptions = validateWeightOptions(weightOptions);    // Update product
+    const validatedWeightOptions = validateWeightOptions(weightOptions);
+
+    // Update product
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
       {

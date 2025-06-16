@@ -19,43 +19,31 @@ export async function GET(request) {
       if (categoryDoc) {
         filters.categories = categoryDoc._id;
       }
-    }    // Get price range - consider both base prices and weight option prices
+    }    // Get price range - only consider the minimum price for each product
     const priceStats = await Product.aggregate([
       { $match: filters },
       {
         $addFields: {
-          allPrices: {
-            $concatArrays: [
-              { $cond: [{ $gt: ["$price", 0] }, ["$price"], []] },
-              "$weightOptions.price"
-            ]
+          // Get the minimum price from either base price or weightOptions
+          minProductPrice: {
+            $min: {
+              $concatArrays: [
+                { $cond: [{ $gt: ["$price", 0] }, ["$price"], []] },
+                "$weightOptions.price"
+              ]
+            }
           }
         }
       },
-      { $unwind: "$allPrices" },
       {
         $group: {
           _id: null,
-          minPrice: { $min: "$allPrices" },
-          maxPrice: { $max: "$allPrices" }
+          minPrice: { $min: "$minProductPrice" },
+          maxPrice: { $max: "$minProductPrice" }
         }
       }
-    ]);
-
-    // Get weight options and tags
-    const weightStats = await Product.aggregate([
-      { $match: filters },
-      { $unwind: "$weightOptions" },
-      {
-        $group: {
-          _id: "$weightOptions.weight",
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { count: -1 } }
-    ]);
-
-    // Get available tags
+    ]);    // Hardcoded standard weight options - simple and clean
+    const standardWeights = ['500g', '750g', '1kg', '1.5kg', '2kg', '3kg', '4kg', '5kg'];    // Get available tags
     const tagStats = await Product.aggregate([
       { $match: filters },
       { $unwind: "$tags" },
@@ -66,13 +54,12 @@ export async function GET(request) {
         }
       },
       { $sort: { count: -1 } }
-    ]);    // Default ranges if no products found
+    ]);
+
+    // Default ranges if no products found
     const defaultPriceRange = { minPrice: 0, maxPrice: 5000 };
     const priceRange = priceStats.length > 0 ? priceStats[0] : defaultPriceRange;
 
-    // Format weight options
-    const weightOptions = weightStats.map(w => w._id).sort();
-    
     // Format tags
     const tags = tagStats.map(t => t._id).sort();
 
@@ -83,7 +70,7 @@ export async function GET(request) {
           min: Math.floor(priceRange.minPrice),
           max: Math.ceil(priceRange.maxPrice)
         },
-        weights: weightOptions,
+        weights: standardWeights, // Use hardcoded clean weights
         tags: tags
       }
     });

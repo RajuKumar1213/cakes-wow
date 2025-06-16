@@ -13,11 +13,6 @@ interface PriceRange {
   max: number;
 }
 
-interface WeightOption {
-  weight: string;
-  count: number;
-}
-
 const FilterSidebar = ({ onFilterChange, category, isOpen = false, onClose }: FilterSidebarProps) => {
   // Use ref to store the latest onFilterChange function
   const onFilterChangeRef = useRef(onFilterChange);
@@ -31,7 +26,7 @@ const FilterSidebar = ({ onFilterChange, category, isOpen = false, onClose }: Fi
     min: 0,
     max: 5000,
   });
-  const [weightOptions, setWeightOptions] = useState<WeightOption[]>([]);  const [selectedWeights, setSelectedWeights] = useState<string[]>([]);
+  const [weightOptions, setWeightOptions] = useState<string[]>([]); const [selectedWeights, setSelectedWeights] = useState<string[]>([]);
   const [isBestseller, setIsBestseller] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDragging, setIsDragging] = useState<"min" | "max" | null>(null);
@@ -61,17 +56,15 @@ const FilterSidebar = ({ onFilterChange, category, isOpen = false, onClose }: Fi
           params.append("category", category);
         }
         const queryString = params.toString();
-        const apiUrl = `/api/products/ranges${
-          queryString ? `?${queryString}` : ""
-        }`;
+        const apiUrl = `/api/products/ranges${queryString ? `?${queryString}` : ""
+          }`;
 
         const response = await fetch(apiUrl);
         if (response.ok) {
-          const data = await response.json();
-          const newPriceRange = data.data.priceRange || { min: 0, max: 5000 };
+          const data = await response.json(); const newPriceRange = data.data.priceRange || { min: 0, max: 5000 };
           setPriceRange(newPriceRange);
           setSelectedPriceRange(newPriceRange);
-          setWeightOptions(data.data.weightOptions || []);
+          setWeightOptions(data.data.weights || []);
           setIsInitialized(true);
           initializedForCategoryRef.current = category; // Mark this category as successfully initialized
         } else {
@@ -126,7 +119,7 @@ const FilterSidebar = ({ onFilterChange, category, isOpen = false, onClose }: Fi
         }
         if (selectedPriceRange.max < priceRange.max) {
           filters.maxPrice = selectedPriceRange.max;
-        }        if (selectedWeights.length > 0) {
+        } if (selectedWeights.length > 0) {
           filters.weights = selectedWeights;
         }
         if (isBestseller !== null) {
@@ -145,7 +138,8 @@ const FilterSidebar = ({ onFilterChange, category, isOpen = false, onClose }: Fi
       isDragging ? 0 : 300
     );
 
-    return () => clearTimeout(timeoutId);  }, [
+    return () => clearTimeout(timeoutId);
+  }, [
     selectedPriceRange.min,
     selectedPriceRange.max,
     selectedWeightsStr,
@@ -206,12 +200,12 @@ const FilterSidebar = ({ onFilterChange, category, isOpen = false, onClose }: Fi
     <>
       {/* Mobile Backdrop */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-opacity-50 z-40 lg:hidden"
           onClick={onClose}
         />
       )}
-      
+
       {/* Sidebar */}
       <div
         className={` rounded-3xl mr-4
@@ -235,7 +229,7 @@ const FilterSidebar = ({ onFilterChange, category, isOpen = false, onClose }: Fi
             >
               <RotateCcw className="h-4 w-4" />
             </button>
-            <button 
+            <button
               onClick={onClose}
               className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors lg:hidden"
             >
@@ -293,10 +287,9 @@ const FilterSidebar = ({ onFilterChange, category, isOpen = false, onClose }: Fi
                             selectedPriceRange.min,
                             "min"
                           )}%`,
-                          right: `${
-                            100 -
+                          right: `${100 -
                             getSliderPercentage(selectedPriceRange.max, "max")
-                          }%`,
+                            }%`,
                         }}
                       ></div>
 
@@ -375,12 +368,11 @@ const FilterSidebar = ({ onFilterChange, category, isOpen = false, onClose }: Fi
                               quickRange.max
                             )
                           }
-                          className={`px-3 py-2 text-xs font-medium rounded-md transition-colors ${
-                            selectedPriceRange.min === quickRange.min &&
-                            selectedPriceRange.max === quickRange.max
+                          className={`px-3 py-2 text-xs font-medium rounded-md transition-colors ${selectedPriceRange.min === quickRange.min &&
+                              selectedPriceRange.max === quickRange.max
                               ? "bg-pink-600 text-white"
                               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                          }`}
+                            }`}
                         >
                           {quickRange.label}
                         </button>
@@ -407,42 +399,37 @@ const FilterSidebar = ({ onFilterChange, category, isOpen = false, onClose }: Fi
                     )}
                   </button>
 
-                  {expandedSections.weight && (
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {weightOptions.map((option) => (
-                        <label
-                          key={option.weight}
-                          className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all duration-200 filter-hover ${
-                            selectedWeights.includes(option.weight)
-                              ? "active-filter-border"
-                              : "border-gray-200 hover:border-pink-300 hover:bg-pink-50"
+                  {expandedSections.weight && (<div className="space-y-2 max-h-48 overflow-y-auto">
+                    {weightOptions.map((weight) => (
+                      <label
+                        key={weight}
+                        className={`flex items-center p-3 border rounded-lg cursor-pointer transition-all duration-200 filter-hover ${selectedWeights.includes(weight)
+                            ? "active-filter-border"
+                            : "border-gray-200 hover:border-pink-300 hover:bg-pink-50"
                           }`}
+                      >
+                        <div
+                          className={
+                            selectedWeights.includes(weight)
+                              ? "active-filter-content flex items-center w-full"
+                              : "flex items-center w-full"
+                          }
                         >
-                          <div
-                            className={
-                              selectedWeights.includes(option.weight)
-                                ? "active-filter-content flex items-center w-full"
-                                : "flex items-center w-full"
-                            }
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedWeights.includes(option.weight)}
-                              onChange={() => handleWeightChange(option.weight)}
-                              className="h-4 w-4 filter-checkbox border-gray-300 rounded focus:ring-pink-500"
-                            />
-                            <span className="ml-3 text-sm text-gray-700 flex-1">
-                              {option.weight}
-                            </span>
-                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                              {option.count}
-                            </span>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
+                          <input
+                            type="checkbox"
+                            checked={selectedWeights.includes(weight)}
+                            onChange={() => handleWeightChange(weight)}
+                            className="h-4 w-4 filter-checkbox border-gray-300 rounded focus:ring-pink-500"
+                          />
+                          <span className="ml-3 text-sm text-gray-700 flex-1">
+                            {weight}
+                          </span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
                   )}
-                </div>              )}
+                </div>)}
 
             </div>
           )}

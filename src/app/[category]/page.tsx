@@ -59,7 +59,6 @@ async function fetchProducts(categorySlug: string): Promise<{ products: Product[
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
     const apiUrl = `${baseUrl}/api/products?category=${categorySlug}&sortBy=rating&sortOrder=desc&limit=24&page=1`;
     
-    console.log(`🔍 [${process.env.NODE_ENV}] Fetching products from:`, apiUrl);
     
     const response = await fetch(apiUrl, {
       // next: { revalidate: 1800 }, // Revalidate every 30 minutes
@@ -74,17 +73,7 @@ async function fetchProducts(categorySlug: string): Promise<{ products: Product[
     }
     
     const data = await response.json();
-    console.log(`📦 Products API response:`, {
-      success: data.success,
-      productCount: data.data?.products?.length || 0,
-      categorySlug,
-      hasDebug: !!data.data?.debug
-    });
-    
-    // Log debug info if present (helpful for Netlify debugging)
-    if (data.data?.debug) {
-      console.log('🐛 API Debug Info:', data.data.debug);
-    }
+
     
     return data.success ? {
       products: data.data.products || [],
@@ -171,7 +160,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
       <Header />
       <div className="min-h-screen bg-gray-50">
         {/* Breadcrumb */}
-        <div className="bg-white border-b">
+        <h1 className="text-2xl bg-white font-bold text-red-500 text-center py-4">{category?.name}</h1>
+        <div className="bg-white ">
           <div className="max-w-7xl mx-auto px-4 py-3">
             <Breadcrumb items={breadcrumbItems} />
           </div>

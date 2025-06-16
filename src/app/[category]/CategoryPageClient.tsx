@@ -70,7 +70,7 @@ const CategoryPageClient = ({
 }: CategoryPageClientProps) => {
   const router = useRouter();
   const { showError } = useToast();
-  
+
   const [category] = useState<Category>(initialCategory);
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [filterLoading, setFilterLoading] = useState(false);
@@ -80,17 +80,17 @@ const CategoryPageClient = ({
     total: initialProducts.length,
     pages: Math.ceil(initialProducts.length / 24)
   });
-  
+
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("popularity");
-  const [priceInputs, setPriceInputs] = useState({ 
-    min: 0, 
-    max: initialFilterOptions.priceRange?.max || 5000 
+  const [priceInputs, setPriceInputs] = useState({
+    min: 0,
+    max: initialFilterOptions.priceRange?.max || 5000
   });
-  
+
   // Filter states
   const [priceRange, setPriceRange] = useState([
-    0, 
+    0,
     initialFilterOptions.priceRange?.max || 5000
   ]);
   const [selectedWeights, setSelectedWeights] = useState<string[]>([]);
@@ -114,8 +114,7 @@ const CategoryPageClient = ({
     return () => {
       document.body.style.overflow = '';
     };
-  }, [showFilters]);
-  // Function to build API query parameters from filter state
+  }, [showFilters]);  // Function to build API query parameters from filter state
   const buildApiParams = (page: number = 1) => {
     const params = new URLSearchParams();
     params.append('category', categorySlug);
@@ -128,10 +127,12 @@ const CategoryPageClient = ({
       params.append('maxPrice', priceRange[1].toString());
     }
 
+    // Make sure to include all selected weights
     selectedWeights.forEach(weight => {
       params.append('weights', weight);
     });
 
+    // Make sure to include all selected tags
     selectedTags.forEach(tag => {
       params.append('tags', tag);
     });
@@ -159,25 +160,42 @@ const CategoryPageClient = ({
 
     params.append('limit', '24');
     return params.toString();
-  };
-  const fetchFilteredProducts = async (page: number = 1) => {
+  }; const fetchFilteredProducts = async (page: number = 1) => {
     try {
       setFilterLoading(true);
-      
+
+      // Build API parameters with the current page and all filters
       const apiParams = buildApiParams(page);
+
+      // Log the full API params for debugging
+      console.log(`Fetching products with params: ${apiParams}`);
+
       const response = await fetch(`/api/products?${apiParams}`);
+
+      // Check if the request was successful
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status}: ${response.statusText}`);
+      }
+
       const data = await response.json();
 
       if (data.success) {
+        // Update products state with the new results
         setProducts(data.data.products || []);
+
+        // Update pagination state
         setPagination(data.data.pagination || {
           page: 1,
           limit: 24,
           total: 0,
           pages: 0
         });
+
+        // Log successful update
+        console.log(`Products updated. Page: ${data.data.pagination?.page}, Total: ${data.data.pagination?.total}`);
       } else {
         showError("Error", "Failed to filter products");
+        console.error("API returned error:", data.error);
       }
     } catch (error) {
       console.error("Error filtering products:", error);
@@ -185,21 +203,26 @@ const CategoryPageClient = ({
     } finally {
       setFilterLoading(false);
     }
-  };
-  // Fetch products when filters change
+  };// Fetch products when filters change
   useEffect(() => {
     // Skip initial render since we have server-side data
-    if (priceRange[0] !== 0 || priceRange[1] !== (initialFilterOptions.priceRange?.max || 5000) || 
-        selectedWeights.length > 0 || selectedTags.length > 0 || sortBy !== "popularity") {
+    if (priceRange[0] !== 0 || priceRange[1] !== (initialFilterOptions.priceRange?.max || 5000) ||
+      selectedWeights.length > 0 || selectedTags.length > 0 || sortBy !== "popularity") {
       fetchFilteredProducts(1); // Reset to page 1 when filters change
     }
   }, [priceRange, selectedWeights, selectedTags, sortBy]);
-
   // Handle page change
   const handlePageChange = (page: number) => {
-    fetchFilteredProducts(page);
-    // Scroll to top of products section
-    window.scrollTo({ top: 400, behavior: 'smooth' });
+    console.log(`Page change requested to: ${page}`);
+
+    // Make sure we're not already on the requested page
+    if (page !== pagination.page) {
+      // Fetch products for the new page while preserving all current filters
+      fetchFilteredProducts(page);
+
+      // Scroll to top of products section
+      window.scrollTo({ top: 400, behavior: 'smooth' });
+    }
   };
 
   const sortOptions = [
@@ -220,7 +243,7 @@ const CategoryPageClient = ({
         {/* Desktop Sidebar Filters - Hidden on mobile */}
         <div className="hidden lg:block w-80 bg-white border-r border-gray-100 min-h-screen shadow-sm">
           <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-pink-50 to-purple-50">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2">
               <SlidersHorizontal className="h-5 w-5 text-pink-600" />
               <h3 className="text-lg font-bold text-gray-900">Filters</h3>
               <Sparkles className="h-4 w-4 text-pink-500" />
@@ -320,37 +343,8 @@ const CategoryPageClient = ({
               </div>
             )}
 
-            {/* Tags Filter */}
-            {availableTags.length > 0 && (
-              <div className="space-y-4">
-                <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                  Tags
-                </h4>
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <div className="flex flex-wrap gap-2">
-                    {availableTags.slice(0, 10).map((tag) => (
-                      <button
-                        key={tag}
-                        onClick={() => {
-                          if (selectedTags.includes(tag)) {
-                            setSelectedTags(selectedTags.filter(t => t !== tag));
-                          } else {
-                            setSelectedTags([...selectedTags, tag]);
-                          }
-                        }}
-                        className={`px-3 py-2 rounded-full text-sm font-medium border-2 transition-all duration-200 ${selectedTags.includes(tag)
-                          ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-gray-200 bg-white hover:border-blue-300 text-gray-700'
-                          }`}
-                      >
-                        {tag}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}            {/* Clear Filters */}
+                     
+            {/* Clear Filters */}
             <button
               onClick={() => {
                 setPriceRange([0, maxPrice]);
@@ -482,11 +476,10 @@ const CategoryPageClient = ({
                             <button
                               key={i}
                               onClick={() => handlePageChange(i)}
-                              className={`px-3 py-2 text-sm font-medium border-t border-b border-r border-gray-300 ${
-                                i === pagination.page
+                              className={`px-3 py-2 text-sm font-medium border-t border-b border-r border-gray-300 ${i === pagination.page
                                   ? "bg-pink-600 text-white border-pink-600"
                                   : "text-gray-500 hover:text-pink-600 hover:bg-gray-50"
-                              }`}
+                                }`}
                             >
                               {i}
                             </button>
@@ -708,16 +701,16 @@ const CategoryPageClient = ({
             </div>
 
             <div className="p-4 border-t bg-gray-50 flex gap-3 sticky bottom-0">              <button
-                onClick={() => {
-                  setPriceRange([0, maxPrice]);
-                  setSelectedWeights([]);
-                  setSelectedTags([]);
-                  setSortBy("popularity");
-                }}
-                className="flex-1 py-3 border-2 border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-white transition-all duration-200"
-              >
-                Clear All
-              </button>
+              onClick={() => {
+                setPriceRange([0, maxPrice]);
+                setSelectedWeights([]);
+                setSelectedTags([]);
+                setSortBy("popularity");
+              }}
+              className="flex-1 py-3 border-2 border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-white transition-all duration-200"
+            >
+              Clear All
+            </button>
               <button
                 onClick={() => setShowFilters(false)}
                 className="flex-1 py-3 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-xl text-sm font-semibold hover:from-pink-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
