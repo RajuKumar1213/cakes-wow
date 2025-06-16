@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import Admin from '@/models/Admin.models';
-import connectDB from '@/lib/mongodb';
+import dbConnect from '@/lib/mongodb';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request) {
   try {
-    await connectDB();
+    await dbConnect();
     
     // Check if admin already exists
     const adminExists = await Admin.adminExists();
@@ -81,7 +81,7 @@ export async function POST(request) {
 // GET method to check if admin exists
 export async function GET() {
   try {
-    await connectDB();
+    await dbConnect();
     
     const adminExists = await Admin.adminExists();
     const admin = adminExists ? await Admin.findOne({}).select('email createdAt') : null;

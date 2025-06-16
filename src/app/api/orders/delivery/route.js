@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
+import dbConnect from '@/lib/mongodb';
 import Order from '@/models/Order.models';
 import { generateOrderId } from '@/lib/serverOrderUtils';
 import jwt from 'jsonwebtoken';
@@ -41,7 +41,7 @@ export async function POST(request) {
         // Continue without user ID for guest orders
       }
     }    // Connect to database
-    await connectDB();
+    await dbConnect();
 
     // Generate unique order ID
     const orderId = generateOrderId();

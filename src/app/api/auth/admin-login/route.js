@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import Admin from '@/models/Admin.models';
-import connectDB from '@/lib/mongodb';
+import dbConnect from '@/lib/mongodb';
 
 export async function POST(request) {
   try {
-    await connectDB();
+    await dbConnect();
     
     const { email, password } = await request.json();
 

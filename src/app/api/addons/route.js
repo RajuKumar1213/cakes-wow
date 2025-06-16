@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/mongodb';
+import dbConnect from '@/lib/mongodb';
 import AddOn from '@/models/AddOn.models';
 import { uploadOnCloudinary, deleteFromCloudinary } from '@/helpers/uploadOnCloudinary';
 import { writeFile, mkdir } from 'fs/promises';
@@ -10,7 +10,7 @@ import mongoose from 'mongoose';
 // GET - Fetch all add-ons or single add-on by ID
 export async function GET(request) {
   try {
-    await connectDB();
+    await dbConnect();
     
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -68,7 +68,7 @@ export async function GET(request) {
 // POST - Create new add-on with image upload
 export async function POST(request) {
   try {
-    await connectDB();
+    await dbConnect();
     
     const formData = await request.formData();
     const name = formData.get('name');
@@ -194,7 +194,7 @@ export async function POST(request) {
 // PUT - Update add-on by ID with optional image upload
 export async function PATCH(request) {
   try {
-    await connectDB();
+    await dbConnect();
     
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -385,7 +385,7 @@ export async function PATCH(request) {
 // DELETE - Delete add-on by ID with Cloudinary cleanup
 export async function DELETE(request) {
   try {
-    await connectDB();
+    await dbConnect();
     
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
