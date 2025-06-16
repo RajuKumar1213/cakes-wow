@@ -1,12 +1,5 @@
 {
   "version": 2,
-  "env": {
-    "MONGODB_URI": "@mongodb_uri",
-    "NEXTAUTH_SECRET": "@nextauth_secret",
-    "RAZORPAY_KEY_ID": "@razorpay_key_id",
-    "RAZORPAY_KEY_SECRET": "@razorpay_key_secret",
-    "NODE_ENV": "production"
-  },
   "functions": {
     "src/app/api/**/*.js": {
       "maxDuration": 30
