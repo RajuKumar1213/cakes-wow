@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ProductCardWrapper } from "@/components/ProductCard";
 import Loading from "@/components/Loading";
@@ -94,9 +94,11 @@ const CategoryPageClient = ({
     initialFilterOptions.priceRange?.max || 5000
   ]);
   const [selectedWeights, setSelectedWeights] = useState<string[]>([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [availableWeights] = useState<string[]>(initialFilterOptions.weights);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);  const [availableWeights] = useState<string[]>(initialFilterOptions.weights);
   const [availableTags] = useState<string[]>(initialFilterOptions.tags);
+  
+  // Track if this is the initial render
+  const isInitialRender = useRef(true);
 
   // Sync price inputs with slider
   useEffect(() => {
@@ -203,13 +205,16 @@ const CategoryPageClient = ({
     } finally {
       setFilterLoading(false);
     }
-  };// Fetch products when filters change
+  };  // Fetch products when filters change
   useEffect(() => {
-    // Skip initial render since we have server-side data
-    if (priceRange[0] !== 0 || priceRange[1] !== (initialFilterOptions.priceRange?.max || 5000) ||
-      selectedWeights.length > 0 || selectedTags.length > 0 || sortBy !== "popularity") {
-      fetchFilteredProducts(1); // Reset to page 1 when filters change
+    // Skip the very first render since we have server-side data
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+      return;
     }
+    
+    // For all subsequent changes (including clearing filters), fetch new data
+    fetchFilteredProducts(1); // Reset to page 1 when filters change
   }, [priceRange, selectedWeights, selectedTags, sortBy]);
   // Handle page change
   const handlePageChange = (page: number) => {
@@ -342,11 +347,10 @@ const CategoryPageClient = ({
                 </div>
               </div>
             )}
-
-                     
             {/* Clear Filters */}
             <button
               onClick={() => {
+                // Reset all filters to their initial state
                 setPriceRange([0, maxPrice]);
                 setSelectedWeights([]);
                 setSelectedTags([]);
@@ -541,6 +545,7 @@ const CategoryPageClient = ({
                   We couldn't find any products matching your criteria. Try adjusting your filters.
                 </p>                <button
                   onClick={() => {
+                    // Reset all filters to their initial state
                     setPriceRange([0, maxPrice]);
                     setSelectedWeights([]);
                     setSelectedTags([]);
@@ -698,10 +703,9 @@ const CategoryPageClient = ({
                   </div>
                 </div>
               )}
-            </div>
-
-            <div className="p-4 border-t bg-gray-50 flex gap-3 sticky bottom-0">              <button
+            </div>            <div className="p-4 border-t bg-gray-50 flex gap-3 sticky bottom-0">              <button
               onClick={() => {
+                // Reset all filters to their initial state
                 setPriceRange([0, maxPrice]);
                 setSelectedWeights([]);
                 setSelectedTags([]);
