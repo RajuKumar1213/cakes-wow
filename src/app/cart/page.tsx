@@ -483,22 +483,12 @@ export default function CartPage() {
                       <span className="text-gray-600 text-sm">Delivery</span>
                       <div className="text-right">
                         <span className="font-semibold text-green-600 text-sm">Free</span>
-                        <div className="text-xs text-gray-500">Saved ₹50</div>
                       </div>
                     </div>
-
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600 text-sm">Taxes & Fees</span>
-                      <span className="font-semibold text-sm">₹0</span>
-                    </div>
-
                     <div className="border-t pt-3">
                       <div className="flex justify-between text-lg font-bold">
-                        <span>Total</span>
+                        <span>Grand Total</span>
                         <span className="text-orange-600">₹{(totalPrice + getAddOnsTotal()).toFixed(2)}</span>
-                      </div>
-                      <div className="text-xs text-green-600 text-right mt-1">
-                        You saved ₹50 on delivery!
                       </div>
                     </div>
                   </div>
@@ -545,15 +535,6 @@ export default function CartPage() {
                     </ul>
                   </div>
 
-                  {/* Contact Info */}
-                  <div className="mt-4 text-center">
-                    <p className="text-sm text-gray-600">
-                      Need help? Call us at{' '}
-                      <a href="tel:+911234567890" className="text-orange-600 font-semibold hover:underline">
-                        +91 12345 67890
-                      </a>
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>

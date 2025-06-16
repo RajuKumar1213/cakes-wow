@@ -2,11 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import AdminNavbar from '@/components/AdminNavbar';
 import {
-  ArrowLeft,
   Search,
   Filter,
   Eye,
@@ -20,7 +18,6 @@ import {
   Calendar,
   DollarSign,
   RefreshCw,
-  Download,
   User,
   CreditCard,
   Gift,
@@ -156,7 +153,7 @@ const OrderCard = ({ order, onStatusChange, onViewDetails, isUpdating }: {
     month: 'short',
     year: 'numeric'
   });
-  
+
   const formatTime = (dateString: string) => new Date(dateString).toLocaleTimeString('en-IN', {
     hour: '2-digit',
     minute: '2-digit'
@@ -176,7 +173,7 @@ const OrderCard = ({ order, onStatusChange, onViewDetails, isUpdating }: {
             <span className="font-medium">{order.customerInfo.fullName}</span>
           </div>
         </div>
-        
+
         <div className="text-left sm:text-right">
           <p className="text-lg sm:text-xl font-bold text-gray-900">{formatPrice(order.totalAmount)}</p>
           <PaymentStatusBadge status={order.paymentStatus} />
@@ -189,19 +186,19 @@ const OrderCard = ({ order, onStatusChange, onViewDetails, isUpdating }: {
           <Phone className="w-3 h-3 sm:w-4 sm:h-4 mt-0.5 flex-shrink-0" />
           <span>{order.customerInfo.mobileNumber}</span>
         </div>
-        
+
         <div className="flex items-start gap-2 text-gray-600">
           <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mt-0.5 flex-shrink-0" />
           <span className="line-clamp-2">
             {order.customerInfo.area}, {order.customerInfo.pinCode}
           </span>
         </div>
-        
+
         <div className="flex items-center gap-2 text-gray-600">
           <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
           <span>{formatDate(order.estimatedDeliveryDate)} at {order.timeSlot}</span>
         </div>
-          <div className="flex items-center gap-2 text-gray-600">
+        <div className="flex items-center gap-2 text-gray-600">
           <Package className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
           <span>
             {order.items.length} item{order.items.length > 1 ? 's' : ''}
@@ -261,7 +258,7 @@ const OrderCard = ({ order, onStatusChange, onViewDetails, isUpdating }: {
           <option value="delivered">Delivered</option>
           <option value="cancelled">Cancelled</option>
         </select>
-        
+
         <button
           onClick={() => onViewDetails(order)}
           className="bg-orange-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium hover:bg-orange-700 transition-colors flex items-center justify-center gap-1 sm:gap-2"
@@ -289,10 +286,10 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }: {
   });
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-2 sm:p-4 z-50">
       <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[95vh] overflow-y-auto">
         {/* Header - Mobile optimized */}
-        <div className="sticky top-0 bg-white p-4 sm:p-6 border-b z-10">
+        <div className="sticky top-0 bg-white p-4  border-b z-10">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Order Details</h2>
@@ -308,18 +305,7 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }: {
         </div>
 
         <div className="p-4 sm:p-6">
-          {/* Debug: Show complete order data in development */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mb-6 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <h4 className="font-mono text-xs text-yellow-800 mb-2">Debug: Order Structure</h4>
-              <div className="text-xs text-yellow-700">
-                <p>Order ID: {order.orderId}</p>
-                <p>Has addons field: {order.addons ? 'Yes' : 'No'}</p>
-                <p>Addons count: {order.addons?.length || 0}</p>
-                <p>Addons type: {typeof order.addons}</p>
-              </div>
-            </div>
-          )}
+
           {/* Order Status and Quick Actions */}
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -357,7 +343,7 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }: {
               <div className="space-y-2 text-sm">
                 <p><span className="text-gray-600">Name:</span> <span className="font-medium">{order.customerInfo.fullName}</span></p>
                 <p><span className="text-gray-600">Phone:</span> <span className="font-medium">{order.customerInfo.mobileNumber}</span></p>
-                <p><span className="text-gray-600">Payment:</span> 
+                <p><span className="text-gray-600">Payment:</span>
                   <span className="ml-2">
                     <PaymentStatusBadge status={order.paymentStatus} />
                   </span>
@@ -467,8 +453,10 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }: {
                     <p className="font-medium text-gray-900 text-sm sm:text-base">{formatPrice(item.price * item.quantity)}</p>
                   </div>
                 </div>
-              ))}            </div>
-          </div>          {/* Add-ons */}
+              ))}
+            </div>
+          </div>
+          {/* Add-ons */}
           {order.addons && order.addons.length > 0 && (
             <div className="mb-6">
               <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
@@ -505,16 +493,6 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }: {
             </div>
           )}
 
-          {/* Debug: Show addon data if exists */}
-          {process.env.NODE_ENV === 'development' && order.addons && (
-            <div className="mb-6 p-3 bg-gray-100 rounded-lg">
-              <h4 className="font-mono text-xs text-gray-600 mb-2">Debug: Addon Data</h4>
-              <pre className="text-xs text-gray-700 overflow-auto">
-                {JSON.stringify(order.addons, null, 2)}
-              </pre>
-            </div>
-          )}
-
           {/* Order Summary */}
           <div className="border-t pt-6">
             <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
@@ -527,20 +505,28 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }: {
                   <span className="text-gray-600">Subtotal:</span>
                   <span>{formatPrice(order.subtotal || 0)}</span>
                 </div>
+
+                {
+                  order.addons && order.addons.length > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Add-ons:</span>
+                      <span>{formatPrice(order.addons.reduce((total, addon) => total + (addon.price * addon.quantity), 0))}</span>
+                    </div>
+                  )
+                }
+
                 {order.deliveryCharge > 0 && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Delivery Charge:</span>
                     <span>{formatPrice(order.deliveryCharge)}</span>
                   </div>
                 )}
-                {order.onlineDiscount > 0 && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Online Discount:</span>
-                    <span>-{formatPrice(order.onlineDiscount)}</span>
-                  </div>
-                )}
+
+
+
+
                 <div className="flex justify-between font-medium text-lg border-t pt-2">
-                  <span>Total Amount:</span>
+                  <span>Total Amount :</span>
                   <span className="text-orange-600">{formatPrice(order.totalAmount)}</span>
                 </div>
               </div>
@@ -566,7 +552,6 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }: {
 export default function AdminOrders() {
   const { showSuccess, showError } = useToast();
   const router = useRouter();
-  
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -575,6 +560,13 @@ export default function AdminOrders() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [itemsPerPage] = useState(20); // Fixed at 5 items per page for testing
+  
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -584,21 +576,29 @@ export default function AdminOrders() {
     delivered: 0,
     cancelled: 0
   });
-
   // Fetch orders from API
-  const fetchOrders = async (showLoader = true) => {
+  const fetchOrders = async (page = currentPage, showLoader = true) => {
     try {
       if (showLoader) setLoading(true);
       setRefreshing(!showLoader);
-      
-      const response = await fetch('/api/orders?limit=50&page=1');
-      const data = await response.json();
-        if (data.success) {
-        console.log('📦 Fetched orders data:', data.orders);
-        console.log('📦 First order addons:', data.orders[0]?.addons);
+
+      const response = await fetch(`/api/orders?limit=${itemsPerPage}&page=${page}`);
+      const data = await response.json();     
+       if (data.success) {
+        
         setOrders(data.orders);
         setFilteredOrders(data.orders);
         
+        if (data.pagination) {
+          setTotalOrders(data.pagination.totalOrders);
+          setTotalPages(data.pagination.totalPages);
+          setCurrentPage(data.pagination.currentPage);
+        } else {
+          setTotalOrders(data.total || data.orders.length);
+          setTotalPages(data.totalPages || Math.ceil((data.total || data.orders.length) / itemsPerPage));
+          setCurrentPage(page);
+        }
+
         // Calculate stats
         const newStats = data.orders.reduce((acc: any, order: Order) => {
           acc.total++;
@@ -613,7 +613,7 @@ export default function AdminOrders() {
           delivered: 0,
           cancelled: 0
         });
-        
+
         setStats(newStats);
       } else {
         showError('Failed to fetch orders', data.error || 'Unknown error occurred');
@@ -635,7 +635,7 @@ export default function AdminOrders() {
   // Filter orders based on search and status
   useEffect(() => {
     let filtered = orders;
-    
+
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(order =>
@@ -645,11 +645,11 @@ export default function AdminOrders() {
         order.customerInfo.area.toLowerCase().includes(searchLower)
       );
     }
-    
+
     if (statusFilter !== 'all') {
       filtered = filtered.filter(order => order.status === statusFilter);
     }
-    
+
     setFilteredOrders(filtered);
   }, [orders, searchTerm, statusFilter]);
 
@@ -657,7 +657,7 @@ export default function AdminOrders() {
   const handleStatusChange = async (orderId: string, newStatus: Order['status']) => {
     try {
       setUpdating(true);
-      
+
       const response = await fetch(`/api/orders/${orderId}`, {
         method: 'PATCH',
         headers: {
@@ -665,27 +665,25 @@ export default function AdminOrders() {
         },
         body: JSON.stringify({ status: newStatus }),
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         // Update local state
-        setOrders(prev => prev.map(order => 
+        setOrders(prev => prev.map(order =>
           order.orderId === orderId ? { ...order, status: newStatus } : order
         ));
-        
+
         // Update selected order if it's the one being updated
         if (selectedOrder && selectedOrder.orderId === orderId) {
           setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);
         }
-        
+
         showSuccess(
-          'Order status updated!', 
+          'Order status updated!',
           `Order #${orderId} status changed to ${newStatus.replace('_', ' ')}`
-        );
-        
-        // Refresh stats
-        fetchOrders(false);
+        );        // Refresh stats
+        fetchOrders(currentPage, false);
       } else {
         showError('Failed to update order', data.error || 'Unknown error occurred');
       }
@@ -701,8 +699,28 @@ export default function AdminOrders() {
     setSelectedOrder(order);
   };
 
+  // Pagination functions
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      const newPage = currentPage - 1;
+      fetchOrders(newPage);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      const newPage = currentPage + 1;
+      fetchOrders(newPage);
+    }
+  };
+
+  const handlePageClick = (page: number) => {
+    if (page !== currentPage && page >= 1 && page <= totalPages) {
+      fetchOrders(page);
+    }
+  };
   const handleRefresh = () => {
-    fetchOrders(false);
+    fetchOrders(currentPage, false);
   };
 
   if (loading) {
@@ -718,12 +736,12 @@ export default function AdminOrders() {
   }
 
   const statuses = ['all', 'pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered', 'cancelled'];
-  
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Admin Navbar */}
       <AdminNavbar />
-      
+
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Header with Stats */}
@@ -791,7 +809,7 @@ export default function AdminOrders() {
                 />
               </div>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <div className="sm:w-48">
                 <select
@@ -806,10 +824,12 @@ export default function AdminOrders() {
                   ))}
                 </select>
               </div>
-              
+
               <div className="text-sm text-gray-600 flex items-center gap-2">
                 <Filter className="w-4 h-4" />
-                <span>{filteredOrders.length} of {orders.length} orders</span>
+                <span>
+                  Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalOrders)} of {totalOrders} orders
+                </span>
               </div>
             </div>
           </div>
@@ -835,10 +855,10 @@ export default function AdminOrders() {
               {orders.length === 0 ? 'No orders yet' : 'No orders found'}
             </h3>
             <p className="text-gray-600 mb-4">
-              {orders.length === 0 
-                ? 'Orders will appear here when customers place them.' 
-                : searchTerm || statusFilter !== 'all' 
-                  ? 'Try adjusting your search or filter criteria.' 
+              {orders.length === 0
+                ? 'Orders will appear here when customers place them.'
+                : searchTerm || statusFilter !== 'all'
+                  ? 'Try adjusting your search or filter criteria.'
                   : 'No orders match your current filters.'
               }
             </p>
@@ -850,6 +870,47 @@ export default function AdminOrders() {
                 Refresh Orders
               </button>
             )}
+          </div>
+        )}        {/* Pagination - Compact and stylish */}
+        {totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-center gap-3">
+            <button
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1 || refreshing}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Prev
+            </button>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">Page</span>
+              <select
+                value={currentPage}
+                onChange={(e) => handlePageClick(Number(e.target.value))}
+                className="px-2 py-1 text-xs border border-gray-300 rounded-md focus:ring-1 focus:ring-orange-500 focus:border-orange-500 bg-white"
+              >
+                {[...Array(totalPages)].map((_, index) => (
+                  <option key={index} value={index + 1}>
+                    {index + 1}
+                  </option>
+                ))}
+              </select>
+              <span className="text-xs text-gray-500">of {totalPages}</span>
+            </div>
+
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages || refreshing}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              Next
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
         )}
       </main>

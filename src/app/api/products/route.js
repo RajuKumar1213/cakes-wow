@@ -2,17 +2,14 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Product from "@/models/Product.models";
 import Category from "@/models/Category.models";
-import { uploadOnCloudinary, uploadBufferToCloudinary } from "@/helpers/uploadOnCloudinary";
-import fs from "fs";
+import {  uploadBufferToCloudinary } from "@/helpers/uploadOnCloudinary";
 import path from "path";
 import {
   createProductFilters,
   createSortOptions,
   calculatePagination,
   formatProductResponse,
-  generateUniqueSlug,
   validatePrice,
-  validateImageUrls,
   validateWeightOptions,
 } from "@/lib/productUtils";
 

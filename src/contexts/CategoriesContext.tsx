@@ -93,7 +93,7 @@ export function CategoriesProvider({ children }: { children: ReactNode }) {
       dispatch({ type: 'SET_LOADING', payload: true });
       dispatch({ type: 'CLEAR_ERROR' });
 
-      const response = await fetch('/api/categories');
+      const response = await fetch('/api/categories', { cache: 'force-cache' });
       const data = await response.json();
       if (data.success) {
         // The API returns grouped categories by default

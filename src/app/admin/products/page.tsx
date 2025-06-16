@@ -83,7 +83,6 @@ interface AddOn {
   updatedAt: string;
 }
 
-
 export default function AdminProducts() {
   const { user, loading } = useAuth();
   const { showSuccess, showError } = useToast();
@@ -99,109 +98,151 @@ export default function AdminProducts() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showProductForm, setShowProductForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | undefined>();
-  const [editingCategory, setEditingCategory] = useState<
+  const [editingProduct, setEditingProduct] = useState<Product | undefined>(); const [editingCategory, setEditingCategory] = useState<
     Category | undefined
-  >(); const [loadingData, setLoadingData] = useState(true); const [deleteLoading, setDeleteLoading] = useState(false);
+  >();
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [sortBy, setSortBy] = useState<'name' | 'price' | 'created' | 'group'>('created');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [loadData, setLoadData] = useState(false);
-  const [addons, setAddons] = useState<AddOn[]>([]);
+  const [loadData, setLoadData] = useState(false); const [addons, setAddons] = useState<AddOn[]>([]);
   const [filteredAddons, setFilteredAddons] = useState<AddOn[]>([]);
   const [showAddOnForm, setShowAddOnForm] = useState(false);
   const [editingAddOn, setEditingAddOn] = useState<AddOn | undefined>();
 
+  // Loading states for each tab
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [addonsLoading, setAddonsLoading] = useState(false);
+
+  // Track which tabs have been loaded
+  const [loadedTabs, setLoadedTabs] = useState<Set<string>>(new Set());
+
+  // Pagination state for products
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [itemsPerPage] = useState(10); // Fixed items per page
+
+  // Initialize by loading the default active tab
   useEffect(() => {
     if (!loading) {
-      fetchData();
-      fetchAddOns();
+      loadTabData(activeTab);
     }
-  }, [loading, editingCategory, loadData, editingAddOn]);
-  const fetchData = async () => {
-    setLoadingData(true);
+  }, [loading]);
+
+  // Load data when tab changes
+  useEffect(() => {
+    if (!loading && activeTab) {
+      loadTabData(activeTab);
+    }
+  }, [activeTab, editingCategory, loadData, editingAddOn]);
+
+  // Function to load data for specific tab
+  const loadTabData = async (tab: "products" | "categories" | "addons") => {
+    // Skip if already loaded (except when explicitly refreshing)
+    if (loadedTabs.has(tab) && !loadData) {
+      return;
+    }    switch (tab) {
+      case 'products':
+        await fetchProducts(currentPage);
+        break;
+      case 'categories':
+        await fetchCategories();
+        break;
+      case 'addons':
+        await fetchAddOns();
+        break;
+    }    // Mark tab as loaded
+    setLoadedTabs(prev => new Set([...prev, tab]));
+    if (loadData) setLoadData(false);
+  };
+
+  // Separate fetch functions for each data type
+  const fetchProducts = async (page = 1) => {
+    setProductsLoading(true);
     try {
-      const [productsRes, categoriesRes, allCategoriesRes] = await Promise.all([
-        fetch("/api/products?limit=100"),
-        fetch("/api/categories"),
+      // Build query parameters
+      const params = new URLSearchParams({
+        limit: itemsPerPage.toString(),
+        page: page.toString(),
+        sortBy: sortBy,
+        sortOrder: sortOrder,
+      });
+
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
+
+      if (selectedCategory !== 'all') {
+        params.append('category', selectedCategory);
+      }
+
+      const [productsRes, allCategoriesRes] = await Promise.all([
+        fetch(`/api/products?${params.toString()}`),
         fetch("/api/categories?format=all"),
       ]);
 
-      const [productsData, categoriesData, allCategoriesData] = await Promise.all([
+      const [productsData, allCategoriesData] = await Promise.all([
         productsRes.json(),
-        categoriesRes.json(),
         allCategoriesRes.json(),
       ]);
 
       setAllCategories(allCategoriesData.data || []);
       setProducts(productsData.data.products || []);
-      setCategories(categoriesData.data || []);
+      
+      // Update pagination state
+      if (productsData.data.pagination) {
+        setCurrentPage(productsData.data.pagination.page);
+        setTotalPages(productsData.data.pagination.pages);
+        setTotalProducts(productsData.data.pagination.total);      }
+        console.log('📦 Products loaded:', productsData.data.products?.length || 0);
+      console.log('📄 Pagination:', productsData.data.pagination);
     } catch (error) {
-      console.error("Failed to fetch data:", error);
-      showError("Error", "Failed to load data");
+      console.error("Failed to fetch products:", error);
+      showError("Error", "Failed to load products");
     } finally {
-      setLoadingData(false);
+      setProductsLoading(false);    }
+  };
+
+  const fetchCategories = async () => {
+    setCategoriesLoading(true);
+    try {
+      const categoriesRes = await fetch("/api/categories?format=all");
+      const categoriesData = await categoriesRes.json();
+
+      setCategories(categoriesData.data || []);
+      console.log('📁 Categories loaded:', categoriesData.data?.length || 0);
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+      showError("Error", "Failed to load categories");
+    } finally {
+      setCategoriesLoading(false);
     }
   };
 
   const fetchAddOns = async () => {
+    setAddonsLoading(true);
     try {
       const res = await fetch("/api/addons");
       const data = await res.json();
       setAddons(data.data || []);
+      console.log('🎁 Add-ons loaded:', data.data?.length || 0);
     } catch (error) {
+      console.error("Failed to fetch add-ons:", error);
       showError("Error", "Failed to load add-ons");
+    } finally {
+      setAddonsLoading(false);
     }
   };
-
-  // Filter products
+  // Filter products on server side when filters change
   useEffect(() => {
-    let filtered = products;
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (product) =>
-          product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          product.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+    if (loadedTabs.has('products') && activeTab === 'products') {
+      // Reset to page 1 when filters change
+      fetchProducts(1);
     }
+  }, [searchTerm, selectedCategory, sortBy, sortOrder]);
 
-    if (selectedCategory !== "all") {
-      filtered = filtered.filter((product) =>
-        product.categories.some((cat) => cat.slug === selectedCategory)
-      );
-    }
-
-    // Sort products
-    filtered.sort((a, b) => {
-      let aValue, bValue;
-
-      switch (sortBy) {        case 'name':
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
-          break;
-        case 'price':
-          aValue = a.price;
-          bValue = b.price;
-          break;
-        case 'created':
-          aValue = new Date(a.createdAt).getTime();
-          bValue = new Date(b.createdAt).getTime();
-          break;
-        default:
-          aValue = a.name.toLowerCase();
-          bValue = b.name.toLowerCase();
-      }
-
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
-
-    setFilteredProducts(filtered);
-  }, [products, searchTerm, selectedCategory, sortBy, sortOrder]);
   useEffect(() => {
     let filtered = addons;
     if (searchTerm) {
@@ -219,14 +260,18 @@ export default function AdminProducts() {
       setSortOrder('asc');
     }
   };
-
   const handleSaveProduct = async () => {
     // This function is called by ProductForm's onSuccess callback
     setShowProductForm(false);
     setEditingProduct(undefined);
-    await fetchData(); // Refresh the data
+    // Mark products tab as not loaded to force refresh
+    setLoadedTabs(prev => {
+      const newSet = new Set(prev);
+      newSet.delete('products');
+      return newSet;
+    });
+    await loadTabData('products');
   };
-
   const handleDeleteProduct = async (id: string) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
     try {
@@ -238,6 +283,13 @@ export default function AdminProducts() {
       console.log(data);
       if (data.success) {
         showSuccess("Success", "Product deleted successfully!");
+        // Mark products tab as not loaded to force refresh
+        setLoadedTabs(prev => {
+          const newSet = new Set(prev);
+          newSet.delete('products');
+          return newSet;
+        });
+        await loadTabData('products');
       }
     } catch (error) {
       console.error("Failed to delete product:", error);
@@ -245,22 +297,30 @@ export default function AdminProducts() {
     } finally {
       setDeleteLoading(false);
     }
-  };
-  const handleDeleteCategory = async (id: string) => {
+  }; const handleDeleteCategory = async (id: string) => {
     if (!confirm("Are you sure you want to delete this category?")) return;
     try {
+      setDeleteLoading(true);
       const response = await fetch(`/api/categories?id=${id}`, {
         method: 'DELETE',
       });
-      showSuccess("Success", "Category deleted successfully!");
-      // Refresh categories after deletion
-      fetchData();
+      if (response.ok) {
+        showSuccess("Success", "Category deleted successfully!");
+        // Mark categories tab as not loaded to force refresh
+        setLoadedTabs(prev => {
+          const newSet = new Set(prev);
+          newSet.delete('categories');
+          return newSet;
+        });
+        await loadTabData('categories');
+      }
     } catch (error) {
       console.error("Failed to delete category:", error);
       showError("Error", "Failed to delete category");
+    } finally {
+      setDeleteLoading(false);
     }
-  };
-  const handleDeleteAddOn = async (id: string) => {
+  }; const handleDeleteAddOn = async (id: string) => {
     if (!confirm("Are you sure you want to delete this add-on?")) return;
     try {
       setDeleteLoading(true);
@@ -270,20 +330,44 @@ export default function AdminProducts() {
       const data = await response.json();
       if (data.success) {
         showSuccess("Success", "Add-on deleted successfully!");
-        fetchAddOns();
+        // Mark addons tab as not loaded to force refresh
+        setLoadedTabs(prev => {
+          const newSet = new Set(prev);
+          newSet.delete('addons');
+          return newSet;
+        });
+        await loadTabData('addons');
       }
     } catch (error) {
       showError("Error", "Failed to delete add-on");
     } finally {
       setDeleteLoading(false);
     }
-  };
-  const handleSaveAddOn = async () => {
+  }; const handleSaveAddOn = async () => {
     setShowAddOnForm(false);
     setEditingAddOn(undefined);
-    await fetchAddOns();
+    // Mark addons tab as not loaded to force refresh
+    setLoadedTabs(prev => {
+      const newSet = new Set(prev);
+      newSet.delete('addons');
+      return newSet;
+    });
+    await loadTabData('addons');
+  };// Check if currently loading any data
+  const isCurrentTabLoading = () => {
+    switch (activeTab) {
+      case 'products':
+        return productsLoading;
+      case 'categories':
+        return categoriesLoading;
+      case 'addons':
+        return addonsLoading;
+      default:
+        return false;
+    }
   };
-  if (loading || loadingData) {
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -319,9 +403,8 @@ export default function AdminProducts() {
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-500">
                   Total Products
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {products.length}
+                </p>                <p className="text-2xl font-bold text-gray-900">
+                  {totalProducts}
                 </p>
               </div>
             </div>
@@ -332,26 +415,23 @@ export default function AdminProducts() {
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-500">
                   Categories
+                </p>                <p className="text-2xl font-bold text-gray-900">
+                  {loadedTabs.has('categories') ? categories.length : '-'}
                 </p>
+              </div>
+            </div>
+          </div>          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center">
+              <Tag className="w-8 h-8 text-purple-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-500">Add-ons</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {allCategories.length}
+                  {loadedTabs.has('addons') ? addons.length : '-'}
                 </p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center">
-              <Tag className="w-8 h-8 text-orange-600" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Featured</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {products.filter((p) => p.isFeatured).length}
-                </p>              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
+        </div>{/* Tabs */}
         <div className="flex border-b border-gray-200">
           <button
             onClick={() => setActiveTab("products")}
@@ -361,7 +441,8 @@ export default function AdminProducts() {
               }`}
           >
             <Package className="w-4 h-4 inline mr-2" />
-            Products ({products.length})
+            Products ({loadedTabs.has('products') ? products.length : '-'})
+            {productsLoading && <Loader2 className="w-3 h-3 inline ml-1 animate-spin" />}
           </button>
           <button
             onClick={() => setActiveTab("categories")}
@@ -371,7 +452,8 @@ export default function AdminProducts() {
               }`}
           >
             <CategoryIcon className="w-4 h-4 inline mr-2" />
-            Categories ({allCategories?.length})
+            Categories ({loadedTabs.has('categories') ? categories.length : '-'})
+            {categoriesLoading && <Loader2 className="w-3 h-3 inline ml-1 animate-spin" />}
           </button>
           <button
             onClick={() => setActiveTab("addons")}
@@ -381,7 +463,8 @@ export default function AdminProducts() {
               }`}
           >
             <Tag className="w-4 h-4 inline mr-2" />
-            Addons ({addons.length})
+            Addons ({loadedTabs.has('addons') ? addons.length : '-'})
+            {addonsLoading && <Loader2 className="w-3 h-3 inline ml-1 animate-spin" />}
           </button>
         </div>
       </div>
@@ -390,7 +473,8 @@ export default function AdminProducts() {
         <>
           {/* Controls */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">                <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">                
+              <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative">
                 <Search className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
                 <input
@@ -436,19 +520,18 @@ export default function AdminProducts() {
                   Grid
                 </button>
               </div>
-            </div>                <button
-              onClick={() => setShowProductForm(true)}
-              className="bg-orange-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center gap-2"
-            >
+            </div>
+              <button
+                onClick={() => setShowProductForm(true)}
+                className="bg-orange-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center gap-2"
+              >
                 <Plus className="w-4 h-4" />
                 Add Product
               </button>
-            </div>
-
-            {/* Results Summary */}
+            </div>            {/* Results Summary */}
             <div className="flex items-center justify-between text-sm text-gray-600 mt-4">
               <div>
-                Showing {filteredProducts.length} of {products.length} products
+                Showing {products.length} of {totalProducts} products (Page {currentPage} of {totalPages})
                 {selectedCategory !== 'all' && (
                   <span className="ml-2 px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs">
                     Filtered by category
@@ -466,9 +549,18 @@ export default function AdminProducts() {
                 <span className="text-xs">({sortOrder === 'asc' ? 'A-Z' : 'Z-A'})</span>
               </div>
             </div>
-          </div>            {/* Products Display */}
-          {viewMode === 'table' ? (
-            /* Products Table */            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          </div>
+          {/* Products Display */}
+          {productsLoading ? (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12">
+              <div className="text-center">
+                <Loader2 className="w-8 h-8 text-orange-600 animate-spin mx-auto mb-4" />
+                <p className="text-gray-600">Loading products...</p>
+              </div>
+            </div>
+          ) : viewMode === 'table' ? (
+            /* Products Table */
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
@@ -496,7 +588,8 @@ export default function AdminProducts() {
                             sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
                           ) : (
                             <ArrowUpDown className="w-3 h-3 opacity-50" />
-                          )}                        </div>
+                          )}
+                        </div>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Availability
@@ -529,7 +622,7 @@ export default function AdminProducts() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredProducts.map((product) => (
+                    {products.map((product) => (
                       <tr key={product._id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -672,7 +765,7 @@ export default function AdminProducts() {
           ) : (
             /* Products Grid */
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {filteredProducts.map((product) => (
+              {products.map((product) => (
                 <div
                   key={product._id}
                   className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
@@ -744,14 +837,15 @@ export default function AdminProducts() {
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between">                        <div className="flex items-center gap-2">
-                      <span className={`text-xs px-2 py-1 rounded-full ${product.isAvailable
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                        }`}>
-                        {product.isAvailable ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs px-2 py-1 rounded-full ${product.isAvailable
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                          }`}>
+                          {product.isAvailable ? 'Active' : 'Inactive'}
+                        </span>
+                      </div>
 
                       <div className="flex items-center gap-2">
                         <button
@@ -773,11 +867,56 @@ export default function AdminProducts() {
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              ))}            </div>
           )}
 
-          {filteredProducts.length === 0 && (
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mt-6">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalProducts)} of {totalProducts} products
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      if (currentPage > 1) {
+                        fetchProducts(currentPage - 1);
+                      }
+                    }}
+                    disabled={currentPage <= 1 || productsLoading}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                      currentPage <= 1 || productsLoading
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    Previous
+                  </button>
+                  
+                  <span className="px-3 py-1.5 text-sm text-gray-600">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  
+                  <button
+                    onClick={() => {
+                      if (currentPage < totalPages) {
+                        fetchProducts(currentPage + 1);
+                      }
+                    }}
+                    disabled={currentPage >= totalPages || productsLoading}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                      currentPage >= totalPages || productsLoading
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}          {products.length === 0 && !productsLoading && (
             <div className="text-center py-12">
               <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -791,7 +930,8 @@ export default function AdminProducts() {
             </div>
           )}
         </>
-      )}        {/* Categories Tab */}
+      )}        
+      {/* Categories Tab */}
       {activeTab === "categories" && (
         <>
           {/* Controls */}
@@ -807,16 +947,14 @@ export default function AdminProducts() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent w-full sm:w-64"
                   />
-                </div>
-
-                {/* Group Filter */}
+                </div>                {/* Group Filter */}
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                 >
                   <option value="all">All Groups</option>
-                  {Array.from(new Set(allCategories.map(cat => cat.group))).map(group => (
+                  {Array.from(new Set(Array.isArray(categories) ? categories.map(cat => cat.group) : [])).map(group => (
                     <option key={group} value={group}>{group}</option>
                   ))}
                 </select>
@@ -855,15 +993,15 @@ export default function AdminProducts() {
               </button>
             </div>
 
-            {/* Results Summary */}
+            {/* Results Summary */}              
             <div className="flex items-center justify-between text-sm text-gray-600 mt-4">
               <div>
-                Showing {allCategories.filter(cat =>
+                Showing {Array.isArray(categories) ? categories.filter(cat =>
                   (searchTerm === '' || cat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     cat.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     cat.group.toLowerCase().includes(searchTerm.toLowerCase())) &&
                   (selectedCategory === 'all' || cat.group === selectedCategory)
-                ).length} of {allCategories.length} categories
+                ).length : 0} of {Array.isArray(categories) ? categories.length : 0} categories
                 {selectedCategory !== 'all' && (
                   <span className="ml-2 px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs">
                     Filtered by group
@@ -882,9 +1020,15 @@ export default function AdminProducts() {
               </div>
             </div>
           </div>
-
           {/* Categories Display */}
-          {viewMode === 'table' ? (
+          {categoriesLoading ? (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12">
+              <div className="text-center">
+                <Loader2 className="w-8 h-8 text-orange-600 animate-spin mx-auto mb-4" />
+                <p className="text-gray-600">Loading categories...</p>
+              </div>
+            </div>
+          ) : viewMode === 'table' ? (
             /* Categories Table */
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="overflow-x-auto">
@@ -940,9 +1084,8 @@ export default function AdminProducts() {
                         Actions
                       </th>
                     </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {allCategories
+                  </thead>                  <tbody className="bg-white divide-y divide-gray-200">
+                    {Array.isArray(categories) ? categories
                       .filter(cat =>
                         (searchTerm === '' || cat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           cat.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1042,8 +1185,7 @@ export default function AdminProducts() {
                                 title="Edit category"
                               >
                                 <Edit className="w-4 h-4" />
-                              </button>
-                              <button
+                              </button>                              <button
                                 onClick={() => handleDeleteCategory(category._id)}
                                 className="text-red-600 hover:text-red-800 transition-colors p-1 hover:bg-red-50 rounded"
                                 title="Delete category"
@@ -1057,15 +1199,14 @@ export default function AdminProducts() {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                      )) : []}
                   </tbody>
                 </table>
               </div>
             </div>
-          ) : (
-            /* Categories Grid */
+          ) : (              /* Categories Grid */
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {allCategories
+              {Array.isArray(categories) ? categories
                 .filter(cat =>
                   (searchTerm === '' || cat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     cat.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -1142,13 +1283,12 @@ export default function AdminProducts() {
                           </button>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                ))}
+                    </div>                  </div>
+                )) : []}
             </div>
           )}
 
-          {allCategories.length === 0 && (
+          {Array.isArray(categories) && categories.length === 0 && !categoriesLoading && (
             <div className="text-center py-12">
               <CategoryIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -1197,80 +1337,89 @@ export default function AdminProducts() {
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredAddons.map((addon) => (
-                    <tr key={addon._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {addon.image ? (
-                          <Image src={addon.image} alt={addon.name} width={48} height={48} className="h-12 w-12 rounded-lg object-cover" />
-                        ) : (
-                          <div className="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                            <ImageIcon className="w-5 h-5 text-gray-400" />
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{addon.name}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">₹{addon.price}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{addon.rating?.toFixed(1) || '0.0'}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
-                        {new Date(addon.createdAt).toLocaleDateString('en-US', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric'
-                        })}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => {
-                              setEditingAddOn(addon);
-                              setShowAddOnForm(true);
-                            }}
-                            className="text-blue-600 hover:text-blue-900 transition-colors p-1 rounded hover:bg-blue-50"
-                            title="Edit Add-On"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteAddOn(addon._id)}
-                            className="text-red-600 hover:text-red-900 transition-colors p-1 rounded hover:bg-red-50"
-                            title="Delete Add-On"
-                            disabled={deleteLoading}
-                          >
-                            {deleteLoading ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="w-4 h-4" />
-                            )}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {addonsLoading ? (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12">
+              <div className="text-center">
+                <Loader2 className="w-8 h-8 text-orange-600 animate-spin mx-auto mb-4" />
+                <p className="text-gray-600">Loading add-ons...</p>
+              </div>
             </div>
-          </div>
-          {filteredAddons.length === 0 && (<div className="text-center py-12">
+          ) : (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredAddons.map((addon) => (
+                      <tr key={addon._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {addon.image ? (
+                            <Image src={addon.image} alt={addon.name} width={48} height={48} className="h-12 w-12 rounded-lg object-cover" />
+                          ) : (
+                            <div className="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                              <ImageIcon className="w-5 h-5 text-gray-400" />
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{addon.name}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">₹{addon.price}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{addon.rating?.toFixed(1) || '0.0'}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                          {new Date(addon.createdAt).toLocaleDateString('en-US', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => {
+                                setEditingAddOn(addon);
+                                setShowAddOnForm(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-900 transition-colors p-1 rounded hover:bg-blue-50"
+                              title="Edit Add-On"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAddOn(addon._id)}
+                              className="text-red-600 hover:text-red-900 transition-colors p-1 rounded hover:bg-red-50"
+                              title="Delete Add-On"
+                              disabled={deleteLoading}
+                            >
+                              {deleteLoading ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+          {filteredAddons.length === 0 && !addonsLoading && (<div className="text-center py-12">
             <Tag className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No add-ons found</h3>
             <p className="text-gray-600">Get started by adding your first add-on</p>
@@ -1289,15 +1438,24 @@ export default function AdminProducts() {
             setEditingProduct(undefined);
           }}
         />
-      )}
-      {showCategoryForm && (
+      )}      {showCategoryForm && (
         <CategoryForm
           category={editingCategory}
           onCancel={() => {
             setShowCategoryForm(false);
             setEditingCategory(undefined);
           }}
-          setLoadData={setLoadData}
+          setLoadData={() => {
+            setShowCategoryForm(false);
+            setEditingCategory(undefined);
+            // Mark categories tab as not loaded to force refresh
+            setLoadedTabs(prev => {
+              const newSet = new Set(prev);
+              newSet.delete('categories');
+              return newSet;
+            });
+            loadTabData('categories');
+          }}
         />
       )}
       {showAddOnForm && (

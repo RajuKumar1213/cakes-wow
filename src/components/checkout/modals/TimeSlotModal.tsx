@@ -140,38 +140,57 @@ const TimeSlotModal: React.FC<TimeSlotModalProps> = ({
                 Choose Different Date
               </button>
             )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-2 md:gap-3 mb-4">
-            {timeSlots.map((slot) => (
-              <button
-                key={slot.value}
-                onClick={() => handleTimeSelection(slot.value)}
-                className={`p-2 md:p-3 rounded-lg border-2 text-xs md:text-sm font-medium transition-all ${selectedTime === slot.value
-                  ? 'border-pink-500 bg-pink-50 text-pink-700'
-                  : 'border-gray-200 bg-white text-gray-700 hover:border-pink-300 hover:bg-pink-50'
-                  }`}
-              >
-                {slot.display}
-              </button>
-            ))}
-          </div>
-        )}        </div>        {/* Footer */}
-        <div className="p-3 md:p-4 border-t bg-gray-50 flex-shrink-0">          <p className="text-xs md:text-sm text-gray-600 text-center">
+          </div>        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-2 md:gap-3 mb-4">
+              {timeSlots.map((slot) => (
+                <button
+                  key={slot.value}
+                  onClick={() => handleTimeSelection(slot.value)}
+                  className={`p-2 md:p-3 rounded-lg border-2 text-xs md:text-sm font-medium transition-all ${selectedTime === slot.value
+                    ? 'border-pink-500 bg-pink-50 text-pink-700'
+                    : 'border-gray-200 bg-white text-gray-700 hover:border-pink-300 hover:bg-pink-50'
+                    }`}
+                >
+                  {slot.display}
+                </button>
+              ))}
+            </div>            {/* Special Delivery Messages */}
+            {selectedDeliveryTypeId === 'midnight' && (
+              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-3 mb-4">
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className="text-purple-600">🌙</span>
+                  <h4 className="text-sm font-semibold text-purple-800">Midnight Delivery</h4>
+                </div>
+                <p className="text-xs text-purple-700">
+                  We will deliver your product on {new Date(selectedDate).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })} after 11:00 PM.
+                </p>
+                
+              </div>
+            )}
+
+          
+
+          </>
+        )}</div>        
+        {/* Footer */}
+        <div className="p-3 md:p-4 border-t bg-gray-50 flex-shrink-0">          
+          <p className="text-xs md:text-sm text-gray-600 text-center">
           {timeSlots.length === 0
             ? isToday(selectedDate)
               ? `Earliest delivery: ${getMinimumDeliveryTimeForDisplay(maxPreparationTime)} (${maxPreparationTime}h prep needed). Please select tomorrow.`
               : 'No slots available for selected date.'
             : isToday(selectedDate)
-              ? `Available after ${getMinimumDeliveryTimeForDisplay(maxPreparationTime)} (${maxPreparationTime}h preparation)`
-              : deliveryType === 'asap'
-                ? 'Select earliest available time'
-                : 'Choose your preferred delivery time'
+              ? 'Select earliest available time'
+              : 'Choose your preferred delivery time'
           }
         </p>
         </div>
-      </div>
-    </div>
+          </div>
+        </div>
   );
 };
 

@@ -138,14 +138,14 @@ const AddOnModal: React.FC<AddOnModalProps> = ({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-pink-600 to-orange-600 text-white p-6 relative flex-shrink-0">
+        <div className="bg-gradient-to-r from-pink-600 to-orange-600 text-white p-4 relative flex-shrink-0">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-full transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
-          <h2 className="text-2xl font-bold mb-2">Make it Extra Special! 🎉</h2>
+          <h2 className="text-2xl font-bold ">Make it Extra Special! 🎉</h2>
           <p className="text-pink-100">
             {productName ? `Perfect add-ons for your ${productName}` : 'Add magical touches to your order'}
           </p>
