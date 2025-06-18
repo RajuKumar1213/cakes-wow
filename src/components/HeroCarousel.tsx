@@ -165,7 +165,7 @@ const HeroCarousel = () => {
                   className="w-full flex-shrink-0 px-1 sm:px-3 carousel-item"
                 >
                   <div
-                    className={`relative h-[350px] md:h-[320px]  rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group`}
+                    className={`relative h-[350px] md:h-[330px]  rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group`}
                     onClick={() => router.push(banner.href)}
                   >
                     {" "}

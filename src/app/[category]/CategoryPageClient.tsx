@@ -80,9 +80,8 @@ const CategoryPageClient = ({
     total: initialProducts.length,
     pages: Math.ceil(initialProducts.length / 24)
   });
-
   const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState("popularity");
+  const [sortBy, setSortBy] = useState("displayOrder"); // Use displayOrder to respect admin ordering
   const [priceInputs, setPriceInputs] = useState({
     min: 0,
     max: initialFilterOptions.priceRange?.max || 5000
@@ -137,9 +136,7 @@ const CategoryPageClient = ({
     // Make sure to include all selected tags
     selectedTags.forEach(tag => {
       params.append('tags', tag);
-    });
-
-    // Add sorting
+    });    // Add sorting
     if (sortBy === 'price_low') {
       params.append('sortBy', 'price');
       params.append('sortOrder', 'asc');
@@ -155,9 +152,17 @@ const CategoryPageClient = ({
     } else if (sortBy === 'newest') {
       params.append('sortBy', 'createdAt');
       params.append('sortOrder', 'desc');
-    } else {
+    } else if (sortBy === 'popularity') {
       params.append('sortBy', 'rating');
       params.append('sortOrder', 'desc');
+    } else if (sortBy === 'displayOrder') {
+      // Admin-defined ordering
+      params.append('sortBy', 'displayOrder');
+      params.append('sortOrder', 'asc');
+    } else {
+      // Default to admin ordering instead of rating
+      params.append('sortBy', 'displayOrder');
+      params.append('sortOrder', 'asc');
     }
 
     params.append('limit', '24');

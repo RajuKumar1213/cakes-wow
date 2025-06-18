@@ -88,25 +88,69 @@ export async function GET(request) {
     });
 
     // Calculate pagination
-    const { page: pageNum, limit: limitNum, skip } = calculatePagination(page, limit);
+    const { page: pageNum, limit: limitNum, skip } = calculatePagination(page, limit);    // Create sort options
+    const sort = createSortOptions(sortBy, sortOrder, categoryObjectId);
+    
+    console.log('🔍 API Sorting Debug:', {
+      sortBy,
+      sortOrder,
+      categoryObjectId: categoryObjectId?.toString(),
+      sortOptions: sort
+    });
 
-    // Create sort options
-    const sort = createSortOptions(sortBy, sortOrder);
-
-    // Handle aggregation for price filtering
+    // Handle aggregation for price filtering or category-specific ordering
     let products, total;
     
-    if (filters._useAggregation) {
-      // Use aggregation pipeline for price filtering
+    if (filters._useAggregation || sort._categorySpecificOrder) {
+      // Use aggregation pipeline for price filtering or category-specific ordering
       const aggregationSteps = filters._aggregationSteps || [];
       delete filters._useAggregation;
       delete filters._aggregationSteps;
       
-      // Build aggregation pipeline
-      const pipeline = [
+      let pipeline = [
         ...aggregationSteps,
-        { $match: filters },
-        { $sort: sort },
+        { $match: filters }
+      ];      // Handle category-specific ordering
+      if (sort._categorySpecificOrder) {
+        pipeline.push(
+          // Add a field for category-specific order
+          {
+            $addFields: {
+              categoryDisplayOrder: {
+                $let: {
+                  vars: {
+                    categoryOrder: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$categoryOrders",
+                            cond: { $eq: ["$$this.category", categoryObjectId] }
+                          }
+                        },
+                        0
+                      ]
+                    }
+                  },
+                  in: {
+                    $ifNull: ["$$categoryOrder.displayOrder", 999999] // Put unordered items at end
+                  }
+                }
+              }
+            }
+          },
+          // Sort by category-specific order, then by creation date
+          {
+            $sort: {
+              categoryDisplayOrder: sort.direction,
+              createdAt: -1
+            }
+          }
+        );
+      } else {
+        pipeline.push({ $sort: sort });
+      }
+      
+      pipeline.push(
         { $skip: skip },
         { $limit: limitNum },
         {
@@ -117,7 +161,7 @@ export async function GET(request) {
             as: 'categories'
           }
         }
-      ];
+      );
       
       // Get total count
       const countPipeline = [
@@ -142,9 +186,7 @@ export async function GET(request) {
         .skip(skip)
         .limit(limitNum)
         .lean();
-    }
-
-    // Format products for response
+    }    // Format products for response
     const formattedProducts = products.map((product) => ({
       ...product,
       discountPercentage:
@@ -153,6 +195,17 @@ export async function GET(request) {
           : 0,
       finalPrice: product.discountedPrice || product.price,
     }));
+
+    // Debug: Log the order of products when sorting by displayOrder
+    if (sortBy === 'displayOrder' && categoryObjectId) {
+      console.log('📋 Products Order Debug:');
+      formattedProducts.forEach((product, index) => {
+        const categoryOrder = product.categoryOrders?.find(order => 
+          order.category?.toString() === categoryObjectId.toString()
+        );
+        console.log(`${index + 1}. ${product.name} - Display Order: ${categoryOrder?.displayOrder || 'unset'}`);
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -363,9 +416,7 @@ export async function POST(request) {
     const validatedPrice = price > 0 ? validatePrice(price) : 0;
     const validatedDiscountedPrice = discountedPrice && discountedPrice > 0
       ? validatePrice(discountedPrice)
-      : null;
-
-    // Create product
+      : null;    // Create product
     const product = new Product({
       name,
       slug,
@@ -379,9 +430,38 @@ export async function POST(request) {
       isFeatured: Boolean(isFeatured),
       isAvailable: Boolean(isAvailable),
       preparationTime: preparationTime,
+      categoryOrders: [], // Will be set by admin later
     });
 
     await product.save();
+
+    // Initialize category orders for each assigned category
+    // Set to the highest order + 1 for each category (so new products appear last by default)
+    const categoryOrderPromises = categories.map(async (categoryId) => {
+      const maxOrder = await Product.aggregate([
+        { $match: { "categoryOrders.category": categoryId } },
+        { $unwind: "$categoryOrders" },
+        { $match: { "categoryOrders.category": categoryId } },
+        { $group: { _id: null, maxOrder: { $max: "$categoryOrders.displayOrder" } } }
+      ]);
+      
+      const nextOrder = maxOrder.length > 0 ? (maxOrder[0].maxOrder || 0) + 1 : 1;
+      
+      // Add category order for this product
+      return Product.findByIdAndUpdate(
+        product._id,
+        {
+          $push: {
+            categoryOrders: {
+              category: categoryId,
+              displayOrder: nextOrder
+            }
+          }
+        }
+      );
+    });
+
+    await Promise.all(categoryOrderPromises);
 
     // Populate categories for response
     await product.populate("categories", "name slug group type");

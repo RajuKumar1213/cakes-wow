@@ -57,11 +57,12 @@ async function fetchCategory(slug: string): Promise<Category | null> {
 async function fetchProducts(categorySlug: string): Promise<{ products: Product[], pagination: any }> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-    const apiUrl = `${baseUrl}/api/products?category=${categorySlug}&sortBy=rating&sortOrder=desc&limit=24&page=1`;
+    // Use displayOrder first to respect admin ordering, fallback to rating
+    const apiUrl = `${baseUrl}/api/products?category=${categorySlug}&sortBy=displayOrder&sortOrder=asc&limit=24&page=1`;
     
-    
-    const response = await fetch(apiUrl, {
-      // next: { revalidate: 1800 }, // Revalidate every 30 minutes
+    console.log('📦 Fetching products with category-specific ordering:', apiUrl);
+      const response = await fetch(apiUrl, {
+      cache: 'no-store', // Disable caching temporarily to test ordering
       headers: {
         'Content-Type': 'application/json',
       },
@@ -74,6 +75,7 @@ async function fetchProducts(categorySlug: string): Promise<{ products: Product[
     
     const data = await response.json();
 
+    console.log('✅ Products fetched:', data.data?.products?.length || 0, 'products');
     
     return data.success ? {
       products: data.data.products || [],

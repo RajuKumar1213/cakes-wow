@@ -172,12 +172,13 @@ export function createProductFilters(params) {
  * Create sort options for MongoDB query
  * @param {string} sortBy - Sort field
  * @param {string} sortOrder - Sort order (asc/desc)
+ * @param {string} categoryId - Category ID for category-specific ordering
  * @returns {Object} - MongoDB sort object
  */
-export function createSortOptions(sortBy = 'createdAt', sortOrder = 'desc') {
+export function createSortOptions(sortBy = 'createdAt', sortOrder = 'desc', categoryId = null) {
   const validSortFields = [
     'name', 'price', 'createdAt', 'updatedAt', 
-    'rating', 'reviewCount', 'sortOrder'
+    'rating', 'reviewCount', 'sortOrder', 'displayOrder'
   ];
 
   if (!validSortFields.includes(sortBy)) {
@@ -185,6 +186,22 @@ export function createSortOptions(sortBy = 'createdAt', sortOrder = 'desc') {
   }
 
   const sortDirection = sortOrder.toLowerCase() === 'asc' ? 1 : -1;
+  
+  // Handle category-specific ordering
+  if (sortBy === 'displayOrder' && categoryId) {
+    // For category-specific ordering, we need to handle this in the aggregation pipeline
+    return { 
+      _categorySpecificOrder: true, 
+      categoryId, 
+      direction: sortDirection 
+    };
+  } else if (sortBy === 'displayOrder') {
+    // No global ordering - fallback to creation date
+    return { 
+      createdAt: -1 // Always sort by newest when no specific category
+    };
+  }
+  
   return { [sortBy]: sortDirection };
 }
 

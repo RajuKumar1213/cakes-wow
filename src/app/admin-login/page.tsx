@@ -86,9 +86,7 @@ export default function AdminLogin() {
 
       if (response.status === 200) {
         showSuccess("success", 'Login successful! Redirecting to admin dashboard...');
-        setTimeout(() => {
-          router.push('/admin');
-        }, 1500);
+        router.push('/admin');
       } else {
         showError("error", response.data.error || 'Login failed. Please check your credentials.');
       }

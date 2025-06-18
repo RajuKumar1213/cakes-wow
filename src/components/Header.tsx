@@ -217,10 +217,12 @@ const Header = () => {
                     <Search className="w-5 h-5" />
                   </button>
                 </form>
-              </div>{" "}              {/* Right side */}
+              </div>{" "}              
+              {/* Right side */}
               <div className="flex items-center space-x-6">
                 {user ? (
-                  <div className="flex items-center space-x-4">                    <div
+                  <div className="flex items-center space-x-4">                    
+                  <div
                       className="flex items-center space-x-1 cursor-pointer hover:text-pink-600 transition-colors"
                       onClick={() => router.push("/profile")}
                     >
@@ -286,6 +288,7 @@ const Header = () => {
                     );
 
                     return (
+
                       <div
                         key={group}
                         className="relative flex-shrink-0"
@@ -296,7 +299,6 @@ const Header = () => {
                         }}
                         onMouseLeave={handleMouseLeave}
                       >
-                        {" "}
                         <button
                           className="flex items-center space-x-1 hover:text-red-500 font-medium whitespace-nowrap text-sm px-1 py-2 rounded-md transition-colors duration-200"
                           onClick={(e) => {
@@ -308,26 +310,22 @@ const Header = () => {
                             }
                           }}
                         >
-                          <span>{group}</span>
-                          {groupedCategories[group].length > 1 && (
-                            <ChevronDown className="w-3 h-3" />
-                          )}
-                        </button>{" "}
+                          <span className="font-extrabold ">{group}</span>
+                        </button>
+                        
                         {isDropdownOpen === group.toLowerCase() &&
                           groupedCategories[group].length > 1 && (
                             <div
-                              className={`absolute top-full ${group == "Famous Character Cake" ? "-left-80" : "-left-1"} bg-white/95 backdrop-blur-xl shadow-2xl rounded-2xl border border-pink-100/50 overflow-hidden`}
+                              className={`absolute top-full ${group == "Famous Character Cake" ? "-left-80" : "-left-1"} bg-white/95 backdrop-blur-xl shadow-2xl rounded-2xl border border-pink-100/50 overflow-hidden `}
                               style={{
                                 boxShadow: "0 20px 40px rgba(5, 3, 3, 0.15), 0 0 20px rgba(236, 72, 153, 0.1)",
                                 zIndex: 9999,
                               }}
                             >
                               <div>
-                                {/* MODIFIED: p-4 to p-3 */}
                                 {Object.keys(categoriesByType).length > 1 ? (
-                                  // Multiple types - organize by type with dynamic width
                                   <div
-                                    className="flex flex-row gap-4" // This class 
+                                    className="flex flex-row gap-4"
                                   >
                                     {Object.entries(categoriesByType).map(
                                       (
@@ -397,8 +395,12 @@ const Header = () => {
                             </div>
                           )}
                       </div>
+                      
                     );
                   })}
+                  <Link href="/customized-cakes">
+                  <span className="font-extrabold text-sm hover:text-red-500 cursor-pointer">Customized Cakes</span>
+                  </Link>
               </div>{" "}
               {/* Gradient fade indicators for scrollable content */}
               <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-white via-pink-50/20 to-transparent pointer-events-none z-10"></div>

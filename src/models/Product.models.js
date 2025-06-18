@@ -29,10 +29,22 @@ const productSchema = new mongoose.Schema({
   imageUrls: [{
     type: String,
     required: true,
-  }],  categories: [{
+  }],    categories: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category',
     required: true,
+  }],
+  // Category-specific display ordering only
+  categoryOrders: [{
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+      required: true,
+    },
+    displayOrder: {
+      type: Number,
+      default: 0,
+    }
   }],
   weightOptions: [{
     weight: {
@@ -88,6 +100,7 @@ productSchema.index({ isFeatured: 1 });
 productSchema.index({ name: 'text', description: 'text' });
 productSchema.index({ createdAt: -1 }); // For sorting by newest
 productSchema.index({ rating: -1, reviewCount: -1 }); // For sorting by popularity
+productSchema.index({ 'categoryOrders.category': 1, 'categoryOrders.displayOrder': 1 }); // For category-specific ordering
 
 // Virtual for discount percentage
 productSchema.virtual('discountPercentage').get(function() {

@@ -50,7 +50,6 @@ export const deliveryTypes = [
     icon: "🌙",
     timeSlots: [
       { time: "11 PM - 12 AM", available: true },
-      { time: "12 AM - 1 AM", available: true }
     ],
   },
   {
