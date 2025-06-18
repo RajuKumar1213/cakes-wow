@@ -53,6 +53,9 @@ export default function MobileSearchPage() {
           <div className={`relative transition-all duration-300 ${
             isInputFocused ? 'transform scale-105' : ''
           }`}>
+            <span className="absolute left-6 top-1/2 -translate-y-1/2 z-10">
+              <Search className="w-5 h-5 text-gray-400" />
+            </span>
             <input
               type="text"
               placeholder="What sweet treat are you craving? 🍰"
@@ -60,7 +63,7 @@ export default function MobileSearchPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsInputFocused(true)}
               onBlur={() => setIsInputFocused(false)}
-              className={`w-full px-6 py-4 pr-14 bg-white rounded-2xl shadow-lg border-2 transition-all duration-300 text-gray-800 placeholder-gray-400 text-lg ${
+              className={`w-full pl-14 pr-14 py-4 bg-white rounded-2xl shadow-lg border-2 transition-all duration-300 text-gray-800 placeholder-gray-400 text-lg ${
                 isInputFocused 
                   ? 'border-pink-300 shadow-pink-200/50' 
                   : 'border-gray-100 hover:border-pink-200'

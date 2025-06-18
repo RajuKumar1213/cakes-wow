@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useCategories } from "@/contexts/CategoriesContext";
+import { useSearchSuggestions } from "@/hooks/useSearchSuggestions";
 import {
   Search,
   MapPin,
@@ -25,7 +26,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import Login from "./Login";
-
+import SearchDropdown from "./SearchDropdown";
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -36,19 +37,59 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const rightSidebarRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
   const [showLogin, setShowLogin] = useState(false);
+  // Real-time search functionality
+  const {
+    query: searchQuery,
+    suggestions,
+    isLoading: searchLoading,
+    showSuggestions,
+    selectedIndex,
+    handleQueryChange,
+    handleKeyboardNavigation,
+    clearSuggestions,
+    setShowSuggestions
+  } = useSearchSuggestions();
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
+      clearSuggestions();
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    const result = handleKeyboardNavigation(e.key);
+    
+    if (result === 'handled') {
+      e.preventDefault();
+    } else if (result && typeof result === 'object') {
+      // User selected a product with Enter key
+      e.preventDefault();
+      clearSuggestions();
+      router.push(`/products/${result.slug}`);
+    }
+  };
+
+  const handleProductClick = (slug: string) => {
+    clearSuggestions();
+  };
+
+  const handleViewAllResults = () => {
+    clearSuggestions();
+  };
+
+  const handlePopularSearchClick = (term: string) => {
+    // Update the search query and redirect to search results
+    handleQueryChange(term);
+    clearSuggestions();
+    router.push(`/search?q=${encodeURIComponent(term)}`);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -72,13 +113,19 @@ const Header = () => {
       ) {
         setIsRightSidebarOpen(false);
       }
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [setShowSuggestions]);
 
   // Create navigation structure from dynamic categories
   const navigationItems = Object.keys(groupedCategories).map((group) => ({
@@ -199,23 +246,38 @@ const Header = () => {
                   <div className="text-sm text-gray-500">Deliver to</div>
                   <div className="font-medium">Hyderabad</div>
                 </div>
-              </div>{" "}
-              {/* Search */}
-              <div className="flex-1 max-w-lg mx-8">
-                <form onSubmit={handleSearch} className="relative">
-                  <input
+              </div>{" "}            
+              <div className="flex-1 max-w-lg mx-8" ref={searchRef}>
+                <form onSubmit={handleSearchSubmit} className="relative">
+                  <div className="relative">                    <input
                     type="text"
-                    placeholder="Search for cakes, pastries..."
+                    placeholder="Search for cakes, occasions, flavors..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                    onChange={(e) => handleQueryChange(e.target.value)}
+                    onFocus={() => setShowSuggestions(true)}
+                    onKeyDown={handleSearchKeyDown}
+                    className="w-full pl-12 pr-4 py-3 text-sm text-gray-700 bg-white border border-gray-300 rounded-full focus:outline-none focus:ring-1 focus:ring-red-500 focus:border-red-500 transition-all duration-300"
                   />
-                  <button
-                    type="submit"
-                    className="absolute right-3 top-2.5 w-5 h-5 text-gray-400 hover:text-red-500 transition-colors"
-                  >
-                    <Search className="w-5 h-5" />
-                  </button>
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  
+                  {/* Loading indicator */}
+                  {searchLoading && (
+                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                      <div className="w-4 h-4 border-2 border-pink-200 border-t-pink-500 rounded-full animate-spin"></div>
+                    </div>
+                  )}
+                </div>
+                  {/* Search Dropdown */}                  {showSuggestions && (
+                  <SearchDropdown
+                    products={suggestions.products}
+                    query={suggestions.query}
+                    isLoading={searchLoading}
+                    selectedIndex={selectedIndex}
+                    onProductClick={handleProductClick}
+                    onViewAllResults={handleViewAllResults}
+                    onPopularSearchClick={handlePopularSearchClick}
+                  />
+                )}
                 </form>
               </div>{" "}              
               {/* Right side */}
@@ -263,7 +325,7 @@ const Header = () => {
           </div>{" "}
           {/* Desktop Navigation */}
           <nav
-            className=" border-gray-200  shadow-sm mt-23 relative z-40"
+            className=" border-gray-200 shadow-sm mt-23 relative z-40"
             ref={dropdownRef}
             style={{
               boxShadow:
@@ -271,7 +333,7 @@ const Header = () => {
             }}
           >
             <div className="container flex items-center justify-center px-6 relative">
-              <div className="flex items-center justify-start flex-wrap space-x-6 py-1 nav-scroll-container">
+              <div className="flex items-center justify-start flex-wrap space-x-6 pt-3 py-1 nav-scroll-container">
                 {!categoriesLoading &&
                   Object.keys(groupedCategories).map((group) => {
                     // Group categories by type within each group
