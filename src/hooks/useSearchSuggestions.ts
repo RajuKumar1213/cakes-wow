@@ -10,6 +10,18 @@ interface SearchProduct {
   slug: string;
   category: string;
   categorySlug: string;
+  weightOptions: Array<{
+    weight: string;
+    price: number;
+    discountedPrice?: number;
+  }>;
+  rating: number;
+  reviewCount: number;
+  firstWeightOption?: {
+    weight: string;
+    price: number;
+    discountedPrice?: number;
+  };
 }
 
 interface SearchSuggestions {

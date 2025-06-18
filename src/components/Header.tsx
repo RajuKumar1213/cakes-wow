@@ -333,7 +333,7 @@ const Header = () => {
             }}
           >
             <div className="container flex items-center justify-center px-6 relative">
-              <div className="flex items-center justify-start flex-wrap space-x-6 pt-3 py-1 nav-scroll-container">
+              <div className="flex items-center justify-start flex-wrap space-x-6 pt-2 py-1 nav-scroll-container">
                 {!categoriesLoading &&
                   Object.keys(groupedCategories).map((group) => {
                     // Group categories by type within each group
@@ -559,7 +559,8 @@ const Header = () => {
                     )}
                   </div>
                 ))}
-            </div>{" "}            {/* User Actions in Mobile Menu */}
+            </div>{" "}            
+            {/* User Actions in Mobile Menu */}
             <div className="p-4 border-t border-gray-200 space-y-3">
               {user ? (
                 <>

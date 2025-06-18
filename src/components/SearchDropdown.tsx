@@ -13,6 +13,18 @@ interface SearchProduct {
   slug: string;
   category: string;
   categorySlug: string;
+  weightOptions: Array<{
+    weight: string;
+    price: number;
+    discountedPrice?: number;
+  }>;
+  rating: number;
+  reviewCount: number;
+  firstWeightOption?: {
+    weight: string;
+    price: number;
+    discountedPrice?: number;
+  };
 }
 
 interface SearchDropdownProps {
@@ -54,17 +66,8 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
     onViewAllResults();
     router.push(`/search?q=${encodeURIComponent(query)}`);
   };
-  console.log('SearchDropdown render:', { 
-    products: products.length, 
-    query: query,
-    isLoading,
-    showConditions: {
-      hasProducts: products.length > 0,
-      queryEmpty: query.length === 0,
-      queryShort: query.length === 1,
-      queryLong: query.length >= 2
-    }
-  });
+  
+
 
   return (
     <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50 max-h-[500px] overflow-y-auto">
@@ -167,13 +170,18 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
                       sizes="100px"
                      
                     />
-                  </div>
-
-                  {/* Product Details */}
+                  </div>                  {/* Product Details */}
                   <div className="p-2">
                     <h3 className="font-medium text-xs text-gray-900 line-clamp-1 mb-1">
                       {product.name}
                     </h3>
+                    
+                    {/* Weight option if available */}
+                    {product.firstWeightOption && (
+                      <p className="text-xs text-gray-600 mb-1">
+                        {product.firstWeightOption.weight}
+                      </p>
+                    )}
                     
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-bold text-gray-900">
@@ -194,19 +202,27 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
                             <Star
                               key={star}
                               className={`w-2.5 h-2.5 ${
-                                star <= 4 ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                                star <= Math.floor(product.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'
                               }`}
                             />
                           ))}
                         </div>
-                        <span className="text-xs text-gray-600">4.9</span>
+                        <span className="text-xs text-gray-600">
+                          {product.rating > 0 ? product.rating.toFixed(1) : 'New'}
+                        </span>
+                        {product.reviewCount > 0 && (
+                          <span className="text-xs text-gray-500">
+                            ({product.reviewCount})
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          </div>          {/* View All Results Button */}
+          </div>          
+          {/* View All Results Button */}
           <div className="border-t border-gray-200 p-2">
             <button
               onClick={handleViewAllResults}
