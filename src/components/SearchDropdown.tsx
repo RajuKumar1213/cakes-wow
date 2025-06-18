@@ -170,18 +170,12 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
                       sizes="100px"
                      
                     />
-                  </div>                  {/* Product Details */}
+                  </div>                  
+                  {/* Product Details */}
                   <div className="p-2">
                     <h3 className="font-medium text-xs text-gray-900 line-clamp-1 mb-1">
                       {product.name}
                     </h3>
-                    
-                    {/* Weight option if available */}
-                    {product.firstWeightOption && (
-                      <p className="text-xs text-gray-600 mb-1">
-                        {product.firstWeightOption.weight}
-                      </p>
-                    )}
                     
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-bold text-gray-900">
