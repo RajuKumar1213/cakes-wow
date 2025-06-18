@@ -33,9 +33,15 @@ interface OrderItem {
   productId: string;
   name: string;
   price: number;
+  discountedPrice?: number;
   quantity: number;
   selectedWeight?: string;
   imageUrl: string;
+  customization?: {
+    type: 'photo-cake';
+    message: string;
+    imageUrl: string | null;
+  };
 }
 
 interface CustomerInfo {
@@ -355,20 +361,44 @@ export default function OrderConfirmationPage() {
                         fill
                         className="object-cover"
                       />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
+                    </div>                    <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-gray-900 text-sm sm:text-base truncate">{item.name}</h3>
                       {item.selectedWeight && (
                         <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-1">
                           <Gift className="w-3 h-3" />
                           Weight: {item.selectedWeight}
                         </p>
-                      )}
-                      <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-1">
+                      )}                      <p className="text-xs sm:text-sm text-gray-600 flex items-center gap-1">
                         <Star className="w-3 h-3 text-yellow-500" />
-                        ₹{item.price} × {item.quantity} = ₹{item.price * item.quantity}
+                        ₹{item.discountedPrice || item.price} × {item.quantity} = ₹{(item.discountedPrice || item.price) * item.quantity}
                       </p>
+                      
+                      {/* Photo Cake Customization Display */}
+                      {item.customization?.type === 'photo-cake' && (
+                        <div className="mt-2 p-2 bg-purple-50 rounded border border-purple-200">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-purple-800 font-semibold text-xs">📸 Photo Cake</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            {item.customization.imageUrl && (
+                              <div className="relative w-8 h-8 rounded overflow-hidden flex-shrink-0 border border-purple-300">
+                                <Image
+                                  src={item.customization.imageUrl}
+                                  alt="Custom photo"
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              {item.customization.message && (
+                                <p className="text-purple-700 text-xs italic">"{item.customization.message}"</p>
+                              )}
+                              <p className="text-purple-600 text-xs">Custom photo will be printed on cake</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}

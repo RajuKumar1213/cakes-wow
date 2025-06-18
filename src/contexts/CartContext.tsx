@@ -26,6 +26,12 @@ export interface CartItem {
   weightOptions?: { weight: string; price: number }[];
   selectedAddOns?: AddOn[];
   preparationTime?: string; // e.g., "4-6 hours", "3 hours"
+  customization?: {
+    type: 'photo-cake';
+    image: File | null;
+    message: string;
+    imageUrl: string | null;
+  };
 }
 
 export interface WishlistItem {
@@ -105,17 +111,23 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       
       // Check if item already exists
       const existingItemIndex = state.items.findIndex(item => item.id === itemId);
-      
-      let newItems: CartItem[];
-        if (existingItemIndex >= 0) {
+        let newItems: CartItem[];      if (existingItemIndex >= 0) {
+        // Get weight option for price calculation when updating existing item
+        const weightOption = selectedWeight 
+          ? product.weightOptions?.find((w: any) => w.weight === selectedWeight)
+          : null;
+          
         // Update existing item quantity and preserve preparation time
         newItems = state.items.map((item, index) =>
           index === existingItemIndex
             ? { 
                 ...item, 
-                quantity: item.quantity + quantity, 
+                quantity: item.quantity + quantity,
+                price: weightOption?.price || product.price,
+                discountedPrice: weightOption?.discountedPrice || product.discountedPrice,
                 selectedAddOns: selectedAddOns || item.selectedAddOns,
-                preparationTime: product.preparationTime || item.preparationTime // Ensure prep time is updated
+                preparationTime: product.preparationTime || item.preparationTime, // Ensure prep time is updated
+                customization: product.customization || item.customization // Update customization if provided
               }
             : item
         );
@@ -123,21 +135,21 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
         // Add new item
         const weightOption = selectedWeight 
           ? product.weightOptions?.find((w: any) => w.weight === selectedWeight)
-          : null;
-          const newItem: CartItem = {
+          : null;        const newItem: CartItem = {
           id: itemId,
           productId: product._id,
           name: product.name,
           slug: product.slug,
           imageUrl: product.imageUrls?.[0] || '',
           price: weightOption?.price || product.price,
-          discountedPrice: product.discountedPrice,
+          discountedPrice: weightOption?.discountedPrice || product.discountedPrice,
           weight: selectedWeight || product.weightOptions?.[0]?.weight || '1kg',
           quantity,
           selectedWeight,
           weightOptions: product.weightOptions,
           selectedAddOns: selectedAddOns || [],
           preparationTime: product.preparationTime, // Add preparation time from product
+          customization: product.customization, // Add customization data for photo cakes
           _id: undefined
         };
         

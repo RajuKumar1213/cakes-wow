@@ -32,6 +32,7 @@ interface OrderItem {
   productId: string;
   name: string;
   price: number;
+  discountedPrice?: number;
   quantity: number;
   selectedWeight?: string;
   imageUrl: string;

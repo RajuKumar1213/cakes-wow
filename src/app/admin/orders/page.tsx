@@ -30,9 +30,16 @@ interface OrderItem {
   productId: string;
   name: string;
   price: number;
+  discountedPrice?: number;
   quantity: number;
   selectedWeight: string;
   imageUrl: string;
+  customization?: {
+    type: 'photo-cake';
+    image: File | null;
+    message: string;
+    imageUrl: string | null;
+  };
 }
 
 interface OrderAddOn {
@@ -440,17 +447,45 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }: {
                     <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-200 rounded-lg flex items-center justify-center">
                       <Package className="w-6 h-6 text-gray-400" />
                     </div>
-                  )}
-                  <div className="flex-1 min-w-0">
+                  )}                  <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-gray-900 text-sm sm:text-base truncate">{item.name}</h4>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs sm:text-sm text-gray-600">
                       {item.selectedWeight && <span>Weight: {item.selectedWeight}</span>}
                       <span>Qty: {item.quantity}</span>
                       <span className="font-medium">₹{item.price} each</span>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium text-gray-900 text-sm sm:text-base">{formatPrice(item.price * item.quantity)}</p>
+                    
+                    {/* Photo Cake Customization Display */}
+                    {item.customization?.type === 'photo-cake' && (
+                      <div className="mt-2 p-2 bg-purple-50 rounded border border-purple-200">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-purple-800 font-semibold text-xs">📸 PHOTO CAKE</span>
+                          <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-medium">Custom Print Required</span>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          {item.customization.imageUrl && (
+                            <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 border-purple-300">
+                              <img
+                                src={item.customization.imageUrl}
+                                alt="Customer's photo for cake"
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+                                <span className="text-white text-xs font-bold">PRINT</span>
+                              </div>
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            {item.customization.message && (
+                              <p className="text-purple-700 text-xs italic mb-1">Message: "{item.customization.message}"</p>
+                            )}
+                            <p className="text-purple-600 text-xs font-medium">⚠️ Print this photo on the cake as per customer request</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>                  <div className="text-right">
+                    <p className="font-medium text-gray-900 text-sm sm:text-base">{formatPrice((item.discountedPrice || item.price) * item.quantity)}</p>
                   </div>
                 </div>
               ))}

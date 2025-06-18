@@ -148,7 +148,7 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
       )}      {/* Products Grid */}
       {!isLoading && products.length > 0 && (
         <>
-          <div className="p-3">
+          <div className="px-2 pb-6 pt-2">
             <div className="grid grid-cols-3 gap-2">
               {products.map((product, index) => (
                 <div
@@ -216,7 +216,7 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
               ))}
             </div>
           </div>          
-          {/* View All Results Button */}
+          {/* View All Results Button
           <div className="border-t border-gray-200 p-2">
             <button
               onClick={handleViewAllResults}
@@ -225,7 +225,7 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
               <span>View All Results</span>
               <ArrowRight className="w-3 h-3" />
             </button>
-          </div>
+          </div> */}
         </>
       )}
     </div>

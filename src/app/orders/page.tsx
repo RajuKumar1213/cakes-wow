@@ -27,9 +27,15 @@ interface OrderItem {
   productId: string;
   name: string;
   price: number;
+  discountedPrice?: number;
   quantity: number;
   selectedWeight?: string;
   imageUrl: string;
+  customization?: {
+    type: 'photo-cake';
+    message: string;
+    imageUrl: string;
+  };
 }
 
 interface CustomerInfo {
@@ -262,29 +268,54 @@ export default function OrdersPage() {
                                 <span className="text-xs font-bold text-gray-600">+{order.items.length - 2}</span>
                               </div>
                             )}
-                          </div>
-
-                          {/* Order Info */}
+                          </div>                          {/* Order Info */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between">
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-gray-800 truncate">
                                   {order.items[0].name}
+                                  {order.items[0].customization?.type === 'photo-cake' && ' (Photo Cake)'}
                                   {order.items.length > 1 && ` +${order.items.length - 1} more`}
                                 </p>
                                 <p className="text-xs text-gray-500 mt-1">
                                   {totalItems} item{totalItems > 1 ? 's' : ''} • {formatDate(order.orderDate)}
                                 </p>
+                                {/* Show custom message for photo cakes */}
+                                {order.items[0].customization?.message && (
+                                  <p className="text-xs text-purple-600 mt-1 italic">
+                                    "{order.items[0].customization.message}"
+                                  </p>
+                                )}
                                 <div className="flex items-center gap-1 mt-2">
                                   <MapPin className="w-3 h-3 text-gray-400" />
                                   <span className="text-xs text-gray-500 truncate">{order.customerInfo.area}</span>
                                 </div>
                               </div>
-                              <Link href={`/order-confirmation/${order.orderId}`}>
-                                <button className="ml-2 p-2 rounded-lg bg-gradient-to-r from-pink-500 to-orange-500 text-white hover:from-pink-600 hover:to-orange-600 transition-all duration-300">
-                                  <ArrowRight className="w-4 h-4" />
-                                </button>
-                              </Link>
+                              
+                              {/* Photo Cake Custom Image Display (Right Side) */}
+                              <div className="flex items-center gap-2 ml-2">
+                                {order.items[0].customization?.imageUrl && (
+                                  <div className="relative">
+                                    <div className="w-16 h-16 rounded-lg overflow-hidden shadow-md border-2 border-purple-200">
+                                      <Image
+                                        src={order.items[0].customization.imageUrl}
+                                        alt="Custom photo"
+                                        width={64}
+                                        height={64}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </div>
+                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
+                                      <span className="text-xs text-white">📷</span>
+                                    </div>
+                                  </div>
+                                )}
+                                <Link href={`/order-confirmation/${order.orderId}`}>
+                                  <button className="p-2 rounded-lg bg-gradient-to-r from-pink-500 to-orange-500 text-white hover:from-pink-600 hover:to-orange-600 transition-all duration-300">
+                                    <ArrowRight className="w-4 h-4" />
+                                  </button>
+                                </Link>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -298,10 +329,18 @@ export default function OrdersPage() {
                           {/* Left: Order Info */}
                           <div className="flex items-center gap-6">
                             {/* Items Images */}
-                            <div className="flex -space-x-3">
-                              {order.items.slice(0, 3).map((item, index) => (
-                                <div key={index} className="w-16 h-16 rounded-2xl overflow-hidden ring-3 ring-white shadow-lg">
-                                  {item.imageUrl ? (
+                            <div className="flex -space-x-3">                              {order.items.slice(0, 3).map((item, index) => (
+                                <div key={index} className="relative w-16 h-16 rounded-2xl overflow-hidden ring-3 ring-white shadow-lg">
+                                  {/* Prioritize photo cake custom image over product image */}
+                                  {item.customization?.imageUrl ? (
+                                    <Image
+                                      src={item.customization.imageUrl}
+                                      alt={`Custom photo for ${item.name}`}
+                                      width={64}
+                                      height={64}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : item.imageUrl ? (
                                     <Image
                                       src={item.imageUrl}
                                       alt={item.name}
@@ -314,6 +353,12 @@ export default function OrdersPage() {
                                       <ChefHat className="w-7 h-7 text-pink-500" />
                                     </div>
                                   )}
+                                  {/* Photo cake indicator */}
+                                  {item.customization?.type === 'photo-cake' && (
+                                    <div className="absolute -top-1 -right-1 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center">
+                                      <span className="text-sm text-white">📷</span>
+                                    </div>
+                                  )}
                                 </div>
                               ))}
                               {order.items.length > 3 && (
@@ -321,17 +366,24 @@ export default function OrdersPage() {
                                   <span className="text-sm font-bold text-gray-600">+{order.items.length - 3}</span>
                                 </div>
                               )}
-                            </div>
-
-                            {/* Order Details */}
-                            <div>
+                            </div>                            {/* Order Details */}
+                            <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
                                 <h3 className="text-lg font-semibold text-gray-800">
                                   {order.items[0].name}
+                                  {order.items[0].customization?.type === 'photo-cake' && ' (Photo Cake)'}
                                   {order.items.length > 1 && ` +${order.items.length - 1} more`}
                                 </h3>
                                 <span className="text-sm font-mono text-gray-500">#{order.orderId}</span>
                               </div>
+                              
+                              {/* Show custom message for photo cakes */}
+                              {order.items[0].customization?.message && (
+                                <p className="text-sm text-purple-600 mb-2 italic">
+                                  Custom Message: "{order.items[0].customization.message}"
+                                </p>
+                              )}
+                              
                               <div className="flex items-center gap-6 text-sm text-gray-600">
                                 <div className="flex items-center gap-1">
                                   <Package className="w-4 h-4" />
@@ -353,8 +405,29 @@ export default function OrdersPage() {
                             </div>
                           </div>
 
-                          {/* Right: Status and Actions */}
+                          {/* Right: Status, Photo Cake Image, and Actions */}
                           <div className="flex items-center gap-6">
+                            {/* Photo Cake Custom Image Display (Right Side) */}
+                            {order.items[0].customization?.imageUrl && (
+                              <div className="relative">
+                                <div className="w-20 h-20 rounded-xl overflow-hidden shadow-lg border-3 border-purple-200">
+                                  <Image
+                                    src={order.items[0].customization.imageUrl}
+                                    alt="Custom photo cake image"
+                                    width={80}
+                                    height={80}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                                <div className="absolute -top-2 -right-2 w-7 h-7 bg-purple-500 rounded-full flex items-center justify-center shadow-md">
+                                  <span className="text-white text-sm">📷</span>
+                                </div>
+                                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center rounded-b-xl">
+                                  Custom Photo
+                                </div>
+                              </div>
+                            )}
+                            
                             <div className="text-right">
                               <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium ${statusInfo.color} mb-2`}>
                                 {getStatusIcon(order.status)}
@@ -369,7 +442,7 @@ export default function OrdersPage() {
                                 View Details
                               </button>
                             </Link>
-                          </div>                        </div>
+                          </div></div>
                       </div>
                     </div>
                   </div>

@@ -57,13 +57,13 @@ export default function RootLayout({
       </head>
       <body
         className={`${poppins.variable} ${inter.variable} font-inter antialiased`}
-      >
-        <AuthProvider>
+      >        <AuthProvider>
           <CartProvider>
             <CategoriesProvider>
               <ToastProvider>
                 <ImagePreloader />
                 {children}
+             
               </ToastProvider>
             </CategoriesProvider>
           </CartProvider>

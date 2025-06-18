@@ -11,12 +11,12 @@ export function formatOrderForDisplay(order) {
     orderId: order.orderId,
     customerName: order.customerInfo.fullName,
     mobileNumber: order.customerInfo.mobileNumber,
-    items: order.items.map(item => ({
-      name: item.name,
+    items: order.items.map(item => ({      name: item.name,
       quantity: item.quantity,
       price: item.price,
+      discountedPrice: item.discountedPrice,
       selectedWeight: item.selectedWeight,
-      total: item.price * item.quantity
+      total: (item.discountedPrice || item.price) * item.quantity
     })),
     totalAmount: order.totalAmount,
     status: order.status,

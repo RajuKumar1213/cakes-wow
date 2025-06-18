@@ -6,6 +6,7 @@ export interface CartItem {
   id: string;
   name: string;
   price: number;
+  discountedPrice?: number;
   quantity: number;
   weight?: string;
   image?: string;
@@ -22,7 +23,7 @@ export interface CartItem {
  */
 export const calculateSubtotal = (cartItems: CartItem[]): number => {
   return cartItems.reduce((total, item) => {
-    const itemTotal = item.price * item.quantity;
+    const itemTotal = (item.discountedPrice || item.price) * item.quantity;
     const addOnsTotal = item.addOns?.reduce((addOnSum, addOn) => 
       addOnSum + (addOn.price * addOn.quantity), 0) || 0;
     return total + itemTotal + addOnsTotal;

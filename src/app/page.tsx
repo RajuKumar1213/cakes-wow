@@ -7,10 +7,10 @@ import {
   BestSeller,
   CelebratedLovedDay,
   SpeciallyTendingCakes,
+  WhatsAppButton,
 } from "@/components";
 import CategorySection from "@/components/CategorySection";
 import { useEffect } from "react";
-import { Phone } from "lucide-react"; // Ensure Phone is imported
 
 interface Product {
   _id: string;
@@ -38,12 +38,6 @@ export default function Home() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-
-  const whatsappLink = `https://wa.me/918019288448?text=Hi! I would like to know more about your cakes.`; // Using the same number
-
-  const handleWhatsAppClick = () => {
-    window.open(whatsappLink, "_blank");
-  };
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
@@ -227,18 +221,9 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
-
+      </section>     
+      <WhatsAppButton/> 
       <Footer />
-
-      {/* Floating WhatsApp Button */}
-      <button
-        onClick={handleWhatsAppClick}
-        className="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-lg z-50 flex items-center justify-center transform hover:scale-110 transition-all duration-300"
-        aria-label="Chat with us on WhatsApp"
-      >
-        <Phone size={28} /> {/* Changed to Phone icon */}
-      </button>
     </main>
   );
 }

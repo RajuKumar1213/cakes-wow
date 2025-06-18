@@ -46,11 +46,10 @@ const uploadBufferToCloudinary = async (buffer: Buffer, filename: string) => {
     }
 
     return new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        {
+      cloudinary.uploader.upload_stream(        {
           resource_type: 'auto',
-          public_id: `products/${filename}`,
-          folder: 'bakingo-products',
+          public_id: `photo-cakes/${filename}`,
+          folder: 'cakeswow-photo-cakes',
         },
         (error, result) => {
           if (error) {
@@ -68,6 +67,55 @@ const uploadBufferToCloudinary = async (buffer: Buffer, filename: string) => {
   }
 };
 
+// upload file on cloudinary with flexible options (for photo-cake orders)
+const uploadToCloudinary = async (options: {
+  buffer: Buffer;
+  folder?: string;
+  public_id?: string;
+}) => {
+  try {
+    const { buffer, folder = 'cakeswow-uploads', public_id } = options;
+    
+    if (!buffer) return null;
+
+    // Check if Cloudinary is properly configured
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      console.error('Cloudinary configuration missing:', {
+        cloud_name: !!process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: !!process.env.CLOUDINARY_API_KEY,
+        api_secret: !!process.env.CLOUDINARY_API_SECRET
+      });
+      throw new Error('Cloudinary environment variables are not configured properly');
+    }
+
+    return new Promise((resolve, reject) => {
+      const uploadOptions: any = {
+        resource_type: 'auto',
+        folder: folder,
+      };
+      
+      if (public_id) {
+        uploadOptions.public_id = public_id;
+      }
+
+      cloudinary.uploader.upload_stream(
+        uploadOptions,
+        (error, result) => {
+          if (error) {
+            console.error('Cloudinary upload error:', error);
+            reject(error);
+          } else {
+            resolve(result);
+          }
+        }
+      ).end(buffer);
+    });
+  } catch (error) {
+    console.error('Cloudinary upload error:', error);
+    return null;
+  }
+};
+
 // delete file on cloudinary
 const deleteFromCloudinary = async (publicId: string) => {
   try {
@@ -79,4 +127,4 @@ const deleteFromCloudinary = async (publicId: string) => {
   }
 };
 
-export { uploadOnCloudinary, uploadBufferToCloudinary, deleteFromCloudinary };
+export { uploadOnCloudinary, uploadBufferToCloudinary, deleteFromCloudinary, uploadToCloudinary };

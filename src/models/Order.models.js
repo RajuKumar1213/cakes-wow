@@ -26,10 +26,23 @@ const orderItemSchema = new mongoose.Schema({
   selectedWeight: {
     type: String,
     default: "",
-  },
+  },  
   imageUrl: {
     type: String,
     default: "",
+  },
+  customization: {
+    type: {
+      type: String,
+      enum: ['photo-cake'],
+    },
+    message: {
+      type: String,
+      trim: true,
+    },
+    imageUrl: {
+      type: String,
+    },
   },
 });
 

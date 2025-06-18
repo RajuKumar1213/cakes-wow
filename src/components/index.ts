@@ -16,4 +16,6 @@ export {default as CelebratedLovedDay} from "./CelebrateLovedDay"
 export {default as SpeciallyTendingCakes} from "./SpeciallyTendingCakes"
 export { default as AddOns } from './AddOns';
 export { default as AddOnModal } from './AddOnModal';
+export { default as PhotoCakeCustomization } from './PhotoCakeCustomization';
+export { default as WhatsAppButton } from './WhatsAppButton';
 export { useToast } from './Toast';

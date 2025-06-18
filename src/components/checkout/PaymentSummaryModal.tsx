@@ -10,6 +10,7 @@ interface PaymentSummaryModalProps {
       name: string;
       quantity: number;
       price: number;
+      discountedPrice?: number;
       weight?: string;
       imageUrl?: string;
     }>;
@@ -79,9 +80,8 @@ export const PaymentSummaryModal: React.FC<PaymentSummaryModalProps> = ({
                       <p className="text-gray-500 text-xs">
                         {item.weight && `${item.weight} • `}Qty: {item.quantity}
                       </p>
-                    </div>
-                    <span className="font-semibold text-gray-900">
-                      ₹{(item.price * item.quantity).toFixed(0)}
+                    </div>                    <span className="font-semibold text-gray-900">
+                      ₹{((item.discountedPrice || item.price) * item.quantity).toFixed(0)}
                     </span>
                   </div>
                 ))}

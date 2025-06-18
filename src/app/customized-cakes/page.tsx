@@ -4,11 +4,9 @@ import { useState } from "react";
 import Image from "next/image";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { MessageCircle } from "lucide-react";
+import WhatsAppButton from "@/components/WhatsAppButton";
 
 const CustomizedCakesPage = () => {
-  const whatsappLink = `https://wa.me/918019288448?text=Hi! I would like to know more about customized cakes.`;
-
   const customCakeTypes = [
     {
       id: 1,
@@ -33,13 +31,8 @@ const CustomizedCakesPage = () => {
     {
       id: 5,
       title: "Corporate Events",
-      image: "/images/designcake.webp",
-    }
+      image: "/images/designcake.webp",    }
   ];
-
-  const handleWhatsAppClick = () => {
-    window.open(whatsappLink, '_blank');
-  };
 
   return (
     <>
@@ -70,15 +63,16 @@ const CustomizedCakesPage = () => {
                 width={300} 
                 height={300}
                 className="mx-auto" 
+              />            </div>            
+            {/* Using the new WhatsApp component */}
+            <div className="mt-4">
+              <WhatsAppButton 
+                variant="inline" 
+                message="Hi! I would like to know more about customized cakes."
+                showIcon="message"
+                className="mx-auto"
               />
             </div>
-            <button
-              onClick={handleWhatsAppClick}
-              className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-md font-semibold text-lg flex items-center space-x-2 mx-auto transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg"
-            >
-              <MessageCircle className="w-6 h-6" />
-              <span>Chat with us on WhatsApp</span>
-            </button>
           </div>
         </div>
 

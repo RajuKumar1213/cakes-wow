@@ -264,9 +264,7 @@ export default function CartPage() {
                             <h3 className="font-semibold text-black hover:text-orange-600 cursor-pointer mb-1 md:mb-2 text-sm md:text-base line-clamp-2">
                               {item.name}
                             </h3>
-                          </Link>
-
-                          <div className="flex items-center gap-2 md:gap-3 mb-2">
+                          </Link>                          <div className="flex items-center gap-2 md:gap-3 mb-2">
                             <span className="bg-gray-100 px-2 py-0.5 md:py-1 rounded-full text-xs text-gray-600">
                               {item.weight}
                             </span>
@@ -275,6 +273,30 @@ export default function CartPage() {
                               <span className="text-xs text-gray-600">4.8</span>
                             </div>
                           </div>
+
+                          {/* Photo Cake Customization Display */}
+                          {item.customization?.type === 'photo-cake' && (
+                            <div className="mb-2 p-2 bg-purple-50 border border-purple-200 rounded-lg">
+                              <div className="flex items-center gap-2">
+                                <div className="relative w-10 h-10 rounded overflow-hidden border border-purple-200">
+                                  {item.customization.imageUrl && (
+                                    <Image
+                                      src={item.customization.imageUrl}
+                                      alt="Custom photo"
+                                      fill
+                                      className="object-cover"
+                                    />
+                                  )}
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-xs font-medium text-purple-800">🎂 Custom Photo Cake</p>
+                                  {item.customization.message && (
+                                    <p className="text-xs text-purple-600">"{item.customization.message}"</p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
 
                           <div className="flex flex-col gap-2 md:gap-3">
                             {/* Price */}

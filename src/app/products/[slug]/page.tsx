@@ -11,8 +11,10 @@ import {
   Plus,
   Share2,
   Check,
+  Camera,
 } from "lucide-react";
 import { Breadcrumb, Footer, Header, AddOnModal } from "@/components";
+import PhotoCakeCustomization from "@/components/PhotoCakeCustomization";
 import { useCart, AddOn } from "@/contexts/CartContext";
 import { useToast } from "@/contexts/ToastContext";
 import useSWR from "swr";
@@ -74,20 +76,21 @@ const ProductPage = () => {
     isInWishlist,
     isInCart,
   } = useCart();
-  const { showSuccess } = useToast();
-  const [product, setProduct] = useState<Product | null>(null);
+  const { showSuccess } = useToast();  const [product, setProduct] = useState<Product | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [selectedWeight, setSelectedWeight] = useState<string>(""); const [quantity, setQuantity] = useState(1);
+  const [selectedWeight, setSelectedWeight] = useState<string>(""); 
+  const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const [selectedAddOns, setSelectedAddOns] = useState<AddOn[]>([]);
   const [showAddOnModal, setShowAddOnModal] = useState(false);
+  const [showPhotoCakeModal, setShowPhotoCakeModal] = useState(false);
+  const [photoCakeData, setPhotoCakeData] = useState<{ image: File | null; message: string; imageUrl?: string }>({ image: null, message: '', imageUrl: undefined });
   const [activeTab, setActiveTab] = useState<
     "description" | "ingredients" | "nutrition" | "reviews"
   >("description");
 
   const { data, isLoading } = useSWR(`/api/products/${productSlug}`, fetcher);
   console.log(data?.data);
-
   useEffect(() => {
     if (data?.success) {
       setProduct(data?.data);
@@ -97,6 +100,18 @@ const ProductPage = () => {
       }
     }
   }, [data]);
+
+  // Check if the current product is a photo cake
+  const isPhotoCake = () => {
+    if (!product) return false;
+    
+    // Check if any category is related to photo cakes
+    return product.categories.some(category => 
+      category.name.toLowerCase().includes('photo') || 
+      category.slug.toLowerCase().includes('photo') ||
+      category.name.toLowerCase().includes('print')
+    );
+  };
 
 
   const handleQuantityChange = (action: "increase" | "decrease") => {
@@ -135,17 +150,31 @@ const ProductPage = () => {
       return Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
     }
     return 0;
-  };
-  const handleAddToCart = async () => {
+  };  const handleAddToCart = async () => {
     if (!product) return;
 
+    // If it's a photo cake and no photo is uploaded, show the customization modal
+    if (isPhotoCake() && !photoCakeData.image) {
+      setShowPhotoCakeModal(true);
+      return;
+    }
+
     setAddingToCart(true);
-    try {
-      // Add to cart without add-ons first
-      addToCart(product, quantity, selectedWeight, []);
+    try {      // Add to cart with photo cake data if applicable
+      const cartItem = {
+        ...product,
+        customization: isPhotoCake() ? {
+          type: 'photo-cake',
+          image: photoCakeData.image,
+          message: photoCakeData.message,
+          imageUrl: photoCakeData.imageUrl || null
+        } : undefined
+      };
+
+      addToCart(cartItem, quantity, selectedWeight, []);
       showSuccess(
         "Added to Cart!",
-        `${quantity}x ${product.name} (${selectedWeight}) added to your cart`,
+        `${quantity}x ${product.name} (${selectedWeight}) added to your cart${isPhotoCake() && photoCakeData.image ? ' with your custom photo' : ''}`,
         "cart"
       );
 
@@ -196,7 +225,6 @@ const ProductPage = () => {
     setShowAddOnModal(false);
     router.push("/cart");
   };
-
   const handleModalContinue = () => {
     // Continue with selected add-ons and go to cart
     setShowAddOnModal(false);
@@ -205,6 +233,22 @@ const ProductPage = () => {
 
   const handleModalClose = () => {
     setShowAddOnModal(false);
+  };  const handlePhotoCakeSave = (data: { image: File | null; imageUrl?: string; message: string }) => {
+    setPhotoCakeData({ 
+      image: data.image, 
+      message: data.message,
+      imageUrl: data.imageUrl 
+    });
+    setShowPhotoCakeModal(false);
+    
+    // Show success message for photo upload
+    if (data.image) {
+      showSuccess(
+        "Photo Uploaded!",
+        "Your custom photo has been added. Now add to cart to continue.",
+        "check"
+      );
+    }
   };
 
   if (isLoading) {
@@ -471,6 +515,69 @@ const ProductPage = () => {
                         </button>
                       ))}
                     </div>
+                  </div>                )}
+
+                {/* Photo Cake Customization */}
+                {isPhotoCake() && (
+                  <div className="space-y-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl">
+                    <div className="flex items-center gap-2">
+                      <Camera className="h-5 w-5 text-purple-600" />
+                      <h3 className="text-lg font-semibold text-purple-900">Personalize Your Photo Cake</h3>
+                    </div>
+                    
+                    {photoCakeData.image ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-purple-200">
+                          <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
+                            <Image
+                              src={URL.createObjectURL(photoCakeData.image)}
+                              alt="Selected photo"
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">Photo uploaded ✓</p>
+                            <p className="text-xs text-gray-500">{photoCakeData.image.name}</p>
+                            {photoCakeData.message && (
+                              <p className="text-xs text-purple-600 mt-1">
+                                Message: "{photoCakeData.message}"
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => setShowPhotoCakeModal(true)}
+                            className="text-purple-600 hover:text-purple-800 text-sm font-medium"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center p-4">
+                        <div className="mb-3">
+                          <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <Camera className="h-8 w-8 text-purple-600" />
+                          </div>
+                          <p className="text-sm text-gray-700 mb-1">Make it special with your photo!</p>
+                          <p className="text-xs text-gray-500">Upload your favorite picture to create a personalized cake</p>
+                        </div>
+                        <button
+                          onClick={() => setShowPhotoCakeModal(true)}
+                          className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2.5 rounded-lg font-semibold text-sm hover:from-purple-600 hover:to-pink-600 transition-all duration-300 hover:scale-105 shadow-lg"
+                        >
+                          <Camera className="h-4 w-4 inline mr-2" />
+                          Add Your Photo
+                        </button>
+                      </div>
+                    )}
+                    
+                    <div className="bg-white/60 p-3 rounded-lg border border-purple-200">
+                      <p className="text-xs text-purple-800">
+                        <strong>💡 Tip:</strong> For best results, upload high-quality photos with good lighting. 
+                        Portrait photos work great for round cakes!
+                      </p>
+                    </div>
                   </div>
                 )}
 
@@ -654,15 +761,21 @@ const ProductPage = () => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Add-On Modal */}
+      </div>      {/* Add-On Modal */}
       <AddOnModal
         isOpen={showAddOnModal}
         onClose={handleModalClose}
         onSkip={handleModalSkip}
         onContinue={handleModalContinue}
         productName={product?.name}
+      />
+
+      {/* Photo Cake Customization Modal */}
+      <PhotoCakeCustomization
+        isOpen={showPhotoCakeModal}
+        onClose={() => setShowPhotoCakeModal(false)}
+        onSave={handlePhotoCakeSave}
+        productName={product?.name || 'Photo Cake'}
       />
 
       <Footer />

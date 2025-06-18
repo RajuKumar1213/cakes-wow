@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Order from "@/models/Order.models";
 import { generateOrderId } from "@/lib/serverOrderUtils";
+import { uploadToCloudinary } from "@/helpers/uploadOnCloudinary";
 
 /**
  * POST /api/orders/create
@@ -72,7 +73,75 @@ export async function POST(request) {
         { status: 400 }
       );
     }    // Generate unique order ID
-    const orderId = await generateOrderId();    // Process add-ons if they exist
+    const orderId = await generateOrderId();    // Process items and handle photo cake image uploads
+    console.log('🔍 Processing', orderData.items.length, 'items for photo cake customization...');
+    console.log('🔐 Cloudinary config check:', {
+      hasCloudName: !!process.env.CLOUDINARY_CLOUD_NAME,
+      hasApiKey: !!process.env.CLOUDINARY_API_KEY,
+      hasApiSecret: !!process.env.CLOUDINARY_API_SECRET
+    });
+    
+    const processedItems = await Promise.all(
+      orderData.items.map(async (item, index) => {
+        console.log(`📦 Item ${index + 1}:`, {
+          name: item.name,
+          hasCustomization: !!item.customization,
+          customizationType: item.customization?.type,
+          hasImageData: !!item.customization?.imageData,
+          imageDataLength: item.customization?.imageData?.length
+        });
+        
+        // If this is a photo cake with customization, upload the image
+        if (item.customization && item.customization.type === 'photo-cake' && item.customization.imageData) {
+          try {
+            console.log('📸 Processing photo cake image upload for item:', item.name);
+            
+            // Convert base64 image data to buffer
+            const base64Data = item.customization.imageData.replace(/^data:image\/[a-z]+;base64,/, '');
+            const imageBuffer = Buffer.from(base64Data, 'base64');
+            
+            console.log('📊 Image buffer created, size:', imageBuffer.length, 'bytes');
+            
+            // Upload to Cloudinary
+            const uploadResult = await uploadToCloudinary({
+              buffer: imageBuffer,
+              folder: 'photo-cakes',
+              public_id: `order-${orderId}-${item.productId}-${Date.now()}`,
+            });
+            
+            console.log('✅ Photo cake image uploaded successfully:', uploadResult?.secure_url);
+            
+            // Update the item with the permanent Cloudinary URL
+            return {
+              ...item,
+              customization: {
+                ...item.customization,
+                imageUrl: uploadResult?.secure_url || null,
+                // Remove the base64 data to save space
+                imageData: undefined
+              }
+            };
+          } catch (uploadError) {
+            console.error('❌ Failed to upload photo cake image:', uploadError);
+            // Continue with the order but without the image
+            return {
+              ...item,
+              customization: {
+                ...item.customization,
+                imageUrl: null,
+                uploadError: 'Failed to upload image'
+              }
+            };
+          }
+        }
+        
+        // Return item as-is if no photo cake customization
+        console.log('📝 Item processed without customization');
+        return item;
+      })
+    );
+
+    console.log('🔄 Processed', processedItems.length, 'items for order', orderId);// Process add-ons if they exist
     let processedAddons = [];
     if (orderData.selectedAddOns && Array.isArray(orderData.selectedAddOns) && orderData.selectedAddOns.length > 0) {
       processedAddons = orderData.selectedAddOns.map(addon => ({
@@ -86,14 +155,12 @@ export async function POST(request) {
       console.log('🎁 Original addon data:', orderData.selectedAddOns);
     } else {
       console.log('🎁 No addons in order data');
-    }
-
-    // Create order in database with payment pending status
+    }    // Create order in database with payment pending status
     const order = new Order({
       orderId,
-      items: orderData.items,
+      items: processedItems, // Use processed items with uploaded images
       addons: processedAddons,
-      customerInfo: orderData.customerInfo,      totalAmount: orderData.totalAmount,
+      customerInfo: orderData.customerInfo,totalAmount: orderData.totalAmount,
       subtotal: orderData.subtotal || orderData.totalAmount,
       deliveryCharge: orderData.deliveryCharge || 0,
       onlineDiscount: 0, // No discount applied
@@ -120,8 +187,7 @@ export async function POST(request) {
           paymentStatus: savedOrder.paymentStatus,
           customerInfo: savedOrder.customerInfo,
           estimatedDeliveryDate: savedOrder.estimatedDeliveryDate,
-          timeSlot: savedOrder.timeSlot,
-          items: savedOrder.items,
+          timeSlot: savedOrder.timeSlot,          items: savedOrder.items, // Now contains permanent Cloudinary URLs
           addons: savedOrder.addons,
         },
       },

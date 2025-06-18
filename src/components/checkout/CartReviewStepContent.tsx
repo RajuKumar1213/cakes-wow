@@ -112,22 +112,85 @@ const CartReviewStepContent: React.FC = () => {
   const getDeliveryPrice = () => {
     const deliveryType = getSelectedDeliveryType();
     return deliveryType ? deliveryType.price : 0;
-  };
-  // Handle proceed to checkout (create order and go to step 3)
+  };  // Handle proceed to checkout (create order and go to step 3)
   const handleProceedToCheckout = async () => {
-    try {      // Calculate totals
+    try {
+      // Calculate totals
       const addOnsTotal = getAddOnsTotal();
       const deliveryPrice = getDeliveryPrice();
-      const finalTotal = orderSummary.subtotal + addOnsTotal + deliveryPrice;// Prepare order data
+      const finalTotal = orderSummary.subtotal + addOnsTotal + deliveryPrice;
+
+      // Helper function to convert File to base64
+      const fileToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = error => reject(error);
+        });
+      };      // Process cart items and handle photo cake image uploads
+      console.log('🛒 Processing', cart.length, 'cart items for order creation...');
+      
+      const processedItems = await Promise.all(
+        cart.map(async (item, index) => {
+          console.log(`🍰 Cart Item ${index + 1}:`, {
+            name: item.name,
+            hasCustomization: !!item.customization,
+            customizationType: item.customization?.type,
+            hasImageFile: item.customization?.image instanceof File,
+            imageFileName: item.customization?.image?.name,
+            messageLength: item.customization?.message?.length
+          });
+          
+          const baseItem = {
+            productId: item.productId || item._id,
+            name: item.name,
+            price: item.discountedPrice || item.price,
+            quantity: item.quantity,
+            selectedWeight: item.selectedWeight || '',
+            imageUrl: item.imageUrl || '',
+          };
+
+          // Handle photo cake customization
+          if (item.customization && item.customization.type === 'photo-cake') {
+            let imageData = null;
+            
+            // Convert File to base64 if present
+            if (item.customization.image instanceof File) {
+              try {
+                imageData = await fileToBase64(item.customization.image);
+                console.log('📸 Converted photo cake image to base64 for:', item.name, 'Length:', imageData?.length);
+              } catch (error) {
+                console.error('Failed to convert image to base64:', error);
+              }
+            }
+
+            const customizationData = {
+              type: item.customization.type,
+              message: item.customization.message || '',
+              imageData: imageData, // Base64 string for API upload
+            };
+            
+            console.log('📦 Final customization data:', {
+              type: customizationData.type,
+              message: customizationData.message,
+              hasImageData: !!customizationData.imageData,
+              imageDataPreview: customizationData.imageData?.substring(0, 50) + '...'
+            });
+
+            return {
+              ...baseItem,
+              customization: customizationData
+            };
+          }
+
+          return baseItem;
+        })
+      );      console.log('📋 Final processed items count:', processedItems.length);
+
+      // Prepare order data
       const orderData = {
-        items: cart.map(item => ({
-          productId: item.productId || item._id,
-          name: item.name,
-          price: item.discountedPrice || item.price,
-          quantity: item.quantity,
-          selectedWeight: item.selectedWeight || '',
-          imageUrl: item.imageUrl || '',
-        })),
+        items: processedItems,
         customerInfo: {
           fullName: state.orderForm.fullName,
           mobileNumber: state.orderForm.mobileNumber.replace(/\s+/g, '').replace(/^\+91/, ''), // Clean mobile number
@@ -147,8 +210,12 @@ const CartReviewStepContent: React.FC = () => {
         deliveryCharge: deliveryPrice,
         notes: state.orderForm.specialInstructions || '',
         // Include add-ons in notes for reference
-        selectedAddOns: selectedAddOns,
-        addOnQuantities: addOnQuantities,      };
+        selectedAddOns: selectedAddOns,        addOnQuantities: addOnQuantities,      };      console.log('📤 Sending order data to API:', {
+        itemsCount: orderData.items.length,
+        itemsWithCustomization: orderData.items.filter((item: any) => item.customization).length,
+        firstItemHasCustomization: !!(orderData.items[0] as any)?.customization,
+        totalAmount: orderData.totalAmount
+      });
 
       // Create order in database
       const response = await fetch('/api/orders/create', {
@@ -237,8 +304,33 @@ const CartReviewStepContent: React.FC = () => {
                           </div>
                         ))}
                       </div>
+                    </div>                  )}
+
+                  {/* Photo Cake Customization Display */}
+                  {item.customization?.type === 'photo-cake' && (
+                    <div className="mt-2 p-2 bg-purple-50 rounded border border-purple-200">
+                      <h4 className="text-xs font-semibold text-purple-800 mb-2">📸 Photo Cake Customization</h4>
+                      <div className="flex items-start space-x-2">
+                        {item.customization.imageUrl && (
+                          <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+                            <Image
+                              src={item.customization.imageUrl}
+                              alt="Custom photo"
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          {item.customization.message && (
+                            <p className="text-xs text-purple-700 italic">"{item.customization.message}"</p>
+                          )}
+                          <p className="text-xs text-purple-600 mt-1">✓ Custom photo will be printed on cake</p>
+                        </div>
+                      </div>
                     </div>
                   )}
+                    
                     {/* Quantity controls */}
                   <div className="flex items-center space-x-1 md:space-x-2 mt-1 md:mt-2">
                     <button

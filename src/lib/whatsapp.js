@@ -75,10 +75,70 @@ export async function sendAdminOrderNotification(orderData) {
           /^,\s*|,\s*$/g,
           ""
         )
-      : "Not specified"; // Get the first product image for the notification
-    const productImage =
-      orderData.items?.[0]?.imageUrl ||
-      "https://cakes-wow.vercel.app/images/cake-default.jpg"; // fallback image
+      : "Not specified";
+
+    // Prepare order items details with customization
+    const prepareOrderDetails = () => {
+      if (!orderData.items || orderData.items.length === 0) return "No items";
+
+      return orderData.items
+        .map((item) => {
+          let details = `${item.name}`;
+          if (item.selectedWeight) details += ` (${item.selectedWeight})`;
+          if (item.customization?.message) {
+            details += ` - Custom: "${item.customization.message}"`;
+          }
+          details += ` x${item.quantity}`;
+          return details;
+        })
+        .join(", ");
+    };
+
+    const orderDetails = prepareOrderDetails();
+
+    // Get the best available image for the notification (customization image > product image > fallback)
+    const getProductImage = () => {
+      if (orderData.items?.[0]?.customization?.imageUrl) {
+        // For photo cakes, use the custom uploaded image
+        return orderData.items[0].customization.imageUrl;
+      } else if (orderData.items?.[0]?.imageUrl) {
+        // Use the product image
+        return orderData.items[0].imageUrl;
+      } else {
+        // Fallback image
+        return "https://cakes-wow.vercel.app/images/cake-default.jpg";
+      }
+    };
+
+    const productImage = getProductImage();    // Calculate total amount including all items and add-ons
+    const calculateTotalAmount = () => {
+      const itemsTotal =
+        orderData.items?.reduce((total, item) => {
+          return total + (item.discountedPrice || item.price) * item.quantity;
+        }, 0) || 0;
+
+      const addOnsTotal =
+        orderData.addOns?.reduce((total, addOn) => {
+          return total + addOn.price * addOn.quantity;
+        }, 0) || 0;
+
+      return itemsTotal + addOnsTotal + (orderData.deliveryCharge || 0);
+    };    const totalAmount = orderData.totalAmount || calculateTotalAmount();    // Prepare order items details with customization for admin
+    const prepareAdminOrderDetails = () => {
+      if (!orderData.items || orderData.items.length === 0) return "No items";
+      
+      return orderData.items.map(item => {
+        let details = `${item.name}`;
+        if (item.selectedWeight) details += ` (${item.selectedWeight})`;
+        if (item.customization?.message) {
+          details += ` - Custom: "${item.customization.message}"`;
+        }
+        details += ` x${item.quantity}`;
+        return details;
+      }).join(", ");
+    };
+
+    const adminOrderDetails = prepareAdminOrderDetails();
 
     const whatsappData = {
       template_name: "new_order_alert",
@@ -94,7 +154,10 @@ export async function sendAdminOrderNotification(orderData) {
         },
         {
           name: "amount",
-          value: String(orderData.totalAmount || orderData.amount || "0"),
+          value: String(totalAmount),
+        },        {
+          name: "orderDetails", 
+          value: adminOrderDetails,
         },
         {
           name: "deliveryTime",
@@ -193,23 +256,50 @@ export async function sendCustomerOrderSuccessMessage(phoneNumber, orderData) {
           /^,\s*|,\s*$/g,
           ""
         )
-      : "As provided";
+      : "As provided";    // Prepare item details string with customization info
+    const itemDetails = orderData.items
+      ?.map((item) => {
+        let itemStr = `${item.name}`;
+        if (item.selectedWeight) {
+          itemStr += ` (${item.selectedWeight})`;
+        }
+        if (item.customization?.message) {
+          itemStr += ` - Custom Message: "${item.customization.message}"`;
+        }
+        itemStr += ` - ₹${item.price} x ${item.quantity}`;
+        return itemStr;
+      })
+      .join(", ") || "Order items";
 
-    // Prepare item details string
-    const itemDetails =
-      orderData.items
-        .map(
-          (item) =>
-            `${item.name} (${item.selectedWeight || "N/A"}) - ₹${
-              item.price
-            } x ${item.quantity}`
-        )
-        .join(", ") || "Order items";
-
-    // Get the first product image for the notification
-    const productImage =
-      orderData.items?.[0]?.imageUrl ||
-      "/logo.webp"; // fallback image
+    // Get the best available image for the notification (customization image > product image > fallback)
+    const getProductImage = () => {
+      if (orderData.items?.[0]?.customization?.imageUrl) {
+        // For photo cakes, use the custom uploaded image
+        return orderData.items[0].customization.imageUrl;
+      } else if (orderData.items?.[0]?.imageUrl) {
+        // Use the product image
+        return orderData.items[0].imageUrl;
+      } else {
+        // Fallback image
+        return "/logo.webp";
+      }
+    };
+    
+    const productImage = getProductImage();
+      // Calculate total amount including all items and add-ons
+    const calculateTotalAmount = () => {
+      const itemsTotal = orderData.items?.reduce((total, item) => {
+        return total + ((item.discountedPrice || item.price) * item.quantity);
+      }, 0) || 0;
+      
+      const addOnsTotal = orderData.addOns?.reduce((total, addOn) => {
+        return total + (addOn.price * addOn.quantity);
+      }, 0) || 0;
+      
+      return itemsTotal + addOnsTotal + (orderData.deliveryCharge || 0);
+    };
+    
+    const totalAmount = orderData.totalAmount || calculateTotalAmount();
     const whatsappData = {
       template_name: "customer_order_alert",
       broadcast_name: broadcastName,
@@ -221,14 +311,13 @@ export async function sendCustomerOrderSuccessMessage(phoneNumber, orderData) {
         {
           name: "customerName",
           value: orderData.customerInfo?.fullName || "Customer",
-        },
-        {
+        },        {
           name: "orderId",
           value: orderData.orderId,
         },
         {
           name: "amount",
-          value: String(orderData.totalAmount || orderData.amount || "0"),
+          value: String(totalAmount),
         },
         {
           name: "itemDetails",
