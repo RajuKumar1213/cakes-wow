@@ -61,32 +61,32 @@ const WhatsAppButton: React.FC<WhatsAppButtonProps> = ({
     );
   }
   // Inline variant
-  // if (variant === 'inline') {
-  //   return (
-  //     <button
-  //       onClick={handleWhatsAppClick}
-  //       className={`flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl min-w-[200px] justify-center ${className}`}
-  //       title="Chat with us on WhatsApp"
-  //       aria-label="Chat with us on WhatsApp"
-  //     >
-  //       <MessageCircle className="h-6 w-6" />
-  //       <span>Chat with us</span>
-  //     </button>
-  //   );
-  // }
-  // // Compact variant
-  // if (variant === 'compact') {
-  //   return (
-  //     <button
-  //       onClick={handleWhatsAppClick}
-  //       className={`flex items-center justify-center w-12 h-12 bg-green-500 hover:bg-green-600 text-white rounded-full transition-all duration-300 hover:scale-110 shadow-md ${className}`}
-  //       title="Chat with us on WhatsApp"
-  //       aria-label="Chat with us on WhatsApp"
-  //     >
-  //       <MessageCircle className="h-6 w-6" />
-  //     </button>
-  //   );
-  // }
+  if (variant === 'inline') {
+    return (
+      <button
+        onClick={handleWhatsAppClick}
+        className={`flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl min-w-[200px] justify-center ${className}`}
+        title="Chat with us on WhatsApp"
+        aria-label="Chat with us on WhatsApp"
+      >
+        <MessageCircle className="h-6 w-6" />
+        <span>Chat with us</span>
+      </button>
+    );
+  }
+  // Compact variant
+  if (variant === 'compact') {
+    return (
+      <button
+        onClick={handleWhatsAppClick}
+        className={`flex items-center justify-center w-12 h-12 bg-green-500 hover:bg-green-600 text-white rounded-full transition-all duration-300 hover:scale-110 shadow-md ${className}`}
+        title="Chat with us on WhatsApp"
+        aria-label="Chat with us on WhatsApp"
+      >
+        <MessageCircle className="h-6 w-6" />
+      </button>
+    );
+  }
 
   return null;
 };

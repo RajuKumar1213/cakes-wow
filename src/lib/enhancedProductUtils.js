@@ -96,18 +96,51 @@ export function createEnhancedProductFilters(params) {
   
   if (params.isFeatured === 'true' || params.isFeatured === true) {
     filters.isFeatured = true;
-  }
-
-  // Search filter
+  }  // Search filter
   if (params.search) {
+    const searchTerm = params.search.toLowerCase().trim();
     const searchRegex = new RegExp(params.search, 'i');
     filters.$or = filters.$or || [];
+    
+    console.log('🔍 Enhanced Search - Processing search term:', searchTerm);
+    
+    // Text-based searches
     filters.$or.push(
       { name: searchRegex },
       { description: searchRegex },
       { shortDescription: searchRegex },
       { tags: { $in: [searchRegex] } }
     );
+    
+    // Enum-based searches
+    if (searchTerm.includes('bestseller') || searchTerm.includes('best seller') || searchTerm.includes('best-seller')) {
+      console.log('🏆 Enhanced Search - Adding bestseller filter');
+      filters.$or.push({ isBestseller: true });
+    }
+    
+    if (searchTerm.includes('featured')) {
+      console.log('⭐ Enhanced Search - Adding featured filter');
+      filters.$or.push({ isFeatured: true });
+    }
+    
+    if (searchTerm.includes('available')) {
+      console.log('✅ Enhanced Search - Adding available filter');
+      filters.$or.push({ isAvailable: true });
+    }
+    
+    if (searchTerm.includes('unavailable') || searchTerm.includes('not available') || searchTerm.includes('out of stock')) {
+      console.log('❌ Enhanced Search - Adding unavailable filter');
+      filters.$or.push({ isAvailable: false });
+    }
+    
+    // Category name search
+    if (searchTerm.includes('chocolate') || searchTerm.includes('birthday') || searchTerm.includes('anniversary') || 
+        searchTerm.includes('wedding') || searchTerm.includes('customized') || searchTerm.includes('photo')) {
+      console.log('🎂 Enhanced Search - Category-related search detected');
+      // This will be handled by joining with categories collection in the API
+    }
+    
+    console.log('🔧 Enhanced Search - Final $or conditions:', filters.$or.length);
   }
 
   console.log('🏁 Enhanced Filter - Final filters:', JSON.stringify(filters, null, 2));

@@ -85,7 +85,14 @@ export async function GET(request) {
       isBestseller,
       isFeatured,
       search,
-    });
+    });    // If search includes category-related terms, we need to use aggregation to search category names
+    let needsCategorySearch = false;
+    if (search) {
+      const searchLower = search.toLowerCase();
+      const categoryTerms = ['chocolate', 'birthday', 'anniversary', 'wedding', 'customized', 'photo', 'cake', 'special'];
+      needsCategorySearch = categoryTerms.some(term => searchLower.includes(term));
+      console.log('🔍 API Search Debug - Search term:', search, 'Needs category search:', needsCategorySearch);
+    }
 
     // Calculate pagination
     const { page: pageNum, limit: limitNum, skip } = calculatePagination(page, limit);    // Create sort options
@@ -96,21 +103,42 @@ export async function GET(request) {
       sortOrder,
       categoryObjectId: categoryObjectId?.toString(),
       sortOptions: sort
-    });
-
-    // Handle aggregation for price filtering or category-specific ordering
+    });    // Handle aggregation for price filtering, category-specific ordering, or category name search
     let products, total;
     
-    if (filters._useAggregation || sort._categorySpecificOrder) {
-      // Use aggregation pipeline for price filtering or category-specific ordering
+    if (filters._useAggregation || sort._categorySpecificOrder || needsCategorySearch) {
+      // Use aggregation pipeline for price filtering, category-specific ordering, or category search
       const aggregationSteps = filters._aggregationSteps || [];
       delete filters._useAggregation;
       delete filters._aggregationSteps;
       
-      let pipeline = [
+      let pipeline = [];
+      
+      // Add category lookup early if we need to search category names
+      if (needsCategorySearch) {
+        pipeline.push({
+          $lookup: {
+            from: 'categories',
+            localField: 'categories',
+            foreignField: '_id',
+            as: 'categories'
+          }
+        });
+        
+        // Modify the search filter to include category names
+        if (search && filters.$or) {
+          const searchRegex = new RegExp(search, 'i');
+          filters.$or.push(
+            { 'categories.name': searchRegex },
+            { 'categories.slug': searchRegex }
+          );
+        }
+      }
+      
+      pipeline.push(
         ...aggregationSteps,
         { $match: filters }
-      ];      // Handle category-specific ordering
+      );// Handle category-specific ordering
       if (sort._categorySpecificOrder) {
         pipeline.push(
           // Add a field for category-specific order
@@ -149,26 +177,43 @@ export async function GET(request) {
       } else {
         pipeline.push({ $sort: sort });
       }
-      
-      pipeline.push(
+        pipeline.push(
         { $skip: skip },
-        { $limit: limitNum },
-        {
+        { $limit: limitNum }
+      );
+      
+      // Add category lookup if not already done
+      if (!needsCategorySearch) {
+        pipeline.push({
           $lookup: {
             from: 'categories',
             localField: 'categories',
             foreignField: '_id',
             as: 'categories'
           }
-        }
-      );
+        });
+      }
       
       // Get total count
-      const countPipeline = [
+      const countPipeline = [];
+      
+      // Add category lookup for count if needed
+      if (needsCategorySearch) {
+        countPipeline.push({
+          $lookup: {
+            from: 'categories',
+            localField: 'categories',
+            foreignField: '_id',
+            as: 'categories'
+          }
+        });
+      }
+      
+      countPipeline.push(
         ...aggregationSteps,
         { $match: filters },
         { $count: "total" }
-      ];
+      );
       
       const [productsResult, countResult] = await Promise.all([
         Product.aggregate(pipeline),

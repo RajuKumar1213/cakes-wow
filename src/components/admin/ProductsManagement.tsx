@@ -37,8 +37,7 @@ interface Product {
     slug: string;
     group: string;
     type: string;
-  }>;
-  weightOptions: Array<{
+  }>;  weightOptions: Array<{
     weight: string;
     price: number;
     discountedPrice?: number;
@@ -112,11 +111,10 @@ export default function ProductsManagement({ onLoadingChange }: ProductsManageme
       console.log('Setting default category:', firstCategory.name);
     }
   }, [allCategories, activeProductTab]);
-
   // Load products when category changes
   useEffect(() => {
-    if (activeProductTab && allCategories.length > 0) {
-      console.log('Loading products for category:', activeProductTab);
+    if (activeProductTab && (allCategories.length > 0 || activeProductTab === 'all' || activeProductTab === 'bestseller')) {
+      console.log('Loading products for tab:', activeProductTab);
       fetchProducts(1);
       setCurrentPage(1);
       setSelectedCategory(activeProductTab);
@@ -156,10 +154,12 @@ export default function ProductsManagement({ onLoadingChange }: ProductsManageme
         limit: '30',
         sortBy,
         sortOrder,
-      });
-
-      if (activeProductTab !== 'all') {
+      });      if (activeProductTab !== 'all' && activeProductTab !== 'bestseller') {
         params.append('category', activeProductTab);
+      }
+
+      if (activeProductTab === 'bestseller') {
+        params.append('isBestseller', 'true');
       }
 
       if (searchTerm) {
@@ -365,8 +365,13 @@ export default function ProductsManagement({ onLoadingChange }: ProductsManageme
     handleReorderProducts(newOrder);
     setDraggedProduct(null);
   };
-  */
-  const toggleOrderingMode = () => {
+  */  const toggleOrderingMode = () => {
+    // Prevent ordering mode for global tabs like 'all' and 'bestseller'
+    if (activeProductTab === 'all' || activeProductTab === 'bestseller') {
+      showError("Error", "Product ordering is only available for individual categories");
+      return;
+    }
+    
     const newOrderingMode = !orderingMode;
     setOrderingMode(newOrderingMode);
     
@@ -389,13 +394,21 @@ export default function ProductsManagement({ onLoadingChange }: ProductsManageme
     fetchProducts(page);
   };
 
+  // Helper function to get current tab display name
+  const getCurrentTabName = () => {
+    if (activeProductTab === 'all') return 'All Products';
+    if (activeProductTab === 'bestseller') return 'Bestseller Products';
+    const category = allCategories.find(c => c.slug === activeProductTab);
+    return category?.name || 'this category';
+  };
+
   const renderTableView = () => (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">      {orderingMode && (
         <div className="bg-blue-50 border-b border-blue-200 px-6 py-3">
           <div className="flex items-center gap-2 text-blue-700">
             <ArrowUpDown className="w-4 h-4" />
             <span className="text-sm font-medium">
-              Ordering Mode: Use the dropdown in the Order column to reorder products in {allCategories.find(c => c.slug === activeProductTab)?.name || 'this category'}
+              Ordering Mode: Use the dropdown in the Order column to reorder products in {getCurrentTabName()}
             </span>
           </div>
         </div>
@@ -680,7 +693,7 @@ export default function ProductsManagement({ onLoadingChange }: ProductsManageme
       {/* Category Sub-tabs */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Product Categories</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Product Categories</h3>          
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setActiveProductTab('all')}
@@ -691,6 +704,19 @@ export default function ProductsManagement({ onLoadingChange }: ProductsManageme
               }`}
             >
               All Products  { activeProductTab === 'all' && `(${totalProducts})`  }
+            </button>
+            <button
+              onClick={() => setActiveProductTab('bestseller')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeProductTab === 'bestseller'
+                  ? "bg-orange-100 text-orange-600 border border-orange-200"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              🏆 Bestseller
+              {activeProductTab === 'bestseller' && products.length > 0 && (
+                <span className="ml-2 text-xs">({products.length})</span>
+              )}
             </button>
             {allCategories.map((category) => (
               <button
@@ -759,29 +785,29 @@ export default function ProductsManagement({ onLoadingChange }: ProductsManageme
             >
               <Plus className="w-4 h-4" />
               Add Product
-            </button>
-
-            <button
-              onClick={toggleOrderingMode}
-              className={`px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-                orderingMode
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              } ${!activeProductTab ? 'opacity-50 cursor-not-allowed' : ''}`}
-              disabled={!activeProductTab}
-            >
-              <ArrowUpDown className="w-4 h-4" />
-              {orderingMode ? 'Exit Ordering' : 
-                `Reorder ${allCategories.find(c => c.slug === activeProductTab)?.name || 'Category'} Products`
-              }
-            </button>
+            </button>            {/* Only show reorder button for specific categories, not for 'all' or 'bestseller' */}
+            {activeProductTab && activeProductTab !== 'all' && activeProductTab !== 'bestseller' && (
+              <button
+                onClick={toggleOrderingMode}
+                className={`px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                  orderingMode
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                } ${!activeProductTab ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={!activeProductTab}
+              >                <ArrowUpDown className="w-4 h-4" />
+                {orderingMode ? 'Exit Ordering' : 
+                  `Reorder ${getCurrentTabName()} Products`
+                }
+              </button>
+            )}
           </div>
         </div>
 
         {/* Results Summary */}
         <div className="flex items-center justify-between text-sm text-gray-600 mt-4">
           <div>
-            Showing {products.length} products in {allCategories.find(c => c.slug === activeProductTab)?.name || 'this category'} (Page {currentPage} of {totalPages})
+            Showing {products.length} products in {getCurrentTabName()} (Page {currentPage} of {totalPages})
             {searchTerm && (
               <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
                 Search: "{searchTerm}"

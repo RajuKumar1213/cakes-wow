@@ -63,7 +63,8 @@ const CustomizedCakesPage = () => {
                 width={300} 
                 height={300}
                 className="mx-auto" 
-              />            </div>            
+              />            
+              </div>            
             {/* Using the new WhatsApp component */}
             <div className="mt-4">
               <WhatsAppButton 
