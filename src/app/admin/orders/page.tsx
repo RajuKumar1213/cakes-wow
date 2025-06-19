@@ -454,8 +454,7 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }: {
                       <span>Qty: {item.quantity}</span>
                       <span className="font-medium">₹{item.price} each</span>
                     </div>
-                    
-                    {/* Photo Cake Customization Display */}
+                      {/* Photo Cake Customization Display - Only for Photo Cakes */}
                     {item.customization?.type === 'photo-cake' && (
                       <div className="mt-2 p-2 bg-purple-50 rounded border border-purple-200">
                         <div className="flex items-center gap-2 mb-2">
@@ -463,7 +462,7 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }: {
                           <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-medium">Custom Print Required</span>
                         </div>
                         <div className="flex items-start gap-3">
-                          {item.customization.imageUrl && (
+                          {item.customization.imageUrl ? (
                             <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 border-purple-300">
                               <img
                                 src={item.customization.imageUrl}
@@ -474,12 +473,23 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }: {
                                 <span className="text-white text-xs font-bold">PRINT</span>
                               </div>
                             </div>
+                          ) : (
+                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 border-red-300 bg-red-50 flex items-center justify-center">
+                              <div className="text-center">
+                                <span className="text-red-600 text-xs font-bold">NO</span>
+                                <span className="text-red-600 text-xs font-bold">IMAGE</span>
+                              </div>
+                            </div>
                           )}
                           <div className="flex-1">
                             {item.customization.message && (
                               <p className="text-purple-700 text-xs italic mb-1">Message: "{item.customization.message}"</p>
                             )}
-                            <p className="text-purple-600 text-xs font-medium">⚠️ Print this photo on the cake as per customer request</p>
+                            <p className="text-purple-600 text-xs font-medium">
+                              {item.customization.imageUrl 
+                                ? "⚠️ Print this photo on the cake as per customer request" 
+                                : "❌ Customer photo failed to upload - please contact customer"}
+                            </p>
                           </div>
                         </div>
                       </div>

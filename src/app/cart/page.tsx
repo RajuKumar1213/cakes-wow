@@ -272,16 +272,17 @@ export default function CartPage() {
                               <Star className="w-3 h-3 text-yellow-400 fill-current" />
                               <span className="text-xs text-gray-600">4.8</span>
                             </div>
-                          </div>
-
-                          {/* Photo Cake Customization Display */}
+                          </div>                          {/* Photo Cake Customization Display */}
                           {item.customization?.type === 'photo-cake' && (
                             <div className="mb-2 p-2 bg-purple-50 border border-purple-200 rounded-lg">
                               <div className="flex items-center gap-2">
                                 <div className="relative w-10 h-10 rounded overflow-hidden border border-purple-200">
-                                  {item.customization.imageUrl && (
+                                  {(item.customization.imageUrl || item.customization.image) && (
                                     <Image
-                                      src={item.customization.imageUrl}
+                                      src={
+                                        item.customization.imageUrl || 
+                                        (item.customization.image instanceof File ? URL.createObjectURL(item.customization.image) : '/placeholder-cake.jpg')
+                                      }
                                       alt="Custom photo"
                                       fill
                                       className="object-cover"
@@ -396,14 +397,12 @@ export default function CartPage() {
                       Selected Add-ons
                     </h2>
                     <p className="text-orange-100 mt-1 text-xs md:text-sm">Extra special touches for your order</p>
-                  </div>
-
-                  <div className="p-3 md:p-4">
-                    <div className="space-y-2 md:space-y-3">
+                  </div>                  <div className="p-2 md:p-3">
+                    <div className="space-y-1.5 md:space-y-2">
                       {selectedAddOns.map((addOn) => (
-                        <div key={addOn._id} className="flex items-center justify-between p-2 md:p-3 bg-orange-50 rounded border border-orange-200">
-                          <div className="flex items-center gap-2 md:gap-3 flex-1">
-                            <div className="w-8 h-8 md:w-10 md:h-10 relative rounded overflow-hidden flex-shrink-0">
+                        <div key={addOn._id} className="flex items-center justify-between p-1.5 md:p-2 bg-orange-50 rounded border border-orange-200">
+                          <div className="flex items-center gap-2 flex-1">
+                            <div className="w-6 h-6 md:w-8 md:h-8 relative rounded overflow-hidden flex-shrink-0 aspect-square">
                               <Image
                                 src={addOn.image}
                                 alt={addOn.name}
@@ -415,45 +414,44 @@ export default function CartPage() {
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-gray-800 text-xs md:text-sm truncate">{addOn.name}</h4>
+                              <h4 className="font-medium text-gray-800 text-xs truncate">{addOn.name}</h4>
                               <div className="flex items-center gap-1">
-                                <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                                <Star className="w-2.5 h-2.5 text-yellow-400 fill-current" />
                                 <span className="text-xs text-gray-600">{addOn.rating}</span>
-                                <span className="text-xs text-gray-500 ml-2">₹{addOn.price} each</span>
+                                <span className="text-xs text-gray-500 ml-1">₹{addOn.price} each</span>
                               </div>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 md:gap-3">
+                          <div className="flex items-center gap-1.5 md:gap-2">
                             {/* Quantity Controls */}
                             <div className="flex items-center bg-white rounded border">
                               <button
                                 onClick={() => updateAddOnQuantity(addOn._id, (addOnQuantities[addOn._id] || 1) - 1)}
-                                className="p-0.5 md:p-1 hover:bg-gray-100 rounded-l transition-colors"
+                                className="p-0.5 hover:bg-gray-100 rounded-l transition-colors"
                               >
-                                <Minus className="w-3 h-3" />
+                                <Minus className="w-2.5 h-2.5" />
                               </button>
-                              <span className="px-1.5 md:px-2 py-0.5 md:py-1 font-medium min-w-[1.5rem] md:min-w-[2rem] text-center text-xs md:text-sm">
+                              <span className="px-1.5 py-0.5 font-medium min-w-[1.5rem] text-center text-xs">
                                 {addOnQuantities[addOn._id] || 1}
                               </span>
                               <button
                                 onClick={() => updateAddOnQuantity(addOn._id, (addOnQuantities[addOn._id] || 1) + 1)}
-                                className="p-0.5 md:p-1 hover:bg-gray-100 rounded-r transition-colors"
+                                className="p-0.5 hover:bg-gray-100 rounded-r transition-colors"
                               >
-                                <Plus className="w-3 h-3" />
+                                <Plus className="w-2.5 h-2.5" />
                               </button>
                             </div>
 
                             {/* Total Price */}
-                            <span className="font-semibold text-orange-600 text-xs md:text-sm min-w-[2.5rem] md:min-w-[3rem] text-right">
+                            <span className="font-semibold text-orange-600 text-xs min-w-[2rem] text-right">
                               ₹{(addOn.price * (addOnQuantities[addOn._id] || 1))}
                             </span>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                    <div className="mt-3 md:mt-4 pt-2 md:pt-3 border-t border-orange-200">
-                      <div className="flex justify-between items-center font-bold text-sm md:text-base">
+                      ))}                    </div>
+                    <div className="mt-2 md:mt-3 pt-2 border-t border-orange-200">
+                      <div className="flex justify-between items-center font-bold text-sm">
                         <span className="text-gray-800">Add-ons Total:</span>
                         <span className="text-orange-600">₹{getAddOnsTotal()}</span>
                       </div>

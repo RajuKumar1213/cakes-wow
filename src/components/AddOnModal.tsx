@@ -177,8 +177,7 @@ const AddOnModal: React.FC<AddOnModalProps> = ({
             <div className="text-center py-12">
               <p className="text-gray-500">No add-ons available at the moment</p>
             </div>
-          ) : (
-            <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+          ) : (            <div className="grid gap-2 grid-cols-3 sm:grid-cols-4 lg:grid-cols-5">
               {addOns.map((addOn) => (
                 <div
                   key={addOn._id}
@@ -189,7 +188,7 @@ const AddOnModal: React.FC<AddOnModalProps> = ({
                   }`}
                   onClick={() => handleAddOnToggle(addOn)}
                 >
-                  <div className="relative h-20">
+                  <div className="relative aspect-square w-full">
                     <Image
                       src={addOn.image}
                       alt={addOn.name}
@@ -200,37 +199,36 @@ const AddOnModal: React.FC<AddOnModalProps> = ({
                       }}
                     />
                     {/* Selection indicator */}
-                    <div className={`absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
+                    <div className={`absolute top-1 right-1 w-4 h-4 rounded-full flex items-center justify-center transition-all duration-200 ${
                       isSelected(addOn._id)
                         ? 'bg-pink-500 text-white'
                         : 'bg-white/80 text-gray-400'
                     }`}>
                       {isSelected(addOn._id) ? (
-                        <Check className="w-2.5 h-2.5" />
+                        <Check className="w-2 h-2" />
                       ) : (
-                        <Plus className="w-2.5 h-2.5" />
+                        <Plus className="w-2 h-2" />
                       )}
                     </div>
                   </div>                  
-                  <div className="p-2 space-y-1">
-                    <div>
-                      <h4 className="font-semibold text-gray-800 text-xs mb-1">
+                  <div className="p-1.5 space-y-1">                    <div>
+                      <h4 className="font-medium text-gray-800 text-xs mb-0.5">
                         {addOn.name}
                       </h4>
                       
-                      <div className="flex items-center gap-1 mb-1">
+                      <div className="flex items-center gap-1 mb-0.5">
                         <div className="flex items-center">
                           {Array.from({ length: 5 }).map((_, index) => (
                             <Star
                               key={index}
-                              className={`w-2 h-2 ${
+                              className={`w-1.5 h-1.5 ${
                                 index < Math.floor(addOn.rating)
                                   ? 'text-yellow-400 fill-current'
                                   : 'text-gray-300'
                               }`}
                             />
                           ))}
-                          <span className="text-xs text-gray-600 ml-1">
+                          <span className="text-xs text-gray-600 ml-0.5">
                             {addOn.rating}
                           </span>
                         </div>
@@ -238,10 +236,10 @@ const AddOnModal: React.FC<AddOnModalProps> = ({
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-gray-900">
+                      <span className="text-xs font-bold text-gray-900">
                         ₹{addOn.price}
                       </span>
-                      <div className={`text-xs font-medium px-1.5 py-0.5 rounded ${
+                      <div className={`text-xs font-medium px-1 py-0.5 rounded ${
                         isSelected(addOn._id)
                           ? 'bg-pink-100 text-pink-600'
                           : 'bg-gray-100 text-gray-600'

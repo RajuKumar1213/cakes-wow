@@ -163,8 +163,7 @@ const AddOns: React.FC<AddOnsProps> = ({
               className={`bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow duration-300 ${
                 layout !== 'grid' ? 'flex-shrink-0 w-44 md:w-52' : ''
               }`}
-            >
-              <div className="relative h-32 md:h-40">
+            >              <div className="relative aspect-square w-full">
                 <Image
                   src={addOn.image}
                   alt={addOn.name}

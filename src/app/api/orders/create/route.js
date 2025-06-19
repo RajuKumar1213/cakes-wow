@@ -90,37 +90,62 @@ export async function POST(request) {
           hasImageData: !!item.customization?.imageData,
           imageDataLength: item.customization?.imageData?.length
         });
-        
-        // If this is a photo cake with customization, upload the image
-        if (item.customization && item.customization.type === 'photo-cake' && item.customization.imageData) {
+          // If this is a photo cake with customization, handle image upload
+        if (item.customization && item.customization.type === 'photo-cake') {
           try {
-            console.log('📸 Processing photo cake image upload for item:', item.name);
+            console.log('📸 Processing photo cake for item:', item.name);
             
-            // Convert base64 image data to buffer
-            const base64Data = item.customization.imageData.replace(/^data:image\/[a-z]+;base64,/, '');
-            const imageBuffer = Buffer.from(base64Data, 'base64');
-            
-            console.log('📊 Image buffer created, size:', imageBuffer.length, 'bytes');
-            
-            // Upload to Cloudinary
-            const uploadResult = await uploadToCloudinary({
-              buffer: imageBuffer,
-              folder: 'photo-cakes',
-              public_id: `order-${orderId}-${item.productId}-${Date.now()}`,
-            });
-            
-            console.log('✅ Photo cake image uploaded successfully:', uploadResult?.secure_url);
-            
-            // Update the item with the permanent Cloudinary URL
-            return {
-              ...item,
-              customization: {
-                ...item.customization,
-                imageUrl: uploadResult?.secure_url || null,
-                // Remove the base64 data to save space
-                imageData: undefined
-              }
-            };
+            // Check if we already have an uploaded image URL
+            if (item.customization.imageUrl) {
+              console.log('✅ Using existing uploaded image URL:', item.customization.imageUrl);
+              return {
+                ...item,
+                customization: {
+                  ...item.customization,
+                  // Keep the existing imageUrl and remove any base64 data
+                  imageData: undefined
+                }
+              };
+            } 
+            // Otherwise, upload the base64 image data if present
+            else if (item.customization.imageData) {
+              console.log('📸 Uploading new base64 image data for item:', item.name);
+              
+              // Convert base64 image data to buffer
+              const base64Data = item.customization.imageData.replace(/^data:image\/[a-z]+;base64,/, '');
+              const imageBuffer = Buffer.from(base64Data, 'base64');
+              
+              console.log('📊 Image buffer created, size:', imageBuffer.length, 'bytes');
+              
+              // Upload to Cloudinary
+              const uploadResult = await uploadToCloudinary({
+                buffer: imageBuffer,
+                folder: 'photo-cakes',
+                public_id: `order-${orderId}-${item.productId}-${Date.now()}`,
+              });
+              
+              console.log('✅ Photo cake image uploaded successfully:', uploadResult?.secure_url);
+              
+              // Update the item with the permanent Cloudinary URL
+              return {
+                ...item,
+                customization: {
+                  ...item.customization,
+                  imageUrl: uploadResult?.secure_url || null,
+                  // Remove the base64 data to save space
+                  imageData: undefined
+                }
+              };
+            } else {
+              console.log('⚠️ Photo cake item has no image data or URL');
+              return {
+                ...item,
+                customization: {
+                  ...item.customization,
+                  imageUrl: null
+                }
+              };
+            }
           } catch (uploadError) {
             console.error('❌ Failed to upload photo cake image:', uploadError);
             // Continue with the order but without the image

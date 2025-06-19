@@ -149,14 +149,16 @@ const CartReviewStepContent: React.FC = () => {
             quantity: item.quantity,
             selectedWeight: item.selectedWeight || '',
             imageUrl: item.imageUrl || '',
-          };
-
+          };          
           // Handle photo cake customization
           if (item.customization && item.customization.type === 'photo-cake') {
             let imageData = null;
-            
-            // Convert File to base64 if present
-            if (item.customization.image instanceof File) {
+        
+            // Use existing imageUrl if available, otherwise convert File to base64
+            if (item.customization.imageUrl) {
+              console.log('📸 Using existing uploaded image URL for:', item.name, 'URL:', item.customization.imageUrl);
+              // Don't need to convert to base64 since image is already uploaded
+            } else if (item.customization.image instanceof File) {
               try {
                 imageData = await fileToBase64(item.customization.image);
                 console.log('📸 Converted photo cake image to base64 for:', item.name, 'Length:', imageData?.length);
@@ -168,14 +170,16 @@ const CartReviewStepContent: React.FC = () => {
             const customizationData = {
               type: item.customization.type,
               message: item.customization.message || '',
-              imageData: imageData, // Base64 string for API upload
+              imageData: imageData, // Base64 string for API upload (only if no imageUrl)
+              imageUrl: item.customization.imageUrl || null, // Use existing uploaded image URL
             };
             
             console.log('📦 Final customization data:', {
               type: customizationData.type,
               message: customizationData.message,
               hasImageData: !!customizationData.imageData,
-              imageDataPreview: customizationData.imageData?.substring(0, 50) + '...'
+              hasImageUrl: !!customizationData.imageUrl,
+              imageUrl: customizationData.imageUrl
             });
 
             return {
@@ -186,7 +190,8 @@ const CartReviewStepContent: React.FC = () => {
 
           return baseItem;
         })
-      );      console.log('📋 Final processed items count:', processedItems.length);
+      );      
+      console.log('📋 Final processed items count:', processedItems.length);
 
       // Prepare order data
       const orderData = {
@@ -264,7 +269,7 @@ const CartReviewStepContent: React.FC = () => {
 
   return (
     <div className="p-3 md:p-6">      <div className="mb-4 md:mb-6">
-        <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-1 md:mb-2">Review Your Order</h2>
+        <h2 className="text-lg md:text-xl font-normal text-gray-900 mb-1 md:mb-2">Review Your Order</h2>
         <p className="text-sm md:text-base text-gray-600">Check your items and delivery details before proceeding to payment</p>
       </div>
 
@@ -284,7 +289,7 @@ const CartReviewStepContent: React.FC = () => {
                 </div>
                 
                 <div className="flex-1">
-                  <h3 className="text-sm md:text-base font-medium text-gray-900">{item.name}</h3>
+                  <h3 className="text-sm md:text-base font-normal text-gray-900">{item.name}</h3>
                   {item.selectedWeight && (
                     <p className="text-xs md:text-sm text-gray-600">Weight: {item.selectedWeight}</p>
                   )}
@@ -295,7 +300,7 @@ const CartReviewStepContent: React.FC = () => {
                   {/* Show cart item's selected add-ons if any */}
                   {item.selectedAddOns && item.selectedAddOns.length > 0 && (
                     <div className="mt-2 p-2 bg-pink-50 rounded border border-pink-200">
-                      <h4 className="text-xs font-semibold text-pink-800 mb-1">Included Add-ons:</h4>
+                      <h4 className="text-xs font-normal text-pink-800 mb-1">Included Add-ons:</h4>
                       <div className="space-y-1">
                         {item.selectedAddOns.map((addOn, index) => (
                           <div key={index} className="flex justify-between items-center text-xs">
@@ -304,17 +309,18 @@ const CartReviewStepContent: React.FC = () => {
                           </div>
                         ))}
                       </div>
-                    </div>                  )}
-
-                  {/* Photo Cake Customization Display */}
+                    </div>                  )}                  {/* Photo Cake Customization Display */}
                   {item.customization?.type === 'photo-cake' && (
                     <div className="mt-2 p-2 bg-purple-50 rounded border border-purple-200">
-                      <h4 className="text-xs font-semibold text-purple-800 mb-2">📸 Photo Cake Customization</h4>
+                      <h4 className="text-xs font-normal text-purple-800 mb-2">📸 Photo Cake Customization</h4>
                       <div className="flex items-start space-x-2">
-                        {item.customization.imageUrl && (
+                        {(item.customization.imageUrl || item.customization.image) && (
                           <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
                             <Image
-                              src={item.customization.imageUrl}
+                              src={
+                                item.customization.imageUrl || 
+                                (item.customization.image instanceof File ? URL.createObjectURL(item.customization.image) : '/placeholder-cake.jpg')
+                              }
                               alt="Custom photo"
                               fill
                               className="object-cover"
@@ -351,7 +357,7 @@ const CartReviewStepContent: React.FC = () => {
                 </div>
                 
                 <div className="text-right">
-                  <p className="text-sm md:text-base font-semibold text-gray-900">
+                  <p className="text-sm md:text-base font-normal text-gray-900">
                     {formatPrice((item.discountedPrice || item.price) * item.quantity)}
                   </p>
                   <button
@@ -368,7 +374,7 @@ const CartReviewStepContent: React.FC = () => {
             <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg p-3 md:p-4 border border-pink-200">
               <div className="flex items-center space-x-2 mb-3 md:mb-4">
                 <Gift className="w-4 h-4 md:w-5 md:h-5 text-pink-600" />
-                <h3 className="text-sm md:text-base font-semibold text-gray-900">Selected Add-ons</h3>
+                <h3 className="text-sm md:text-base font-normal text-gray-900">Selected Add-ons</h3>
               </div>
               
               <div className="space-y-2 md:space-y-3">
@@ -387,7 +393,7 @@ const CartReviewStepContent: React.FC = () => {
                         />
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-800 text-xs md:text-sm">{addOn.name}</h4>
+                        <h4 className="font-normal text-gray-800 text-xs md:text-sm">{addOn.name}</h4>
                         <div className="flex items-center gap-1">
                           <Star className="w-2 h-2 md:w-3 md:h-3 text-yellow-400 fill-current" />
                           <span className="text-xs text-gray-600">{addOn.rating}</span>
@@ -436,7 +442,7 @@ const CartReviewStepContent: React.FC = () => {
         </div>        {/* Order Summary */}
         <div className="lg:col-span-1">
           <div className="bg-gray-50 rounded-lg p-4 sticky top-4">
-            <h3 className="font-semibold text-gray-900 mb-4">Order Summary</h3>
+            <h3 className="font-normal text-gray-900 mb-4">Order Summary</h3>
             
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
@@ -460,7 +466,7 @@ const CartReviewStepContent: React.FC = () => {
                   {getDeliveryPrice() === 0 ? 'FREE' : formatPrice(getDeliveryPrice())}
                 </span>
               </div>              <div className="border-t pt-2 mt-2">
-                <div className="flex justify-between font-semibold text-base">
+                <div className="flex justify-between font-normal text-base">
                   <span>Total</span>
                   <span>{formatPrice(orderSummary.subtotal + getAddOnsTotal() + getDeliveryPrice())}</span>
                 </div>
