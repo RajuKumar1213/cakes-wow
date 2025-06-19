@@ -14,7 +14,8 @@ import {
   X,
   User,
   ChevronDown,
-  Phone
+  Phone,
+  Image
 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import WhatsAppModal from '@/components/WhatsAppModal';
@@ -33,7 +34,6 @@ const AdminNavbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
-
   // Navigation items
   const navigationItems = [
     {
@@ -47,6 +47,12 @@ const AdminNavbar = () => {
       href: '/admin/products',
       icon: Package,
       current: pathname.startsWith('/admin/products')
+    },
+    {
+      name: 'Hero Banners',
+      href: '/admin/hero-banners',
+      icon: Image,
+      current: pathname.startsWith('/admin/hero-banners')
     },
     {
       name: 'Orders',

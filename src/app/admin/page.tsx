@@ -466,15 +466,20 @@ export default function AdminDashboard() {
         <div className="mb-8">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Quick Actions
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          </h3>          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <QuickAction
               title="Manage Products, Categories and Add-ons"
               description="Add, edit, or remove products from your catalog"
               icon={Package}
               onClick={() => router.push("/admin/products")}
             />
-        
+            <QuickAction
+              title="Hero Banners"
+              description="Manage homepage carousel banners"
+              icon={BarChart3}
+              onClick={() => router.push("/admin/hero-banners")}
+              color="purple"
+            />
             <QuickAction
               title="View Orders"
               description="Track and manage customer orders"
@@ -492,7 +497,8 @@ export default function AdminDashboard() {
               title="User Management"
               description="Manage customer accounts and permissions"
               icon={Users}
-              onClick={() => router.push("/admin/users")}            />
+              onClick={() => router.push("/admin/users")}
+            />
           </div>
         </div>{" "}
         {/* Recent Activity */}
