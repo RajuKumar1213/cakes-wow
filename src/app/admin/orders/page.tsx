@@ -221,7 +221,62 @@ const OrderCard = ({ order, onStatusChange, onViewDetails, isUpdating }: {
             <span className="capitalize">{order.paymentMethod.replace('_', ' ')}</span>
           </div>
         )}
-      </div>
+      </div>      {/* Photo Cake Display with Image Preview */}
+      {order.items.some(item => item.customization?.type === 'photo-cake') && (
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-purple-800 font-bold text-xs sm:text-sm">📸 PHOTO CAKE</span>
+            <span className="bg-purple-200 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">
+              Print Required
+            </span>
+          </div>
+          
+          {order.items
+            .filter(item => item.customization?.type === 'photo-cake')
+            .map((item, index) => (
+              <div key={index} className="flex items-center gap-3 mb-2 last:mb-0">
+                {/* Photo Preview */}
+                {item.customization?.imageUrl ? (                  <div 
+                    className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 border-purple-300 cursor-pointer hover:border-purple-500 transition-colors group"
+                    onClick={() => item.customization?.imageUrl && window.open(item.customization.imageUrl, '_blank')}
+                    title="Click to view full image in new tab"
+                  >
+                    <img
+                      src={item.customization.imageUrl}
+                      alt="Customer's photo for cake"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span className="text-white text-xs font-bold">VIEW</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg flex-shrink-0 border-2 border-red-300 bg-red-50 flex items-center justify-center">
+                    <div className="text-center">
+                      <span className="text-red-600 text-xs font-bold block">NO</span>
+                      <span className="text-red-600 text-xs font-bold">IMAGE</span>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Photo Details */}
+                <div className="flex-1 min-w-0">                  <p className="text-purple-800 font-medium text-xs sm:text-sm truncate">{item.name}</p>
+                  {item.customization?.message && (
+                    <p className="text-purple-700 text-xs italic truncate" title={item.customization.message}>
+                      � Name: "{item.customization.message}"
+                    </p>
+                  )}
+                  <p className="text-purple-600 text-xs font-medium">
+                    {item.customization?.imageUrl 
+                      ? "🖼️ Image ready - click to view" 
+                      : "❌ Image missing - contact customer"}
+                  </p>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      )}
 
       {/* Special details - Mobile responsive */}
       {(order.customerInfo.deliveryOccasion || order.customerInfo.messageOnCard) && (
@@ -460,17 +515,20 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }: {
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-purple-800 font-semibold text-xs">📸 PHOTO CAKE</span>
                           <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-medium">Custom Print Required</span>
-                        </div>
-                        <div className="flex items-start gap-3">
+                        </div>                        <div className="flex items-start gap-3">
                           {item.customization.imageUrl ? (
-                            <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 border-2 border-purple-300">
+                            <div 
+                              className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 border-purple-300 cursor-pointer hover:border-purple-500 transition-colors group"
+                              onClick={() => item.customization?.imageUrl && window.open(item.customization.imageUrl, '_blank')}
+                              title="Click to view full image in new tab"
+                            >
                               <img
                                 src={item.customization.imageUrl}
                                 alt="Customer's photo for cake"
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                               />
-                              <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
-                                <span className="text-white text-xs font-bold">PRINT</span>
+                              <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span className="text-white text-xs font-bold">VIEW</span>
                               </div>
                             </div>
                           ) : (
@@ -480,14 +538,13 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }: {
                                 <span className="text-red-600 text-xs font-bold">IMAGE</span>
                               </div>
                             </div>
-                          )}
-                          <div className="flex-1">
+                          )}                          <div className="flex-1">
                             {item.customization.message && (
-                              <p className="text-purple-700 text-xs italic mb-1">Message: "{item.customization.message}"</p>
+                              <p className="text-purple-700 text-xs italic mb-1">� Name: "{item.customization.message}"</p>
                             )}
                             <p className="text-purple-600 text-xs font-medium">
                               {item.customization.imageUrl 
-                                ? "⚠️ Print this photo on the cake as per customer request" 
+                                ? "🖼️ Click image to view full size - Print this photo on the cake" 
                                 : "❌ Customer photo failed to upload - please contact customer"}
                             </p>
                           </div>

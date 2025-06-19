@@ -86,7 +86,7 @@ export async function sendAdminOrderNotification(orderData) {
           let details = `${item.name}`;
           if (item.selectedWeight) details += ` (${item.selectedWeight})`;
           if (item.customization?.message) {
-            details += ` - Custom: "${item.customization.message}"`;
+            details += ` - Name: "${item.customization.message}"`;
           }
           details += ` x${item.quantity}`;
           return details;
@@ -131,7 +131,7 @@ export async function sendAdminOrderNotification(orderData) {
         let details = `${item.name}`;
         if (item.selectedWeight) details += ` (${item.selectedWeight})`;
         if (item.customization?.message) {
-          details += ` - Custom: "${item.customization.message}"`;
+          details += ` - Name: "${item.customization.message}"`;
         }
         details += ` x${item.quantity}`;
         return details;
@@ -264,7 +264,7 @@ export async function sendCustomerOrderSuccessMessage(phoneNumber, orderData) {
           itemStr += ` (${item.selectedWeight})`;
         }
         if (item.customization?.message) {
-          itemStr += ` - Custom Message: "${item.customization.message}"`;
+          itemStr += ` - Name on Cake: "${item.customization.message}"`;
         }
         itemStr += ` - ₹${item.price} x ${item.quantity}`;
         return itemStr;

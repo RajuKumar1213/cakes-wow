@@ -16,25 +16,48 @@ export const PaymentStep: React.FC = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('online');
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [showPaymentError, setShowPaymentError] = useState<boolean>(false);
-
   // Load pending order from localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    try {
-      const saved = localStorage.getItem('pending-order');
-      if (saved) {
-        const order = JSON.parse(saved);
-        setPendingOrder(order);
-        console.log('Loaded pending order:', order);
-      } else {
-        // No pending order, redirect back to cart
-        console.error('No pending order found');
-        goToPreviousStep();
+    const loadPendingOrder = () => {
+      try {
+        const saved = localStorage.getItem('pending-order');
+        console.log('🔍 Checking localStorage for pending-order:', !!saved);
+        
+        if (saved) {
+          const order = JSON.parse(saved);
+          console.log('📋 Found pending order:', order.orderId);
+          setPendingOrder(order);
+          return true;
+        } else {
+          console.log('⏳ No pending order found in localStorage');
+          return false;
+        }
+      } catch (error) {
+        console.error('❌ Error parsing pending order:', error);
+        return false;
       }
-    } catch (error) {
-      console.error('Error loading pending order:', error);
-      goToPreviousStep();
+    };
+
+    // Try to load immediately
+    if (!loadPendingOrder()) {
+      console.log('⏳ Order not found immediately, waiting for order creation to complete...');
+      
+      // Wait longer for order creation to complete
+      setTimeout(() => {
+        if (!loadPendingOrder()) {
+          console.log('⏳ Still no order found, retrying once more...');
+          
+          // Final retry after even longer delay
+          setTimeout(() => {
+            if (!loadPendingOrder()) {
+              console.error('❌ No pending order found after all retries, redirecting back');
+              goToPreviousStep();
+            }
+          }, 3000); // 3 second final delay
+        }
+      }, 2000); // 2 second initial delay
     }
   }, [goToPreviousStep]);
   const handlePayment = async () => {

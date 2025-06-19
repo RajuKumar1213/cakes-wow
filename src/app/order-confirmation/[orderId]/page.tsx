@@ -390,9 +390,8 @@ export default function OrderConfirmationPage() {
                                 />
                               </div>
                             )}
-                            <div className="flex-1">
-                              {item.customization.message && (
-                                <p className="text-purple-700 text-xs italic">"{item.customization.message}"</p>
+                            <div className="flex-1">                              {item.customization.message && (
+                                <p className="text-purple-700 text-xs italic">Name: "{item.customization.message}"</p>
                               )}
                               <p className="text-purple-600 text-xs">Custom photo will be printed on cake</p>
                             </div>

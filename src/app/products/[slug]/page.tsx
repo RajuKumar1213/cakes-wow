@@ -237,15 +237,15 @@ const ProductPage = () => {
     setPhotoCakeData({ 
       image: data.image, 
       message: data.message,
-      imageUrl: data.imageUrl 
+      imageUrl: data.imageUrl || undefined // Will be undefined since we're not uploading yet
     });
     setShowPhotoCakeModal(false);
     
-    // Show success message for photo upload
+    // Show success message for photo selection
     if (data.image) {
       showSuccess(
-        "Photo Uploaded!",
-        "Your custom photo has been added. Now add to cart to continue.",
+        "Photo Selected!",
+        "Your custom photo has been saved. Add to cart and it will be uploaded during checkout.",
         "check"
       );
     }
@@ -515,20 +515,18 @@ const ProductPage = () => {
                         </button>
                       ))}
                     </div>
-                  </div>                )}
-
-                {/* Photo Cake Customization */}
+                  </div>                )}                {/* Photo Cake Customization */}
                 {isPhotoCake() && (
-                  <div className="space-y-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl">
+                  <div className="space-y-2 p-3 bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl">
                     <div className="flex items-center gap-2">
-                      <Camera className="h-5 w-5 text-purple-600" />
-                      <h3 className="text-lg font-semibold text-purple-900">Personalize Your Photo Cake</h3>
+                      <Camera className="h-4 w-4 text-purple-600" />
+                      <h3 className="text-base font-semibold text-purple-900">Personalize Your Photo Cake</h3>
                     </div>
                     
                     {photoCakeData.image ? (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-purple-200">
-                          <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3 p-2 bg-white rounded-lg border border-purple-200">
+                          <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-gray-200">
                             <Image
                               src={URL.createObjectURL(photoCakeData.image)}
                               alt="Selected photo"
@@ -537,45 +535,44 @@ const ProductPage = () => {
                             />
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900">Photo uploaded ✓</p>
+                            <p className="text-xs font-medium text-gray-900">Photo uploaded ✓</p>
                             <p className="text-xs text-gray-500">{photoCakeData.image.name}</p>
                             {photoCakeData.message && (
-                              <p className="text-xs text-purple-600 mt-1">
+                              <p className="text-xs text-purple-600">
                                 Message: "{photoCakeData.message}"
                               </p>
                             )}
                           </div>
                           <button
                             onClick={() => setShowPhotoCakeModal(true)}
-                            className="text-purple-600 hover:text-purple-800 text-sm font-medium"
+                            className="text-purple-600 hover:text-purple-800 text-xs font-medium"
                           >
                             Edit
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center p-4">
-                        <div className="mb-3">
-                          <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                            <Camera className="h-8 w-8 text-purple-600" />
+                      <div className="text-center p-2">
+                        <div className="mb-2">
+                          <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-1">
+                            <Camera className="h-6 w-6 text-purple-600" />
                           </div>
-                          <p className="text-sm text-gray-700 mb-1">Make it special with your photo!</p>
-                          <p className="text-xs text-gray-500">Upload your favorite picture to create a personalized cake</p>
+                          <p className="text-xs text-gray-700 mb-1">Make it special with your photo!</p>
+                          <p className="text-xs text-gray-500">Upload your favorite picture</p>
                         </div>
                         <button
                           onClick={() => setShowPhotoCakeModal(true)}
-                          className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2.5 rounded-lg font-semibold text-sm hover:from-purple-600 hover:to-pink-600 transition-all duration-300 hover:scale-105 shadow-lg"
+                          className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg font-semibold text-xs hover:from-purple-600 hover:to-pink-600 transition-all duration-300 hover:scale-105 shadow-lg"
                         >
-                          <Camera className="h-4 w-4 inline mr-2" />
+                          <Camera className="h-3 w-3 inline mr-1" />
                           Add Your Photo
                         </button>
                       </div>
                     )}
                     
-                    <div className="bg-white/60 p-3 rounded-lg border border-purple-200">
+                    <div className="bg-white/60 p-2 rounded-lg border border-purple-200">
                       <p className="text-xs text-purple-800">
-                        <strong>💡 Tip:</strong> For best results, upload high-quality photos with good lighting. 
-                        Portrait photos work great for round cakes!
+                        <strong>💡 Tip:</strong> Upload high-quality photos with good lighting for best results.
                       </p>
                     </div>
                   </div>

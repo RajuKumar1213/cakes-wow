@@ -26,7 +26,7 @@ const orderItemSchema = new mongoose.Schema({
   selectedWeight: {
     type: String,
     default: "",
-  },  
+  },
   imageUrl: {
     type: String,
     default: "",
@@ -34,7 +34,7 @@ const orderItemSchema = new mongoose.Schema({
   customization: {
     type: {
       type: String,
-      enum: ['photo-cake'],
+      enum: ["photo-cake"],
     },
     message: {
       type: String,
@@ -139,7 +139,7 @@ const customerInfoSchema = new mongoose.Schema({
 });
 
 const orderSchema = new mongoose.Schema(
-  {    
+  {
     orderId: {
       type: String,
       required: true,
@@ -191,7 +191,8 @@ const orderSchema = new mongoose.Schema(
       required: true,
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
-    },    paymentMethod: {
+    },
+    paymentMethod: {
       type: String,
       enum: ["online", "card"],
       default: "online",
@@ -282,8 +283,14 @@ orderSchema.index({ "customerInfo.area": 1 });
 
 // Virtual for order total items count
 orderSchema.virtual("totalItems").get(function () {
-  const itemsCount = this.items.reduce((total, item) => total + item.quantity, 0);
-  const addonsCount = this.addons.reduce((total, addon) => total + addon.quantity, 0);
+  const itemsCount = this.items.reduce(
+    (total, item) => total + item.quantity,
+    0
+  );
+  const addonsCount = this.addons.reduce(
+    (total, addon) => total + addon.quantity,
+    0
+  );
   return itemsCount + addonsCount;
 });
 

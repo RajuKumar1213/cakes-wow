@@ -92,6 +92,7 @@ const initialState: CheckoutState = {
 const checkoutReducer = (state: CheckoutState, action: CheckoutAction): CheckoutState => {
   switch (action.type) {
     case 'SET_STEP':
+      console.log('🔄 CheckoutContext: Step transition from', state.currentStep, 'to', action.payload);
       return { ...state, currentStep: action.payload };
     case 'UPDATE_FORM':
       return {

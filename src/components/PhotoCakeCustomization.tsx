@@ -89,50 +89,28 @@ const PhotoCakeCustomization: React.FC<PhotoCakeCustomizationProps> = ({
 
     if (!selectedImage) {
       newErrors.image = 'Please upload an image for your photo cake.';
-    }
-
-    if (message.trim().length > 100) {
-      newErrors.message = 'Message must be 100 characters or less.';
+    }    if (message.trim().length > 20) {
+      newErrors.message = 'Name must be 20 characters or less.';
     }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       setIsUploading(false);
       return;
-    }
-
-    try {
-      // Upload image to server
-      let uploadedImageUrl = '';
-      if (selectedImage) {
-        const formData = new FormData();
-        formData.append('file', selectedImage);
-
-        const uploadResponse = await fetch('/api/upload/photo-cake', {
-          method: 'POST',
-          body: formData,
-        });
-
-        const uploadResult = await uploadResponse.json();
-
-        if (!uploadResponse.ok || !uploadResult.success) {
-          throw new Error(uploadResult.error || 'Failed to upload image');
-        }
-
-        uploadedImageUrl = uploadResult.imageUrl;
-      }
-
-      // Save the data with uploaded image URL
+    }    try {
+      // Don't upload immediately - just save the File object and message
+      // Upload will happen during checkout when user clicks "Pay"
+      console.log('💾 Saving photo cake customization locally (no upload yet)');
+        // Save the data with the File object (not uploaded yet)
       onSave({ 
         image: selectedImage, 
-        imageUrl: uploadedImageUrl,
+        imageUrl: undefined, // Will be set after upload during checkout
         message: message.trim() 
       });
-      
       onClose();
     } catch (error) {
-      console.error('Upload error:', error);
-      setErrors({ image: error instanceof Error ? error.message : 'Failed to upload image' });
+      console.error('Save error:', error);
+      setErrors({ image: error instanceof Error ? error.message : 'Failed to save customization' });
     } finally {
       setIsUploading(false);
     }
@@ -149,21 +127,18 @@ const PhotoCakeCustomization: React.FC<PhotoCakeCustomizationProps> = ({
   };
 
   if (!isOpen) return null;
-
   const suggestedMessages = [
-    "Happy Birthday! 🎂",
-    "With Love ❤️",
-    "Congratulations! 🎉",
-    "Happy Anniversary! 💕",
-    "Best Wishes! ✨",
-    "Celebrate Life! 🌟"
+    "Happy Birthday",
+    "John",
+    "Sarah",
+    "Happy Anniversary",
+    "Mom",
+    "Dad"
   ];
-
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 rounded-t-2xl">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">        {/* Header */}
+        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 rounded-t-2xl z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-gradient-to-br from-pink-100 to-orange-100 rounded-xl flex items-center justify-center">
@@ -184,170 +159,170 @@ const PhotoCakeCustomization: React.FC<PhotoCakeCustomizationProps> = ({
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          {/* Photo Upload Section */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <ImageIcon className="w-5 h-5 text-pink-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Upload Your Photo</h3>
-              <span className="text-red-500">*</span>
-            </div>
-            
-            {/* Upload Area */}
-            <div
-              className={`relative border-2 border-dashed rounded-xl p-8 transition-all duration-300 ${
-                isDragging
-                  ? 'border-pink-400 bg-pink-50'
-                  : errors.image
-                  ? 'border-red-300 bg-red-50'
-                  : selectedImage
-                  ? 'border-green-300 bg-green-50'
-                  : 'border-gray-300 bg-gray-50 hover:border-pink-300 hover:bg-pink-50'
-              }`}
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-            >
-              {selectedImage && imagePreview ? (
-                <div className="text-center space-y-4">
-                  <div className="relative mx-auto w-48 h-48 rounded-xl overflow-hidden shadow-lg">
-                    <Image
-                      src={imagePreview}
-                      alt="Preview"
-                      fill
-                      className="object-cover"
-                    />
+        {/* Content - Two Column Layout */}
+        <div className="p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column - Photo Upload */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <ImageIcon className="w-5 h-5 text-pink-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Upload Your Photo</h3>
+                <span className="text-red-500">*</span>
+              </div>
+              
+              {/* Upload Area */}              <div
+                className={`relative border-2 border-dashed rounded-xl p-8 transition-all duration-300 ${
+                  isDragging
+                    ? 'border-pink-400 bg-pink-50'
+                    : errors.image
+                    ? 'border-red-300 bg-red-50'
+                    : selectedImage
+                    ? 'border-green-300 bg-green-50'
+                    : 'border-gray-300 bg-gray-50 hover:border-pink-300 hover:bg-pink-50'
+                }`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+              >
+                {selectedImage && imagePreview ? (
+                  <div className="text-center space-y-4">
+                    <div className="relative mx-auto w-64 h-64 rounded-xl overflow-hidden shadow-lg">
+                      <Image
+                        src={imagePreview}
+                        alt="Preview"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>                  
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-green-700">
+                        ✓ Photo selected successfully!
+                      </p>
+                      <p className="text-xs text-gray-600">{selectedImage.name}</p>
+                    
+                      <button
+                        onClick={handleReset}
+                        className="text-sm text-pink-600 hover:text-pink-700 font-medium"
+                        disabled={isUploading}
+                      >
+                        Change Photo
+                      </button>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-green-700">
-                      ✓ Photo uploaded successfully!
-                    </p>
-                    <p className="text-xs text-gray-600">{selectedImage.name}</p>
+                ) : (
+                  <div className="text-center space-y-4">
+                    <div className="w-16 h-16 mx-auto bg-gradient-to-br from-pink-100 to-orange-100 rounded-xl flex items-center justify-center">
+                      <Upload className="w-8 h-8 text-pink-600" />
+                    </div>
+                    <div className="space-y-2">                    
+                      <p className="text-lg font-medium text-gray-900">
+                        Drop your photo here or click to browse
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        JPG, PNG, or WEBP • Max 10MB
+                      </p>
+                      <p className="text-xs text-blue-600">
+                        📋 Photo will be uploaded when you complete checkout
+                      </p>
+                    </div>
                     <button
-                      onClick={handleReset}
-                      className="text-sm text-pink-600 hover:text-pink-700 font-medium"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-pink-600 to-orange-600 text-white font-medium rounded-xl hover:from-pink-700 hover:to-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
                       disabled={isUploading}
                     >
-                      Change Photo
+                      <Upload className="w-4 h-4 mr-2" />
+                      Choose Photo
                     </button>
                   </div>
-                </div>
-              ) : (
-                <div className="text-center space-y-4">
-                  <div className="w-16 h-16 mx-auto bg-gradient-to-br from-pink-100 to-orange-100 rounded-xl flex items-center justify-center">
-                    <Upload className="w-8 h-8 text-pink-600" />
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-lg font-medium text-gray-900">
-                      Drop your photo here or click to browse
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      JPG, PNG, or WEBP • Max 10MB
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-pink-600 to-orange-600 text-white font-medium rounded-xl hover:from-pink-700 hover:to-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                    disabled={isUploading}
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Choose Photo
-                  </button>
-                </div>
-              )}
-              
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/jpg,image/png,image/webp"
-                onChange={handleFileInputChange}
-                className="hidden"
-                disabled={isUploading}
-              />
-            </div>
-
-            {errors.image && (
-              <p className="text-sm text-red-600 flex items-center space-x-1">
-                <span>⚠️</span>
-                <span>{errors.image}</span>
-              </p>
-            )}
-          </div>
-
-          {/* Message Section */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <MessageSquare className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">Add a Message</h3>
-              <span className="text-xs text-gray-500">(Optional)</span>
-            </div>
-
-            {/* Suggested Messages */}
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-gray-700">Quick suggestions:</p>
-              <div className="flex flex-wrap gap-2">
-                {suggestedMessages.map((suggestion, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setMessage(suggestion)}
-                    className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-full hover:bg-blue-100 transition-colors border border-blue-200"
-                    disabled={isUploading}
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Message Input */}
-            <div className="space-y-2">
-              <textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Write your custom message here... (optional)"
-                rows={3}
-                maxLength={100}
-                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-colors resize-none ${
-                  errors.message
-                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                    : 'border-gray-300 focus:ring-pink-500 focus:border-pink-500'
-                }`}
-                disabled={isUploading}
-              />
-              <div className="flex justify-between items-center">
-                <div className="text-xs text-gray-500">
-                  {message.length}/100 characters
-                </div>
-                {errors.message && (
-                  <p className="text-xs text-red-600 flex items-center space-x-1">
-                    <span>⚠️</span>
-                    <span>{errors.message}</span>
-                  </p>
                 )}
+                
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  onChange={handleFileInputChange}
+                  className="hidden"
+                  disabled={isUploading}
+                />
+              </div>
+
+              {errors.image && (
+                <p className="text-sm text-red-600 flex items-center space-x-1">
+                  <span>⚠️</span>
+                  <span>{errors.image}</span>
+                </p>
+              )}
+            </div>
+
+            {/* Right Column - Name on Cake */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <MessageSquare className="w-5 h-5 text-blue-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Name on Cake</h3>
+                <span className="text-xs text-gray-500">(Optional)</span>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <textarea
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}                    placeholder="Enter the name to be written on the cake... (optional)"
+                    rows={2}
+                    maxLength={20}
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-colors resize-none ${
+                      errors.message
+                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                        : 'border-gray-300 focus:ring-pink-500 focus:border-pink-500'
+                    }`}
+                    disabled={isUploading}
+                  />                  <div className="flex justify-between items-center">
+                    <div className="text-xs text-gray-500">
+                      {message.length}/20 characters
+                    </div>
+                    {errors.message && (
+                      <p className="text-xs text-red-600 flex items-center space-x-1">
+                        <span>⚠️</span>
+                        <span>{errors.message}</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Suggested Names */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700">Popular Names:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {suggestedMessages.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setMessage(suggestion)}
+                        className="px-3 py-1 text-xs bg-pink-100 text-pink-700 rounded-full hover:bg-pink-200 transition-colors"
+                        disabled={isUploading}
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Tips Section */}
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Sparkles className="w-4 h-4 text-blue-600" />
+                    <h4 className="text-sm font-semibold text-blue-900">Tips for Great Results:</h4>
+                  </div>
+                  <ul className="text-xs text-blue-800 space-y-1 ml-6">
+                    <li>• Use high-quality, clear photos</li>
+                    <li>• Avoid blurry or pixelated images</li>
+                    <li>• Names should be short and sweet</li>
+                    <li>• Consider the cake size for text length</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
-
-          {/* Tips Section */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
-            <div className="flex items-start space-x-3">
-              <Sparkles className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-              <div className="space-y-2">
-                <h4 className="font-semibold text-blue-900">Tips for Best Results:</h4>
-                <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• Use high-resolution photos for better print quality</li>
-                  <li>• Ensure faces are clearly visible and well-lit</li>
-                  <li>• Avoid photos with busy backgrounds</li>
-                  <li>• Portrait orientation works best for most cake designs</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 rounded-b-2xl">
+        </div>        {/* Footer */}
+        <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 rounded-b-2xl z-10">
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={onClose}
@@ -359,17 +334,16 @@ const PhotoCakeCustomization: React.FC<PhotoCakeCustomizationProps> = ({
             <button
               onClick={handleSave}
               disabled={!selectedImage || isUploading}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-pink-600 to-orange-600 text-white font-medium rounded-xl hover:from-pink-700 hover:to-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 disabled:hover:scale-100 flex items-center justify-center space-x-2"
-            >
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-pink-600 to-orange-600 text-white font-medium rounded-xl hover:from-pink-700 hover:to-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 disabled:hover:scale-100 flex items-center justify-center space-x-2"            >
               {isUploading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Uploading...</span>
+                  <span>Saving...</span>
                 </>
               ) : (
                 <>
                   <Heart className="w-4 h-4" />
-                  <span>Add to Cart</span>
+                  <span>Save & Add to Cart</span>
                 </>
               )}
             </button>

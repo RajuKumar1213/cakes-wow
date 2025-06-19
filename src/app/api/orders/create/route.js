@@ -82,82 +82,32 @@ export async function POST(request) {
     });
     
     const processedItems = await Promise.all(
-      orderData.items.map(async (item, index) => {
-        console.log(`📦 Item ${index + 1}:`, {
+      orderData.items.map(async (item, index) => {        console.log(`📦 Item ${index + 1}:`, {
           name: item.name,
           hasCustomization: !!item.customization,
           customizationType: item.customization?.type,
-          hasImageData: !!item.customization?.imageData,
-          imageDataLength: item.customization?.imageData?.length
+          hasImageUrl: !!item.customization?.imageUrl
         });
-          // If this is a photo cake with customization, handle image upload
+        
+        // Photo cake items should already have imageUrl from checkout upload
         if (item.customization && item.customization.type === 'photo-cake') {
-          try {
-            console.log('📸 Processing photo cake for item:', item.name);
-            
-            // Check if we already have an uploaded image URL
-            if (item.customization.imageUrl) {
-              console.log('✅ Using existing uploaded image URL:', item.customization.imageUrl);
-              return {
-                ...item,
-                customization: {
-                  ...item.customization,
-                  // Keep the existing imageUrl and remove any base64 data
-                  imageData: undefined
-                }
-              };
-            } 
-            // Otherwise, upload the base64 image data if present
-            else if (item.customization.imageData) {
-              console.log('📸 Uploading new base64 image data for item:', item.name);
-              
-              // Convert base64 image data to buffer
-              const base64Data = item.customization.imageData.replace(/^data:image\/[a-z]+;base64,/, '');
-              const imageBuffer = Buffer.from(base64Data, 'base64');
-              
-              console.log('📊 Image buffer created, size:', imageBuffer.length, 'bytes');
-              
-              // Upload to Cloudinary
-              const uploadResult = await uploadToCloudinary({
-                buffer: imageBuffer,
-                folder: 'photo-cakes',
-                public_id: `order-${orderId}-${item.productId}-${Date.now()}`,
-              });
-              
-              console.log('✅ Photo cake image uploaded successfully:', uploadResult?.secure_url);
-              
-              // Update the item with the permanent Cloudinary URL
-              return {
-                ...item,
-                customization: {
-                  ...item.customization,
-                  imageUrl: uploadResult?.secure_url || null,
-                  // Remove the base64 data to save space
-                  imageData: undefined
-                }
-              };
-            } else {
-              console.log('⚠️ Photo cake item has no image data or URL');
-              return {
-                ...item,
-                customization: {
-                  ...item.customization,
-                  imageUrl: null
-                }
-              };
-            }
-          } catch (uploadError) {
-            console.error('❌ Failed to upload photo cake image:', uploadError);
-            // Continue with the order but without the image
-            return {
-              ...item,
-              customization: {
-                ...item.customization,
-                imageUrl: null,
-                uploadError: 'Failed to upload image'
-              }
-            };
+          console.log('📸 Processing photo cake item:', item.name);
+          
+          if (item.customization.imageUrl) {
+            console.log('✅ Photo cake has uploaded image URL:', item.customization.imageUrl);
+          } else {
+            console.log('⚠️ Photo cake missing image URL - upload may have failed');
           }
+          
+          // Just save the item as-is since upload already happened in checkout
+          return {
+            ...item,
+            customization: {
+              type: item.customization.type,
+              message: item.customization.message || '',
+              imageUrl: item.customization.imageUrl || null
+            }
+          };
         }
         
         // Return item as-is if no photo cake customization

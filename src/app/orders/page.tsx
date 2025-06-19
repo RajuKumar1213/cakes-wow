@@ -283,7 +283,7 @@ export default function OrdersPage() {
                                 {/* Show custom message for photo cakes */}
                                 {order.items[0].customization?.message && (
                                   <p className="text-xs text-purple-600 mt-1 italic">
-                                    "{order.items[0].customization.message}"
+                                    "Name: {order.items[0].customization.message}"
                                   </p>
                                 )}
                                 <div className="flex items-center gap-1 mt-2">
@@ -380,7 +380,7 @@ export default function OrdersPage() {
                               {/* Show custom message for photo cakes */}
                               {order.items[0].customization?.message && (
                                 <p className="text-sm text-purple-600 mb-2 italic">
-                                  Custom Message: "{order.items[0].customization.message}"
+                                  Name on Cake: "{order.items[0].customization.message}"
                                 </p>
                               )}
                               

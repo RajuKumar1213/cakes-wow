@@ -13,6 +13,8 @@ const CartReviewStepContent: React.FC = () => {
   const { state, goToNextStep, goToPreviousStep, dispatch } = useCheckout();
   const [selectedAddOns, setSelectedAddOns] = useState<any[]>([]);
   const [addOnQuantities, setAddOnQuantities] = useState<{ [key: string]: number }>({});
+  const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState('');
 
   // Load add-ons from localStorage
   const loadAddOnsFromStorage = React.useCallback(() => {
@@ -115,6 +117,9 @@ const CartReviewStepContent: React.FC = () => {
   };  // Handle proceed to checkout (create order and go to step 3)
   const handleProceedToCheckout = async () => {
     try {
+      setIsUploadingPhotos(true);
+      setUploadProgress('Preparing order...');
+      
       // Calculate totals
       const addOnsTotal = getAddOnsTotal();
       const deliveryPrice = getDeliveryPrice();
@@ -130,6 +135,7 @@ const CartReviewStepContent: React.FC = () => {
         });
       };      // Process cart items and handle photo cake image uploads
       console.log('🛒 Processing', cart.length, 'cart items for order creation...');
+      setUploadProgress('Processing cart items...');
       
       const processedItems = await Promise.all(
         cart.map(async (item, index) => {
@@ -149,43 +155,86 @@ const CartReviewStepContent: React.FC = () => {
             quantity: item.quantity,
             selectedWeight: item.selectedWeight || '',
             imageUrl: item.imageUrl || '',
-          };          
-          // Handle photo cake customization
+          };            // Handle photo cake customization - Upload image NOW during checkout
           if (item.customization && item.customization.type === 'photo-cake') {
-            let imageData = null;
-        
-            // Use existing imageUrl if available, otherwise convert File to base64
+            console.log('📸 Processing photo cake customization for:', item.name);
+            
+            // If image is already uploaded (has imageUrl), use it
             if (item.customization.imageUrl) {
-              console.log('📸 Using existing uploaded image URL for:', item.name, 'URL:', item.customization.imageUrl);
-              // Don't need to convert to base64 since image is already uploaded
-            } else if (item.customization.image instanceof File) {
+              console.log('✅ Using existing uploaded image URL for:', item.name);
+              const customizationData = {
+                type: item.customization.type,
+                message: item.customization.message || '',
+                imageUrl: item.customization.imageUrl,
+              };
+              
+              return {
+                ...baseItem,
+                customization: customizationData
+              };
+            }            // If we have a File object, upload it now
+            else if (item.customization.image instanceof File) {
+              console.log('📤 Uploading photo cake image during checkout for:', item.name);
+              setUploadProgress(`Uploading photo for ${item.name}...`);
+              
               try {
-                imageData = await fileToBase64(item.customization.image);
-                console.log('📸 Converted photo cake image to base64 for:', item.name, 'Length:', imageData?.length);
-              } catch (error) {
-                console.error('Failed to convert image to base64:', error);
+                // Upload the image to Cloudinary
+                const formData = new FormData();
+                formData.append('file', item.customization.image);
+
+                const uploadResponse = await fetch('/api/upload/photo-cake', {
+                  method: 'POST',
+                  body: formData,
+                });
+
+                const uploadResult = await uploadResponse.json();
+
+                if (!uploadResponse.ok || !uploadResult.success) {
+                  throw new Error(uploadResult.error || 'Failed to upload photo');
+                }
+
+                console.log('✅ Photo uploaded successfully during checkout:', uploadResult.imageUrl);
+
+                const customizationData = {
+                  type: item.customization.type,
+                  message: item.customization.message || '',
+                  imageUrl: uploadResult.imageUrl, // Now we have the permanent URL
+                };
+                
+                return {
+                  ...baseItem,
+                  customization: customizationData
+                };
+              } catch (uploadError) {
+                console.error('❌ Failed to upload photo during checkout:', uploadError);
+                // Still proceed with order but mark as failed upload
+                const customizationData = {
+                  type: item.customization.type,
+                  message: item.customization.message || '',
+                  imageUrl: null,
+                  uploadError: 'Failed to upload photo'
+                };
+                
+                return {
+                  ...baseItem,
+                  customization: customizationData
+                };
               }
             }
-
-            const customizationData = {
-              type: item.customization.type,
-              message: item.customization.message || '',
-              imageData: imageData, // Base64 string for API upload (only if no imageUrl)
-              imageUrl: item.customization.imageUrl || null, // Use existing uploaded image URL
-            };
-            
-            console.log('📦 Final customization data:', {
-              type: customizationData.type,
-              message: customizationData.message,
-              hasImageData: !!customizationData.imageData,
-              hasImageUrl: !!customizationData.imageUrl,
-              imageUrl: customizationData.imageUrl
-            });
-
-            return {
-              ...baseItem,
-              customization: customizationData
-            };
+            // No image provided
+            else {
+              console.log('⚠️ Photo cake item has no image');
+              const customizationData = {
+                type: item.customization.type,
+                message: item.customization.message || '',
+                imageUrl: null,
+              };
+              
+              return {
+                ...baseItem,
+                customization: customizationData
+              };
+            }
           }
 
           return baseItem;
@@ -223,6 +272,7 @@ const CartReviewStepContent: React.FC = () => {
       });
 
       // Create order in database
+      setUploadProgress('Creating your order...');
       const response = await fetch('/api/orders/create', {
         method: 'POST',
         headers: {
@@ -237,12 +287,30 @@ const CartReviewStepContent: React.FC = () => {
       }      const result = await response.json();
 
       // Store order details in context for payment step
-      localStorage.setItem('pending-order', JSON.stringify(result.order));      // Proceed to payment step
+      console.log('💾 About to store order in localStorage:', result.order);
+      localStorage.setItem('pending-order', JSON.stringify(result.order));
+
+      console.log('✅ Order created successfully, transitioning to payment step');
+      console.log('📝 Order stored in localStorage:', result.order.orderId);
+      console.log('🔄 Current step before transition:', state.currentStep);
+
+      // Proceed to payment step
       dispatch({ type: 'SET_STEP', payload: 3 });
       
-    } catch (error) {
-      // Show error message to user (you might want to add a toast notification here)
-      alert('Failed to create order. Please try again.');
+      console.log('✅ Step transition dispatched to step 3');
+      setIsUploadingPhotos(false);
+      setUploadProgress('');
+        } catch (error) {
+      console.error('❌ Order creation failed:', error);
+      setIsUploadingPhotos(false);
+      setUploadProgress('');
+      
+      // More detailed error message for debugging
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('💥 Error details:', errorMessage);
+      
+      // Show user-friendly error message
+      alert(`Failed to create order: ${errorMessage}. Please try again.`);
     }
   };
 
@@ -327,9 +395,8 @@ const CartReviewStepContent: React.FC = () => {
                             />
                           </div>
                         )}
-                        <div className="flex-1">
-                          {item.customization.message && (
-                            <p className="text-xs text-purple-700 italic">"{item.customization.message}"</p>
+                        <div className="flex-1">                          {item.customization.message && (
+                            <p className="text-xs text-purple-700 italic">Name: "{item.customization.message}"</p>
                           )}
                           <p className="text-xs text-purple-600 mt-1">✓ Custom photo will be printed on cake</p>
                         </div>
@@ -508,12 +575,23 @@ const CartReviewStepContent: React.FC = () => {
           <ArrowLeft className="w-3 h-3 md:w-4 md:h-4" />
           <span>Back to Delivery Details</span>
         </button>
-        
-        <button
+          <button
           onClick={handleProceedToCheckout}
-          className="px-6 md:px-8 py-2 md:py-3 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors font-medium text-sm md:text-base w-full md:w-auto"
+          disabled={isUploadingPhotos}
+          className={`px-6 md:px-8 py-2 md:py-3 rounded-lg font-medium text-sm md:text-base w-full md:w-auto transition-colors ${
+            isUploadingPhotos 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-pink-500 hover:bg-pink-600'
+          } text-white`}
         >
-          Process to Checkout
+          {isUploadingPhotos ? (
+            <div className="flex items-center justify-center space-x-2">
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span>{uploadProgress || 'Processing...'}</span>
+            </div>
+          ) : (
+            'Proceed to Checkout'
+          )}
         </button>
       </div>
     </div>

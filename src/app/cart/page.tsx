@@ -290,9 +290,8 @@ export default function CartPage() {
                                   )}
                                 </div>
                                 <div className="flex-1">
-                                  <p className="text-xs font-medium text-purple-800">🎂 Custom Photo Cake</p>
-                                  {item.customization.message && (
-                                    <p className="text-xs text-purple-600">"{item.customization.message}"</p>
+                                  <p className="text-xs font-medium text-purple-800">🎂 Custom Photo Cake</p>                                  {item.customization.message && (
+                                    <p className="text-xs text-purple-600">Name: "{item.customization.message}"</p>
                                   )}
                                 </div>
                               </div>
