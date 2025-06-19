@@ -481,6 +481,13 @@ export default function AdminDashboard() {
               color="purple"
             />
             <QuickAction
+              title="Category Showcase"
+              description="Manage homepage category showcase section"
+              icon={FolderOpen}
+              onClick={() => router.push("/admin/category-showcases")}
+              color="blue"
+            />
+            <QuickAction
               title="View Orders"
               description="Track and manage customer orders"
               icon={ShoppingCart}
