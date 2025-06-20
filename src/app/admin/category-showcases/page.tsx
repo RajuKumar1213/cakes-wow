@@ -1,24 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
-import { PageLoading } from "@/components/Loading";
-import AdminNavbar from "@/components/AdminNavbar";
 import Link from "next/link";
 import Image from "next/image";
 import CategoryShowcase from "@/components/CategoryShowcase";
-import axios from "axios";
-import {
-  Edit3,
-  Trash2,
-  Plus,
-  Image as ImageIcon,
-  ExternalLink,
-  ArrowUp,
-  ArrowDown,  Eye,
-  EyeOff,
-} from "lucide-react";
+import AdminNavbar from "@/components/AdminNavbar";
 
 interface CategoryShowcaseItem {
   _id: string;
@@ -34,23 +20,42 @@ interface CategoryShowcaseItem {
 }
 
 export default function AdminCategoryShowcasesPage() {
-  const { user, loading: authLoading } = useAuth();
-  const router = useRouter();
   const [categoryShowcases, setCategoryShowcases] = useState<CategoryShowcaseItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   useEffect(() => {
-    fetchCategoryShowcases();
+    checkAuthAndFetchData();
   }, []);
 
+  const checkAuthAndFetchData = async () => {
+    try {
+      // Check authentication
+      const authResponse = await fetch("/api/auth/admin-info");
+      if (!authResponse.ok) {
+        window.location.href = "/admin-login";
+        return;
+      }
+      
+      setIsAuthenticated(true);
+      await fetchCategoryShowcases();
+    } catch (error) {
+      console.error("Auth error:", error);
+      window.location.href = "/admin-login";
+    }
+  };
   const fetchCategoryShowcases = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("/api/category-showcases?includeInactive=true");
-      if (response.data.success) {
-        setCategoryShowcases(response.data.data);
+      // Fetch all category showcases (including inactive for admin)
+      const response = await fetch("/api/category-showcases?includeInactive=true");
+      const data = await response.json();
+
+      if (data.success) {
+        setCategoryShowcases(data.data);
       } else {
-        setError(response.data.message || "Failed to fetch category showcases");
+        setError(data.message || "Failed to fetch category showcases");
       }
     } catch (error) {
       console.error("Error fetching category showcases:", error);
@@ -59,18 +64,23 @@ export default function AdminCategoryShowcasesPage() {
       setLoading(false);
     }
   };
+
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this category showcase?")) {
       return;
     }
 
     try {
-      const response = await axios.delete(`/api/category-showcases/${id}`);
+      const response = await fetch(`/api/category-showcases/${id}`, {
+        method: "DELETE",
+      });
 
-      if (response.data.success) {
+      const data = await response.json();
+
+      if (data.success) {
         setCategoryShowcases(prev => prev.filter(item => item._id !== id));
       } else {
-        setError(response.data.message || "Failed to delete category showcase");
+        setError(data.message || "Failed to delete category showcase");
       }
     } catch (error) {
       console.error("Error deleting category showcase:", error);
@@ -83,19 +93,27 @@ export default function AdminCategoryShowcasesPage() {
       const categoryShowcase = categoryShowcases.find(item => item._id === id);
       if (!categoryShowcase) return;
 
-      const response = await axios.put(`/api/category-showcases/${id}`, {
-        ...categoryShowcase,
-        isActive: !currentStatus,
+      const response = await fetch(`/api/category-showcases/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...categoryShowcase,
+          isActive: !currentStatus,
+        }),
       });
 
-      if (response.data.success) {
+      const data = await response.json();
+
+      if (data.success) {
         setCategoryShowcases(prev =>
           prev.map(item =>
             item._id === id ? { ...item, isActive: !currentStatus } : item
           )
         );
       } else {
-        setError(response.data.message || "Failed to update category showcase");
+        setError(data.message || "Failed to update category showcase");
       }
     } catch (error) {
       console.error("Error updating category showcase:", error);
@@ -112,12 +130,20 @@ export default function AdminCategoryShowcasesPage() {
     setCategoryShowcases(newItems);
 
     try {
-      const response = await axios.put("/api/category-showcases", { items: newItems });
+      const response = await fetch("/api/category-showcases", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ items: newItems }),
+      });
 
-      if (!response.data.success) {
+      const data = await response.json();
+
+      if (!data.success) {
         // Revert on error
         setCategoryShowcases(categoryShowcases);
-        setError(response.data.message || "Failed to reorder category showcases");
+        setError(data.message || "Failed to reorder category showcases");
       }
     } catch (error) {
       // Revert on error
@@ -126,14 +152,21 @@ export default function AdminCategoryShowcasesPage() {
       setError("Failed to reorder category showcases");
     }
   };
-  // Show loading while checking auth
-  if (authLoading) {
-    return <PageLoading />;
-  }
 
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       <AdminNavbar />
+      <div className="min-h-screen bg-gray-50">
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
@@ -303,9 +336,9 @@ export default function AdminCategoryShowcasesPage() {
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
+          )}        </div>
       </div>
     </div>
+    </>
   );
 }

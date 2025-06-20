@@ -53,13 +53,22 @@ export default function CategoryShowcaseForm({ categoryShowcaseId }: CategorySho
       setError("Failed to fetch category showcase");
     } finally {
       setLoading(false);
-    }  };
+    }
+  };
+
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  };
+
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
     setFormData(prev => ({
       ...prev,
       name,
-      // Don't auto-generate slug, let user enter manually
+      slug: prev.slug || generateSlug(name),
     }));
   };
 
@@ -217,10 +226,12 @@ export default function CategoryShowcaseForm({ categoryShowcaseId }: CategorySho
                   onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
                   required
-                />                <p className="mt-1 text-sm text-gray-500">
-                  URL-friendly version of the name (e.g., chocolate-cakes, birthday-special)
+                />
+                <p className="mt-1 text-sm text-gray-500">
+                  URL-friendly version of the name (auto-generated)
                 </p>
-              </div>            </div>            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              </div>
+            </div>            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div>
                 <label htmlFor="sortOrder" className="block text-sm font-medium text-gray-700">
                   Sort Order

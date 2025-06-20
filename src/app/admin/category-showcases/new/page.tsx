@@ -36,5 +36,10 @@ export default function NewCategoryShowcasePage() {
     );
   }
 
-  return <><AdminNavbar /><CategoryShowcaseForm /></>;
+  return (
+    <>
+      <AdminNavbar />
+      <CategoryShowcaseForm />
+    </>
+  );
 }

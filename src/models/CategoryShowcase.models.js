@@ -11,21 +11,10 @@ const categoryShowcaseSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-    },
-    image: {
+    },    image: {
       type: String,
       required: true,
       trim: true,
-    },
-    description: {
-      type: String,
-      required: false,
-      trim: true,
-    },
-    productCount: {
-      type: Number,
-      required: false,
-      default: 0,
     },
     isActive: {
       type: Boolean,

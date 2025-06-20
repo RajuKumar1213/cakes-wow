@@ -15,8 +15,7 @@ import {
   User,
   ChevronDown,
   Phone,
-  Image,
-  Home
+  Image
 } from 'lucide-react';
 import { useToast } from '@/contexts/ToastContext';
 import WhatsAppModal from '@/components/WhatsAppModal';
@@ -30,11 +29,10 @@ interface AdminInfo {
 const AdminNavbar = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const { showSuccess, showError } = useToast();  const [adminInfo, setAdminInfo] = useState<AdminInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { showSuccess, showError } = useToast();
+  const [adminInfo, setAdminInfo] = useState<AdminInfo | null>(null); const [loading, setLoading] = useState(true);  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const [isHomeDropdownOpen, setIsHomeDropdownOpen] = useState(false);
+  const [isHeroPageDropdownOpen, setIsHeroPageDropdownOpen] = useState(false);
   const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);  // Navigation items
   const navigationItems = [
     {
@@ -44,30 +42,28 @@ const AdminNavbar = () => {
       current: pathname === '/admin'
     },
     {
-      name: 'Home Page',
-      icon: Home,
+      name: 'Products',
+      href: '/admin/products',
+      icon: Package,
+      current: pathname.startsWith('/admin/products')
+    },
+    {
+      name: 'Hero Page',
+      icon: Image,
+      hasDropdown: true,
       current: pathname.startsWith('/admin/hero-banners') || pathname.startsWith('/admin/category-showcases'),
-      isDropdown: true,
       subItems: [
         {
           name: 'Hero Banners',
           href: '/admin/hero-banners',
-          icon: Image,
           current: pathname.startsWith('/admin/hero-banners')
         },
         {
           name: 'Category Showcase',
           href: '/admin/category-showcases',
-          icon: BarChart3,
           current: pathname.startsWith('/admin/category-showcases')
         }
       ]
-    },
-    {
-      name: 'Products',
-      href: '/admin/products',
-      icon: Package,
-      current: pathname.startsWith('/admin/products')
     },
     {
       name: 'Orders',
@@ -130,10 +126,10 @@ const AdminNavbar = () => {
       router.push('/admin-login');
     }
   };
-
   const handleNavigation = (href: string) => {
     router.push(href);
     setIsMobileMenuOpen(false);
+    setIsHeroPageDropdownOpen(false);
   };
 
   return (
@@ -153,11 +149,12 @@ const AdminNavbar = () => {
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 
-                if (item.isDropdown) {
+                // Handle dropdown items
+                if (item.hasDropdown) {
                   return (
                     <div key={item.name} className="relative">
                       <button
-                        onClick={() => setIsHomeDropdownOpen(!isHomeDropdownOpen)}
+                        onClick={() => setIsHeroPageDropdownOpen(!isHeroPageDropdownOpen)}
                         className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${item.current
                             ? 'bg-orange-100 text-orange-700 border border-orange-200'
                             : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -169,37 +166,34 @@ const AdminNavbar = () => {
                       </button>
                       
                       {/* Dropdown Menu */}
-                      {isHomeDropdownOpen && (
+                      {isHeroPageDropdownOpen && (
                         <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                          {item.subItems?.map((subItem) => {
-                            const SubIcon = subItem.icon;
-                            return (
-                              <button
-                                key={subItem.name}
-                                onClick={() => {
-                                  handleNavigation(subItem.href);
-                                  setIsHomeDropdownOpen(false);
-                                }}
-                                className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 transition-colors ${subItem.current
-                                    ? 'bg-orange-50 text-orange-700'
-                                    : 'text-gray-700 hover:bg-gray-50'
-                                  }`}
-                              >
-                                <SubIcon className="w-4 h-4" />
-                                {subItem.name}
-                              </button>
-                            );
-                          })}
+                          {item.subItems?.map((subItem) => (
+                            <button
+                              key={subItem.name}
+                              onClick={() => {
+                                handleNavigation(subItem.href);
+                                setIsHeroPageDropdownOpen(false);
+                              }}
+                              className={`w-full text-left px-4 py-2 text-sm transition-colors ${subItem.current
+                                  ? 'bg-orange-50 text-orange-700'
+                                  : 'text-gray-700 hover:bg-gray-50'
+                                }`}
+                            >
+                              {subItem.name}
+                            </button>
+                          ))}
                         </div>
                       )}
                     </div>
                   );
                 }
                 
+                // Handle regular items
                 return (
                   <button
                     key={item.name}
-                    onClick={() => item.href && handleNavigation(item.href)}
+                    onClick={() => handleNavigation(item.href!)}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${item.current
                         ? 'bg-orange-100 text-orange-700 border border-orange-200'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -277,63 +271,48 @@ const AdminNavbar = () => {
               )}
             </button>
           </div>
-        </div>        {/* Mobile Navigation Menu */}
+        </div>
+
+        {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 py-2">
-            <div className="space-y-1">
+          <div className="md:hidden border-t border-gray-200 py-2">            <div className="space-y-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 
-                if (item.isDropdown) {
+                // Handle dropdown items in mobile
+                if (item.hasDropdown) {
                   return (
                     <div key={item.name}>
-                      <button
-                        onClick={() => setIsHomeDropdownOpen(!isHomeDropdownOpen)}
-                        className={`w-full flex items-center justify-between gap-3 px-3 py-3 rounded-lg text-base font-medium transition-colors ${item.current
-                            ? 'bg-orange-100 text-orange-700 border border-orange-200'
-                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                          }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Icon className="w-5 h-5" />
-                          {item.name}
-                        </div>
-                        <ChevronDown className={`w-4 h-4 transition-transform ${isHomeDropdownOpen ? 'rotate-180' : ''}`} />
-                      </button>
-                      
-                      {/* Mobile Dropdown Items */}
-                      {isHomeDropdownOpen && (
-                        <div className="ml-8 mt-1 space-y-1">
-                          {item.subItems?.map((subItem) => {
-                            const SubIcon = subItem.icon;
-                            return (
-                              <button
-                                key={subItem.name}
-                                onClick={() => {
-                                  handleNavigation(subItem.href);
-                                  setIsMobileMenuOpen(false);
-                                  setIsHomeDropdownOpen(false);
-                                }}
-                                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${subItem.current
-                                    ? 'bg-orange-50 text-orange-700'
-                                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                                  }`}
-                              >
-                                <SubIcon className="w-4 h-4" />
-                                {subItem.name}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
+                      <div className={`flex items-center gap-3 px-3 py-3 text-base font-medium ${item.current
+                          ? 'text-orange-700'
+                          : 'text-gray-600'
+                        }`}>
+                        <Icon className="w-5 h-5" />
+                        {item.name}
+                      </div>
+                      <div className="ml-8 space-y-1">
+                        {item.subItems?.map((subItem) => (
+                          <button
+                            key={subItem.name}
+                            onClick={() => handleNavigation(subItem.href)}
+                            className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${subItem.current
+                                ? 'bg-orange-100 text-orange-700 border border-orange-200'
+                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                              }`}
+                          >
+                            {subItem.name}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   );
                 }
                 
+                // Handle regular items
                 return (
                   <button
                     key={item.name}
-                    onClick={() => item.href && handleNavigation(item.href)}
+                    onClick={() => handleNavigation(item.href!)}
                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-base font-medium transition-colors ${item.current
                         ? 'bg-orange-100 text-orange-700 border border-orange-200'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -370,13 +349,17 @@ const AdminNavbar = () => {
           </div>
         )}
       </div>      {/* Click outside to close dropdowns */}
-      {(isProfileDropdownOpen || isHomeDropdownOpen) && (
+      {isProfileDropdownOpen && (
         <div
           className="fixed inset-0 z-40"
-          onClick={() => {
-            setIsProfileDropdownOpen(false);
-            setIsHomeDropdownOpen(false);
-          }}
+          onClick={() => setIsProfileDropdownOpen(false)}
+        />
+      )}
+      
+      {isHeroPageDropdownOpen && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setIsHeroPageDropdownOpen(false)}
         />
       )}
 

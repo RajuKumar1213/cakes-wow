@@ -43,9 +43,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
-    
-    const body = await request.json();
-    const { name, slug, image, description, productCount, isActive, sortOrder } = body;
+      const body = await request.json();
+    const { name, slug, image, isActive, sortOrder } = body;
 
     // Validate required fields
     if (!name || !slug || !image) {
@@ -62,14 +61,10 @@ export async function POST(request: NextRequest) {
         { success: false, message: "Category with this slug already exists" },
         { status: 400 }
       );
-    }
-
-    const categoryShowcase = new CategoryShowcase({
+    }    const categoryShowcase = new CategoryShowcase({
       name,
       slug,
       image,
-      description,
-      productCount,
       isActive: isActive !== undefined ? isActive : true,
       sortOrder: sortOrder || 0,
     });

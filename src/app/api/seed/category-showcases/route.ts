@@ -5,78 +5,72 @@ import CategoryShowcase from "@/models/CategoryShowcase.models";
 export async function POST() {
   try {
     await dbConnect();
-
+    
     // Clear existing category showcases
     await CategoryShowcase.deleteMany({});
-
+    
+    // Create default category showcases
     const defaultCategoryShowcases = [
       {
-        name: "Chocolate Loaded Cakes",
-        slug: "chocolate-loaded-cakes",
+        name: "Chocolate Art",
+        slug: "chocolate-art",
         image: "/images/chocolate.webp",
-        description: "Rich and decadent chocolate cakes for chocolate lovers",
-        productCount: 25,
+        sortOrder: 0,
         isActive: true,
-        sortOrder: 1,
       },
       {
-        name: "Gourmet Cakes",
-        slug: "gourmet-cakes",
-        image: "/images/gourmet.webp",
-        description: "Premium gourmet cakes with exquisite flavors",
-        productCount: 18,
-        isActive: true,
-        sortOrder: 2,
-      },
-      {
-        name: "Photo Cakes",
-        slug: "photo-print-cakes",
-        image: "/images/photo.webp",
-        description: "Personalized photo cakes for special occasions",
-        productCount: 12,
-        isActive: true,
-        sortOrder: 3,
-      },
-      {
-        name: "Design Cakes",
-        slug: "design-cakes",
-        image: "/images/designcake.webp",
-        description: "Custom designed cakes for every celebration",
-        productCount: 30,
-        isActive: true,
-        sortOrder: 4,
-      },
-      {
-        name: "Anniversary Cakes",
-        slug: "anniversary-cakes",
-        image: "/images/aniversary.webp",
-        description: "Romantic cakes for anniversary celebrations",
-        productCount: 15,
-        isActive: true,
-        sortOrder: 5,
-      },
-      {
-        name: "Birthday Cakes",
-        slug: "birthday-cakes",
+        name: "Birthday Special",
+        slug: "birthday-special",
         image: "/images/birthday1.webp",
-        description: "Fun and colorful birthday cakes for all ages",
-        productCount: 40,
+        sortOrder: 1,
         isActive: true,
-        sortOrder: 6,
+      },
+      {
+        name: "Anniversary Collection",
+        slug: "anniversary-collection",
+        image: "/images/aniversary.webp",
+        sortOrder: 2,
+        isActive: true,
+      },
+      {
+        name: "Wedding Dreams",
+        slug: "wedding-dreams",
+        image: "/images/engagement.webp",
+        sortOrder: 3,
+        isActive: true,
+      },
+      {
+        name: "Jungle Adventure",
+        slug: "jungle-adventure",
+        image: "/images/jungle.webp",
+        sortOrder: 4,
+        isActive: true,
+      },
+      {
+        name: "Photo Memories",
+        slug: "photo-memories",
+        image: "/images/photo.webp",
+        sortOrder: 5,
+        isActive: true,
       },
     ];
-
-    const createdCategoryShowcases = await CategoryShowcase.insertMany(defaultCategoryShowcases);
-
+    
+    // Insert default category showcases
+    const createdShowcases = await CategoryShowcase.insertMany(defaultCategoryShowcases);
+    
     return NextResponse.json({
       success: true,
-      message: `${createdCategoryShowcases.length} category showcases seeded successfully`,
-      data: createdCategoryShowcases,
+      message: `Successfully seeded ${createdShowcases.length} category showcases`,
+      data: createdShowcases,
     });
   } catch (error) {
     console.error("Error seeding category showcases:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to seed category showcases" },
+      {
+        success: false,
+        message: "Failed to seed category showcases",
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }

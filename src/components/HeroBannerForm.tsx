@@ -304,7 +304,9 @@ const HeroBannerForm = ({ bannerId, isEdit = false }: HeroBannerFormProps) => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                 placeholder="Enter image alt text for accessibility"
               />
-            </div>            {/* Link/Href */}
+            </div>
+
+            {/* Link/Href */}
             <div>
               <label htmlFor="href" className="block text-sm font-medium text-gray-700 mb-2">
                 Link URL *
@@ -317,10 +319,10 @@ const HeroBannerForm = ({ bannerId, isEdit = false }: HeroBannerFormProps) => {
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                placeholder="e.g., birthday-cakes or products/cake-name"
+                placeholder="e.g., /birthday-cakes or /products/cake-name"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Enter URL path (e.g., birthday-cakes, chocolate-special)
+                Enter relative URL (e.g., /birthday-cakes) or absolute URL
               </p>
             </div>
 

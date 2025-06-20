@@ -60,7 +60,7 @@ export async function PUT(
       );
     }
 
-    const { name, slug, image, description, productCount, isActive, sortOrder } = body;
+    const { name, slug, image, isActive, sortOrder } = body;
 
     // Validate required fields
     if (!name || !slug || !image) {
@@ -77,16 +77,12 @@ export async function PUT(
         { success: false, message: "Category with this slug already exists" },
         { status: 400 }
       );
-    }
-
-    const categoryShowcase = await CategoryShowcase.findByIdAndUpdate(
+    }    const categoryShowcase = await CategoryShowcase.findByIdAndUpdate(
       id,
       {
         name,
         slug,
         image,
-        description,
-        productCount,
         isActive,
         sortOrder,
       },
