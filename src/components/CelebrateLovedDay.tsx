@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ProductCard from "./ProductCard";
 import CategoryCard from "./CategoryCard";
 
@@ -23,39 +23,119 @@ interface Product {
   }>;
 }
 
+interface CelebrateLoveDayItem {
+  _id: string;
+  name: string;
+  slug: string;
+  image: string;
+  productCount?: number;
+  isActive: boolean;
+  sortOrder: number;
+}
+
 const CelebrateLovedDay = () => {
-  const categories = [
+  const [celebrateLoveDays, setCelebrateLoveDays] = useState<CelebrateLoveDayItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fallback data in case API fails
+  const fallbackCategories = [
     {
-      id: "1",
+      _id: "1",
+      name: "Anniversary Special",
       slug: "all-anniversary-cakes",
       image: "/images/aniversary.webp",
       productCount: 25,
+      isActive: true,
+      sortOrder: 0,
     },
     {
-      id: "2",
-      slug: "all-anniversary-cakes",
+      _id: "2",
+      name: "Anniversary Elegance",
+      slug: "anniversary-elegance",
       image: "/images/aniversary2.webp",
+      productCount: 18,
+      isActive: true,
+      sortOrder: 1,
     },
     {
-      id: "3",
-      slug: "all-anniversary-cakes",
+      _id: "3",
+      name: "Anniversary Celebration",
+      slug: "anniversary-celebration",
       image: "/images/aniversary3.webp",
+      productCount: 22,
+      isActive: true,
+      sortOrder: 2,
     },
     {
-      id: "4",
-      slug: "all-anniversary-cakes",
+      _id: "4",
+      name: "Anniversary Memories",
+      slug: "anniversary-memories",
       image: "/images/aniversary4.webp",
+      productCount: 15,
+      isActive: true,
+      sortOrder: 3,
     },
   ];
 
-  const formatCategoriesForCard = (category: any) => ({
-    id: category.id,
+  useEffect(() => {
+    fetchCelebrateLoveDays();
+  }, []);
+
+  const fetchCelebrateLoveDays = async () => {
+    try {
+      const response = await fetch('/api/celebrate-love-days');
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        // Filter only active items and sort by sortOrder
+        const activeItems = data.data
+          .filter((item: CelebrateLoveDayItem) => item.isActive)
+          .sort((a: CelebrateLoveDayItem, b: CelebrateLoveDayItem) => a.sortOrder - b.sortOrder);
+        
+        setCelebrateLoveDays(activeItems);
+      } else {
+        // Use fallback data
+        setCelebrateLoveDays(fallbackCategories);
+      }
+    } catch (error) {
+      console.error('Error fetching celebrate love days:', error);
+      // Use fallback data
+      setCelebrateLoveDays(fallbackCategories);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatCategoriesForCard = (category: CelebrateLoveDayItem) => ({
+    id: category._id,
     name: category.name,
     image: category.image,
     href: `/${category.slug}`,
-    description: category.description,
     ...(category.productCount && { productCount: category.productCount }),
   });
+
+  if (loading) {
+    return (
+      <div className="relative bg-gradient-to-br overflow-hidden">
+        <div className="relative z-10">
+          <section className="py-8 md:py-12">
+            <div className="container mx-auto px-2 md:px-6 lg:px-8">            
+              <h2 className="font-poppins text-2xl md:text-left md:text-3xl font-semibold text-gray-800 mb-6 text-center">
+                Celebrate the Loved Day
+              </h2>
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="bg-gray-200 aspect-square rounded-lg"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative bg-gradient-to-br  overflow-hidden">
@@ -67,7 +147,7 @@ const CelebrateLovedDay = () => {
             Celebrate the Loved Day
           </h2>
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 mb-8">
-              {categories.map((category) => {
+              {celebrateLoveDays.map((category) => {
                 const cardProps = formatCategoriesForCard(category);
                 return <CategoryCard hideTitle={true} key={cardProps.id} {...cardProps} />;
               })}

@@ -46,12 +46,11 @@ const AdminNavbar = () => {
       href: '/admin/products',
       icon: Package,
       current: pathname.startsWith('/admin/products')
-    },
-    {
+    },    {
       name: 'Hero Page',
       icon: Image,
       hasDropdown: true,
-      current: pathname.startsWith('/admin/hero-banners') || pathname.startsWith('/admin/category-showcases'),
+      current: pathname.startsWith('/admin/hero-banners') || pathname.startsWith('/admin/category-showcases') || pathname.startsWith('/admin/celebrate-love-days'),
       subItems: [
         {
           name: 'Hero Banners',
@@ -62,6 +61,11 @@ const AdminNavbar = () => {
           name: 'Category Showcase',
           href: '/admin/category-showcases',
           current: pathname.startsWith('/admin/category-showcases')
+        },
+        {
+          name: 'Celebrate Love Days',
+          href: '/admin/celebrate-love-days',
+          current: pathname.startsWith('/admin/celebrate-love-days')
         }
       ]
     },

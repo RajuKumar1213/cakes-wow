@@ -60,9 +60,8 @@ export default function Home() {
       </div>
 
       {/* Bestseller Products */}
-      <div className="relative bg-gradient-to-r from-red-50/30 via-pink-50/20 to-orange-50/30">
-        <BestSeller />
-      </div>
+      <BestSeller />
+
 
       {/* Celebrate the Loved day */}
       <div className="relative bg-white/80 backdrop-blur-sm">
@@ -221,8 +220,8 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>     
-      <WhatsAppButton/> 
+      </section>
+      <WhatsAppButton />
       <Footer />
     </main>
   );
