@@ -83,7 +83,9 @@ const CelebrateLovedDay = () => {
 
   const fetchCelebrateLoveDays = async () => {
     try {
-      const response = await fetch('/api/celebrate-love-days');
+      const response = await fetch('/api/celebrate-love-days', {
+        // next: { revalidate: 3600 },
+      });
       const data = await response.json();
       
       if (data.success && data.data) {

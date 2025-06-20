@@ -16,6 +16,7 @@ export { default as BestSeller } from './BestSeller';
 export { default as CelebrateLoveDayForm } from './CelebrateLoveDayForm';
 export {default as CelebratedLovedDay} from "./CelebrateLovedDay"
 export {default as SpeciallyTendingCakes} from "./SpeciallyTendingCakes"
+export { default as SpeciallyTrendingCakeForm } from './SpeciallyTrendingCakeForm';
 export { default as AddOns } from './AddOns';
 export { default as AddOnModal } from './AddOnModal';
 export { default as PhotoCakeCustomization } from './PhotoCakeCustomization';

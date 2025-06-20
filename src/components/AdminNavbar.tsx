@@ -50,7 +50,7 @@ const AdminNavbar = () => {
       name: 'Hero Page',
       icon: Image,
       hasDropdown: true,
-      current: pathname.startsWith('/admin/hero-banners') || pathname.startsWith('/admin/category-showcases') || pathname.startsWith('/admin/celebrate-love-days'),
+      current: pathname.startsWith('/admin/hero-banners') || pathname.startsWith('/admin/category-showcases') || pathname.startsWith('/admin/celebrate-love-days') || pathname.startsWith('/admin/specially-trending-cakes'),
       subItems: [
         {
           name: 'Hero Banners',
@@ -66,6 +66,11 @@ const AdminNavbar = () => {
           name: 'Celebrate Love Days',
           href: '/admin/celebrate-love-days',
           current: pathname.startsWith('/admin/celebrate-love-days')
+        },
+        {
+          name: 'Specially Trending Cakes',
+          href: '/admin/specially-trending-cakes',
+          current: pathname.startsWith('/admin/specially-trending-cakes')
         }
       ]
     },
