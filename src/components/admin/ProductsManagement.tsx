@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
 import {
@@ -10,7 +11,6 @@ import {
   Trash2,
   Package,
   Image as ImageIcon,
-
   Loader2,
   Grid3X3,
   List,
@@ -19,6 +19,7 @@ import {
   ArrowDown,
   ChevronUp,
   ChevronDown,
+  TrendingUp,
 } from "lucide-react";
 import Image from "next/image";
 import { ProductForm } from "@/components";
@@ -50,6 +51,7 @@ interface Product {
   rating: number;
   reviewCount: number;
   createdAt: string;
+  bestsellerOrder?: number;
   globalDisplayOrder?: number;
   categoryOrders?: Array<{
     category: string;
@@ -72,6 +74,7 @@ interface ProductsManagementProps {
 
 export default function ProductsManagement({ onLoadingChange }: ProductsManagementProps) {
   const { showSuccess, showError } = useToast();
+  const router = useRouter();
 
   console.log('🔄 ProductsManagement component mounting/re-rendering');
 
@@ -98,31 +101,40 @@ export default function ProductsManagement({ onLoadingChange }: ProductsManageme
   // Ordering states
   const [orderingMode, setOrderingMode] = useState(false);
   const [draggedProduct, setDraggedProduct] = useState<Product | null>(null);
-  const [orderingCategory, setOrderingCategory] = useState<string>('all');
-  // Load categories on mount
+  const [orderingCategory, setOrderingCategory] = useState<string>('all');  // Load categories on mount
   useEffect(() => {
     fetchCategories();
   }, []);
 
+  // Initial load effect - ensure products are fetched on mount
+  useEffect(() => {
+    // Set default activeProductTab to 'all' if not set
+    if (!activeProductTab) {
+      setActiveProductTab('all');
+    }
+  }, []);
   // Set default category when categories load
   useEffect(() => {
     if (allCategories.length > 0 && !activeProductTab) {
       const firstCategory = allCategories[0];
       setActiveProductTab(firstCategory.slug);
       console.log('Setting default category:', firstCategory.name);
+    } else if (allCategories.length > 0 && activeProductTab === 'all') {
+      // Force load products for 'all' tab when categories are loaded
+      console.log('Categories loaded, fetching all products...');
+      fetchProducts(1);
+      setCurrentPage(1);
     }
-  }, [allCategories, activeProductTab]);
-
-  // Load products when category changes
+  }, [allCategories, activeProductTab]);// Load products when category changes
   useEffect(() => {
-    if (activeProductTab && allCategories.length > 0) {
+    if (activeProductTab && (allCategories.length > 0 || activeProductTab === 'bestsellers' || activeProductTab === 'all')) {
       console.log('Loading products for category:', activeProductTab);
       fetchProducts(1);
       setCurrentPage(1);
       setSelectedCategory(activeProductTab);
       setOrderingCategory(activeProductTab);
     }
-  }, [activeProductTab, allCategories.length]);
+  }, [activeProductTab, allCategories.length, sortBy, sortOrder]);
 
   // Update loading state
   useEffect(() => {
@@ -156,18 +168,34 @@ export default function ProductsManagement({ onLoadingChange }: ProductsManageme
         limit: '30',
         sortBy,
         sortOrder,
-      });
-
-      if (activeProductTab !== 'all') {
+      });      if (activeProductTab !== 'all' && activeProductTab !== 'bestsellers') {
         params.append('category', activeProductTab);
+      }
+
+      if (activeProductTab === 'bestsellers') {
+        params.append('isBestseller', 'true');
+        params.set('sortBy', 'bestsellerOrder');
+        params.set('sortOrder', 'asc');
       }
 
       if (searchTerm) {
         params.append('search', searchTerm);
+      }      const response = await fetch(`/api/products?${params}`);
+      
+      // Check if the response is OK
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      const response = await fetch(`/api/products?${params}`);
+      
       const data = await response.json();
+      
+      console.log('🔍 API Response debug:', {
+        success: data.success,
+        hasData: !!data.data,
+        dataType: typeof data.data,
+        responseKeys: Object.keys(data),
+        fullResponse: data
+      });
       
       if (data.success || data.data) {
         // Handle the API response structure correctly
@@ -192,24 +220,26 @@ export default function ProductsManagement({ onLoadingChange }: ProductsManageme
         console.log('📦 Products loaded:', products.length);
         console.log('📄 Pagination:', pagination);
       } else {
-        console.error('API response structure:', data);
+        console.error('❌ Invalid API response structure:', data);
+        console.error('❌ Response does not have success=true or data property');
         showError("Error", "Invalid API response structure");
-      }
-    } catch (error) {
-      console.error('Failed to fetch products:', error);
-      showError("Error", "Failed to load products");
+      }    } catch (error) {
+      console.error('❌ Failed to fetch products - Error details:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('❌ Error type:', error instanceof Error ? error.constructor.name : typeof error);
+      console.error('❌ Error message:', errorMessage);
+      showError("Error", `Failed to load products: ${errorMessage}`);
     } finally {
       setProductsLoading(false);
     }
-  };
-  // Handle search and filters
+  };  // Handle search and filters
   useEffect(() => {
-    if (activeProductTab && allCategories.length > 0) {
-      console.log('Filters changed, refetching products...');
+    if (searchTerm && activeProductTab && (allCategories.length > 0 || activeProductTab === 'bestsellers' || activeProductTab === 'all')) {
+      console.log('Search term changed, refetching products...');
       fetchProducts(1);
       setCurrentPage(1);
     }
-  }, [searchTerm, sortBy, sortOrder, activeProductTab, allCategories.length]);
+  }, [searchTerm]);
 
   // Delete product
   const handleDeleteProduct = async (productId: string) => {
@@ -681,8 +711,7 @@ export default function ProductsManagement({ onLoadingChange }: ProductsManageme
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Product Categories</h3>
-          <div className="flex flex-wrap gap-2">
-            <button
+          <div className="flex flex-wrap gap-2">            <button
               onClick={() => setActiveProductTab('all')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 activeProductTab === 'all'
@@ -691,6 +720,18 @@ export default function ProductsManagement({ onLoadingChange }: ProductsManageme
               }`}
             >
               All Products  { activeProductTab === 'all' && `(${totalProducts})`  }
+            </button>
+            <button
+              onClick={() => setActiveProductTab('bestsellers')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeProductTab === 'bestsellers'
+                  ? "bg-pink-100 text-pink-600 border border-pink-200"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}            >
+              ⭐ Best Sellers
+              {activeProductTab === 'bestsellers' && products.length > 0 && (
+                <span className="ml-2 text-xs">({products.length})</span>
+              )}
             </button>
             {allCategories.map((category) => (
               <button
@@ -753,6 +794,16 @@ export default function ProductsManagement({ onLoadingChange }: ProductsManageme
           </div>
 
           <div className="flex gap-3">
+            {activeProductTab === 'bestsellers' && (
+              <button
+                onClick={() => router.push('/admin/bestseller-management')}
+                className="bg-pink-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-pink-700 transition-colors flex items-center gap-2"
+              >
+                <TrendingUp className="w-4 h-4" />
+                Manage Order
+              </button>
+            )}
+            
             <button
               onClick={() => setShowProductForm(true)}
               className="bg-orange-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center gap-2"

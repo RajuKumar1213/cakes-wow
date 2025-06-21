@@ -91,7 +91,7 @@ const HeroCarousel = () => {
       try {
         // Use fetch with Next.js caching - revalidate every 1 hour (3600 seconds)
         const response = await fetch('/api/hero-banners', {
-          next: { revalidate: 3600 } // Cache for 1 hour
+          // next: { revalidate: 3600 } // Cache for 1 hour
         });
 
         if (response.ok) {

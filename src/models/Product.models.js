@@ -73,6 +73,11 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  bestsellerOrder: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
   rating: {
     type: Number,
     default: 0,
@@ -97,6 +102,7 @@ productSchema.index({ price: 1 });
 // Note: isAvailable index is covered by compound index above
 productSchema.index({ isBestseller: 1 });
 productSchema.index({ isFeatured: 1 });
+productSchema.index({ isBestseller: 1, bestsellerOrder: 1 }); // Index for bestseller ordering
 productSchema.index({ name: 'text', description: 'text' });
 productSchema.index({ createdAt: -1 }); // For sorting by newest
 productSchema.index({ rating: -1, reviewCount: -1 }); // For sorting by popularity

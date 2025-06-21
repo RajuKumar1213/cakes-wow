@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 const CategorySection = () => {
@@ -60,9 +59,9 @@ const CategorySection = () => {
     <section className="pt-16 pb-24 bg-gray-50">
       <div className="container mx-auto px-4 md:px-6 lg:px-8">
         <div className="text-center sm:text-left mb-8">          
-          <h2 className="font-poppins text-2xl md:text-3xl font-semibold text-gray-800">
-          Experience Flavour
-        </h2>
+           <h2 className="font-poppins text-center md:text-left text-2xl md:text-4xl font-bold text-gray-800 mb-4">
+              Experience <span className="text-pink-600">Flavour</span>
+            </h2>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">

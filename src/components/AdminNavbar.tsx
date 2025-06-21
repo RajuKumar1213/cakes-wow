@@ -46,11 +46,9 @@ const AdminNavbar = () => {
       href: '/admin/products',
       icon: Package,
       current: pathname.startsWith('/admin/products')
-    },    {
-      name: 'Hero Page',
-      icon: Image,
+    },    {      name: 'Hero Page',      icon: Image,
       hasDropdown: true,
-      current: pathname.startsWith('/admin/hero-banners') || pathname.startsWith('/admin/category-showcases') || pathname.startsWith('/admin/celebrate-love-days') || pathname.startsWith('/admin/specially-trending-cakes'),
+      current: pathname.startsWith('/admin/hero-banners') || pathname.startsWith('/admin/category-showcases') || pathname.startsWith('/admin/celebrate-love-days') || pathname.startsWith('/admin/specially-trending-cakes') || pathname.startsWith('/admin/bestseller-management'),
       subItems: [
         {
           name: 'Hero Banners',
@@ -71,6 +69,11 @@ const AdminNavbar = () => {
           name: 'Specially Trending Cakes',
           href: '/admin/specially-trending-cakes',
           current: pathname.startsWith('/admin/specially-trending-cakes')
+        },
+        {
+          name: 'Bestseller Management',
+          href: '/admin/bestseller-management',
+          current: pathname.startsWith('/admin/bestseller-management')
         }
       ]
     },

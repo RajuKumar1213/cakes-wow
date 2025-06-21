@@ -175,10 +175,9 @@ export function createProductFilters(params) {
  * @param {string} categoryId - Category ID for category-specific ordering
  * @returns {Object} - MongoDB sort object
  */
-export function createSortOptions(sortBy = 'createdAt', sortOrder = 'desc', categoryId = null) {
-  const validSortFields = [
+export function createSortOptions(sortBy = 'createdAt', sortOrder = 'desc', categoryId = null) {  const validSortFields = [
     'name', 'price', 'createdAt', 'updatedAt', 
-    'rating', 'reviewCount', 'sortOrder', 'displayOrder'
+    'rating', 'reviewCount', 'sortOrder', 'displayOrder', 'bestsellerOrder'
   ];
 
   if (!validSortFields.includes(sortBy)) {

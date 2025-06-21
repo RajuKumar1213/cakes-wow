@@ -22,10 +22,8 @@ const baseProductSchema = z.object({
       })
     )
     .min(1, "At least one weight option is required"),
-
   isAvailable: z.boolean(),
   isBestseller: z.boolean(),
-  isFeatured: z.boolean(),
   preparationTime: z.string().min(1, "Preparation time is required"),
   // Remove images from form schema - we'll handle them separately
 });
@@ -94,10 +92,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
         name: "",
         description: "",
         price: 0,
-        discountedPrice: 0,
-        isAvailable: true,
+        discountedPrice: 0,        isAvailable: true,
         isBestseller: false,
-        isFeatured: false,
         categories: [],
         weightOptions: [{ weight: "", price: 0, discountedPrice: 0 }],
         preparationTime: "",
@@ -138,8 +134,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       setValue(
         "isAvailable",
         product.isAvailable !== undefined ? product.isAvailable : true
-      );
-      setValue("isBestseller", product.isBestseller || false); setValue("isFeatured", product.isFeatured || false);
+      );      setValue("isBestseller", product.isBestseller || false);
       setValue("preparationTime", product.preparationTime || "");
 
       // Handle existing images (URLs)
@@ -165,10 +160,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
             weight: opt.weight || "",
             price: opt.price || 0,
             discountedPrice: opt.discountedPrice || 0
-          })) : [],
-          isAvailable: Boolean(data.isAvailable),
+          })) : [],          isAvailable: Boolean(data.isAvailable),
           isBestseller: Boolean(data.isBestseller),
-          isFeatured: Boolean(data.isFeatured),
           preparationTime: data.preparationTime || "",
           imageFilesCount: imageFiles.length,
           imagePreviewsCount: imagePreviews.length
@@ -201,10 +194,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
               weight: String(opt.weight),
               price: Number(opt.price),
               discountedPrice: Number(opt.discountedPrice)
-            })),
-            isAvailable: Boolean(safeData.isAvailable),
+            })),            isAvailable: Boolean(safeData.isAvailable),
             isBestseller: Boolean(safeData.isBestseller),
-            isFeatured: Boolean(safeData.isFeatured),
             preparationTime: String(safeData.preparationTime),
             imageFilesCount: Number(safeData.imageFilesCount),
             imagePreviewsCount: Number(safeData.imagePreviewsCount)
@@ -254,12 +245,9 @@ const ProductForm: React.FC<ProductFormProps> = ({
               option.discountedPrice.toString()
             );
           }
-        });
-
-        // Add boolean fields
+        });        // Add boolean fields
         formData.append("isAvailable", cleanData.isAvailable.toString());
         formData.append("isBestseller", cleanData.isBestseller.toString());
-        formData.append("isFeatured", cleanData.isFeatured.toString());
 
         // Add preparationTime
         formData.append("preparationTime", cleanData.preparationTime);// Handle images - both new uploads and existing URLs
@@ -911,52 +899,11 @@ const ProductForm: React.FC<ProductFormProps> = ({
                             <span className="text-sm font-medium text-gray-700 group-hover:text-pink-600 transition-colors">
                               Bestseller
                             </span>
-                          </label>
-                        )}
-                      />
-
-                      <Controller
-                        name="isFeatured"
-                        control={control}
-                        render={({ field }) => (
-                          <label className="flex items-center space-x-3 cursor-pointer group">
-                            <div className="relative">
-                              <input
-                                type="checkbox"
-                                checked={field.value}
-                                onChange={field.onChange}
-                                className="sr-only"
-                              />
-                              <div
-                                className={`w-6 h-6 rounded-lg border-2 transition-all duration-200 ${field.value
-                                  ? "bg-gradient-to-r from-blue-400 to-indigo-500 border-indigo-500"
-                                  : "border-gray-300 group-hover:border-indigo-400"
-                                  }`}
-                              >
-                                {field.value && (
-                                  <svg
-                                    className="w-4 h-4 text-white absolute top-0.5 left-0.5"
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                  >
-                                    <path
-                                      fillRule="evenodd"
-                                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                      clipRule="evenodd"
-                                    />
-                                  </svg>
-                                )}
-                              </div>
-                            </div>
-                            <span className="text-sm font-medium text-gray-700 group-hover:text-indigo-600 transition-colors">
-                              Featured
-                            </span>
-                          </label>
-                        )}
+                          </label>                        )}
                       />
                     </div>
                   </div>
-                </div>              </div>
+                </div></div>
             </div>
 
             {/* Categories Section - Placed at the bottom */}

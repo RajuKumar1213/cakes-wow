@@ -50,9 +50,8 @@ export default function Home() {
       </div>
 
       {/* Featured Categories Showcase */}
-      <div className="relative bg-white/60 backdrop-blur-sm">
-        <CategoryShowcase />
-      </div>
+      <CategoryShowcase />
+
 
       {/* Quick Category Navigation */}
       <div className="relative">
@@ -64,13 +63,11 @@ export default function Home() {
 
 
       {/* Celebrate the Loved day */}
-      <div className="relative bg-white/80 backdrop-blur-sm">
-        <CelebratedLovedDay />
-      </div>
+      <CelebratedLovedDay />
 
-      <div className="relative bg-gradient-to-r from-purple-50/30 via-pink-50/20 to-red-50/30">
-        <SpeciallyTendingCakes />
-      </div>
+
+      <SpeciallyTendingCakes />
+
 
       {/* About Section */}
       <section className="py-20 bg-gradient-to-br from-white via-gray-50 to-red-50/30 relative overflow-hidden">

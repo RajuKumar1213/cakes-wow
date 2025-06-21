@@ -248,6 +248,7 @@ export async function POST(request) {
     const isBestseller = formData.get("isBestseller") === "true";
     const isFeatured = formData.get("isFeatured") === "true";
     const isAvailable = formData.get("isAvailable") !== "false"; // Default to true
+    const bestsellerOrder = formData.get("bestsellerOrder") ? parseInt(formData.get("bestsellerOrder")) : undefined;
 
     // Get arrays
     const categories = formData.getAll("categories");
@@ -417,7 +418,7 @@ export async function POST(request) {
     const validatedDiscountedPrice = discountedPrice && discountedPrice > 0
       ? validatePrice(discountedPrice)
       : null;    // Create product
-    const product = new Product({
+    const productData = {
       name,
       slug,
       description,
@@ -431,7 +432,14 @@ export async function POST(request) {
       isAvailable: Boolean(isAvailable),
       preparationTime: preparationTime,
       categoryOrders: [], // Will be set by admin later
-    });
+    };
+
+    // Add bestsellerOrder only if provided
+    if (bestsellerOrder !== undefined) {
+      productData.bestsellerOrder = bestsellerOrder;
+    }
+
+    const product = new Product(productData);
 
     await product.save();
 
@@ -541,6 +549,7 @@ export async function PATCH(request) {
     const isBestseller = formData.get("isBestseller") === "true";
     const isFeatured = formData.get("isFeatured") === "true";
     const isAvailable = formData.get("isAvailable") !== "false"; // Default to true
+    const bestsellerOrder = formData.get("bestsellerOrder") ? parseInt(formData.get("bestsellerOrder")) : undefined;
 
     // Get arrays
     const categories = formData.getAll("categories");
@@ -677,23 +686,30 @@ export async function PATCH(request) {
 
     // Validate weight options
     const validatedWeightOptions = validateWeightOptions(weightOptions);    // Update product
+    const updateData = {
+      name,
+      slug,
+      description,
+      price: validatedPrice,
+      discountedPrice: validatedDiscountedPrice,
+      imageUrls: imageUrls,
+      categories,
+      weightOptions: validatedWeightOptions,
+      isBestseller: Boolean(isBestseller),
+      isFeatured: Boolean(isFeatured),
+      isAvailable: Boolean(isAvailable),
+      preparationTime: preparationTime,
+      updatedAt: new Date(),
+    };
+
+    // Add bestsellerOrder only if provided
+    if (bestsellerOrder !== undefined) {
+      updateData.bestsellerOrder = bestsellerOrder;
+    }
+
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
-      {
-        name,
-        slug,
-        description,
-        price: validatedPrice,
-        discountedPrice: validatedDiscountedPrice,
-        imageUrls: imageUrls,
-        categories,
-        weightOptions: validatedWeightOptions,
-        isBestseller: Boolean(isBestseller),
-        isFeatured: Boolean(isFeatured),
-        isAvailable: Boolean(isAvailable),
-        preparationTime: preparationTime,
-        updatedAt: new Date(),
-      },
+      updateData,
       { new: true, runValidators: true }
     );
 

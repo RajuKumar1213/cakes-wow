@@ -70,7 +70,7 @@ const CategoryShowcase = () => {
       const response = await fetch('/api/category-showcases', {
         // next: { revalidate: 3600 } // Cache for 1 hour
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         if (data.success && data.data.length > 0) {
@@ -117,8 +117,8 @@ const CategoryShowcase = () => {
     <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
       <div className="container mx-auto px-2 md:px-6 lg:px-8">
         <div className="text-center sm:text-left mb-6">
-          <h2 className="font-poppins text-2xl md:text-3xl font-bold text-gray-800 mb-4">
-            WOW Them with Every Slice!
+          <h2 className="font-poppins text-2xl md:text-4xl font-bold text-gray-800 mb-2 md:mb-3">
+            Wow them with <span className="text-pink-600">Every</span> Slice
           </h2>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 max-w-7xl mx-auto justify-items-center">

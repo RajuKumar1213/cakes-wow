@@ -25,10 +25,10 @@ interface Product {
 const fetcher = (...args: [input: RequestInfo, init?: RequestInit]) => fetch(...args).then(res => res.json())
 
 export default function BestSeller() {
-  const {data, error, isLoading} = useSWR('/api/products?isBestseller=true&limit=8&sortBy=reviewCount&sortOrder=asc', fetcher);
+  const {data, error, isLoading} = useSWR('/api/products?isBestseller=true&sortBy=bestsellerOrder&sortOrder=asc', fetcher);
 
   return (
-    <div className="relative overflow-hidden py-10 bg-pink-50">
+    <div className="relative overflow-hidden  bg-pink-50">
       {/* Enhanced pink glowing background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-20 -left-20 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-blob"></div>
@@ -60,7 +60,7 @@ export default function BestSeller() {
                 <span className="w-2 h-2 mr-2 rounded-full bg-pink-500 animate-pulse"></span>
                 <span className="text-sm font-medium text-pink-700">Trending Now</span>
               </div>
-              <h2 className="font-poppins text-3xl md:text-4xl font-bold text-gray-800 mb-2 md:mb-3">
+              <h2 className="font-poppins text-2xl md:text-4xl font-bold text-gray-800 mb-2 md:mb-3">
                 Our <span className="text-pink-600">Best</span> Sellers
               </h2>
               <p className="text-pink-700/80 max-w-lg">Discover the products everyone is loving right now</p>

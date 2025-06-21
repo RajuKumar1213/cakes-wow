@@ -321,8 +321,7 @@ export default function AdminDashboard() {
                     <div className="h-4 bg-gray-200 rounded w-2/3 mb-3"></div>
                     <div className="h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
                     <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  </div>
-                  <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
+                  </div>                  <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
                 </div>
               </div>
             ))
@@ -371,8 +370,7 @@ export default function AdminDashboard() {
                     ? `${dashboardStats.recentOrders.length} recent orders`
                     : "No recent orders"
                 }
-                icon={Users}
-                changeType="neutral"
+                icon={Users}                changeType="neutral"
               />
             </>
           )}
@@ -492,6 +490,12 @@ export default function AdminDashboard() {
               description="Track and manage customer orders"
               icon={ShoppingCart}
               onClick={() => router.push("/admin/orders")}
+            />            <QuickAction
+              title="Bestseller Management"
+              description="Manage bestseller products display order"
+              icon={TrendingUp}
+              onClick={() => router.push("/admin/bestseller-management")}
+              color="pink"
             />
             <QuickAction
               title="Add New Product"
