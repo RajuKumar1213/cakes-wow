@@ -46,104 +46,65 @@ export async function sendAdminOrderNotification(orderData) {
         ? `91${cleanPhoneNumber}`
         : cleanPhoneNumber;
 
-    // console.log("📱 Sending admin order notification:", {
-    //   phone: formattedNumber,
-    //   template: "new_order_alert",
-    //   orderId: orderData.orderId,
-    //   customerName: orderData.customerInfo?.fullName || "Customer",
-    // });
-
     // Generate unique broadcast name with date
     const currentDate = new Date()
       .toISOString()
       .split("T")[0]
       .replace(/-/g, "");
-    const broadcastName = `new_order_alert_${currentDate}`;
+    const broadcastName = `admin_order_alert_${currentDate}`;
 
-    // Prepare delivery time string
-    const deliveryTime = orderData.deliveryInfo?.deliveryDate
-      ? `${orderData.deliveryInfo.deliveryDate} ${
-          orderData.deliveryInfo.deliveryTime || ""
-        }`
-      : "Not specified";
-
-    // Prepare address string
-    const address = orderData.deliveryInfo?.address
-      ? `${orderData.deliveryInfo.address.street || ""}, ${
-          orderData.deliveryInfo.address.area || ""
-        }, ${orderData.deliveryInfo.address.city || ""}`.replace(
-          /^,\s*|,\s*$/g,
-          ""
-        )
-      : "Not specified";
-
-    // Prepare order items details with customization
-    const prepareOrderDetails = () => {
-      if (!orderData.items || orderData.items.length === 0) return "No items";
-
-      return orderData.items
-        .map((item) => {
-          let details = `${item.name}`;
-          if (item.selectedWeight) details += ` (${item.selectedWeight})`;
-          if (item.customization?.message) {
-            details += ` - Name: "${item.customization.message}"`;
+    // Prepare item details string with customization info
+    const itemDetails =
+      orderData.items
+        ?.map((item) => {
+          let itemStr = `${item.name}`;
+          if (item.selectedWeight) {
+            itemStr += ` (${item.selectedWeight})`;
           }
-          details += ` x${item.quantity}`;
-          return details;
+          if (item.customization?.message) {
+            itemStr += ` - Name on Cake: "${item.customization.message}"`;
+          }
+          itemStr += ` - ₹${item.price} x ${item.quantity}`;
+          return itemStr;
         })
-        .join(", ");
-    };
+        .join(", ") || "Order items";
 
-    const orderDetails = prepareOrderDetails();
+    // add-ons details
+    const addOnsDetails =
+      orderData.addons
+        ?.map((addOn) => {
+          return `${addOn.name} - ₹${addOn.price}`;
+        })
+        .join(", ") || "No add-ons";
 
-    // Get the best available image for the notification (customization image > product image > fallback)
     const getProductImage = () => {
-      if (orderData.items?.[0]?.customization?.imageUrl) {
-        // For photo cakes, use the custom uploaded image
-        return orderData.items[0].customization.imageUrl;
-      } else if (orderData.items?.[0]?.imageUrl) {
-        // Use the product image
+      if (orderData.items?.[0]?.imageUrl) {
         return orderData.items[0].imageUrl;
       } else {
         // Fallback image
-        return "https://cakes-wow.vercel.app/images/cake-default.jpg";
+        return "/logo.webp";
       }
     };
+    const productImage = getProductImage();
 
-    const productImage = getProductImage();    // Calculate total amount including all items and add-ons
-    const calculateTotalAmount = () => {
-      const itemsTotal =
-        orderData.items?.reduce((total, item) => {
-          return total + (item.discountedPrice || item.price) * item.quantity;
-        }, 0) || 0;
+    const formateDate = () => {
+      const date = new Date(orderData.customerInfo?.deliveryDate);
 
-      const addOnsTotal =
-        orderData.addOns?.reduce((total, addOn) => {
-          return total + addOn.price * addOn.quantity;
-        }, 0) || 0;
+      const day = String(date.getUTCDate()).padStart(2, "0");
+      const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+      const year = date.getUTCFullYear(); // Normal year
 
-      return itemsTotal + addOnsTotal + (orderData.deliveryCharge || 0);
-    };    const totalAmount = orderData.totalAmount || calculateTotalAmount();    // Prepare order items details with customization for admin
-    const prepareAdminOrderDetails = () => {
-      if (!orderData.items || orderData.items.length === 0) return "No items";
-      
-      return orderData.items.map(item => {
-        let details = `${item.name}`;
-        if (item.selectedWeight) details += ` (${item.selectedWeight})`;
-        if (item.customization?.message) {
-          details += ` - Name: "${item.customization.message}"`;
-        }
-        details += ` x${item.quantity}`;
-        return details;
-      }).join(", ");
+      return `${day}-${month}-${year}`;
     };
 
-    const adminOrderDetails = prepareAdminOrderDetails();
-
     const whatsappData = {
-      template_name: "new_order_alert",
+      template_name: "admin_order_alert",
       broadcast_name: broadcastName,
       parameters: [
+        {
+          name: "image",
+          value: productImage,
+        },
         {
           name: "orderId",
           value: orderData.orderId,
@@ -153,27 +114,29 @@ export async function sendAdminOrderNotification(orderData) {
           value: orderData.customerInfo?.fullName || "Customer",
         },
         {
+          name: "items",
+          value: `${itemDetails} ${
+            addOnsDetails ? `, Add-ons: ${addOnsDetails}` : ""
+          }`,
+        },
+        {
           name: "amount",
-          value: String(totalAmount),
-        },        {
-          name: "orderDetails", 
-          value: adminOrderDetails,
+          value: orderData.totalAmount || "0",
         },
         {
           name: "deliveryTime",
-          value: deliveryTime,
+          value: orderData.customerInfo?.timeSlot
+            ? `${formateDate()}  - ${orderData.customerInfo.timeSlot || ""}`
+            : "Will be confirmed shortly",
         },
         {
           name: "address",
-          value: address,
+          value: orderData.customerInfo?.fullAddress
+            ? orderData.customerInfo?.fullAddress
+            : "As provided",
         },
       ],
     };
-
-    // console.log(
-    //   "📡 WATI API Request Data:",
-    //   JSON.stringify(whatsappData, null, 2)
-    // );
 
     const response = await fetch(
       `${process.env.WATI_API_ENDPOINT}/api/v1/sendTemplateMessage?whatsappNumber=${formattedNumber}`,
@@ -220,86 +183,77 @@ export async function sendAdminOrderNotification(orderData) {
 
 export async function sendCustomerOrderSuccessMessage(phoneNumber, orderData) {
   try {
-    // Clean phone number (remove any non-digit characters)
     const cleanPhoneNumber = String(phoneNumber).replace(/[^\d]/g, "");
 
-    // Validate that we have a clean 10-digit phone number
     if (cleanPhoneNumber.length < 10) {
       throw new Error(`Invalid phone number format: ${phoneNumber}`);
     }
 
-    // Format it with country code if not already included (for India)
     const formattedNumber =
       cleanPhoneNumber.length === 10
         ? `91${cleanPhoneNumber}`
         : cleanPhoneNumber;
 
-    // Generate unique broadcast name with date
     const currentDate = new Date()
       .toISOString()
       .split("T")[0]
       .replace(/-/g, "");
     const broadcastName = `customer_order_alert_${currentDate}`;
 
+    const formateDate = () => {
+      const date = new Date(orderData.customerInfo?.deliveryDate);
+
+      const day = String(date.getUTCDate()).padStart(2, "0");
+      const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+      const year = date.getUTCFullYear(); // Normal year
+
+      return `${day}-${month}-${year}`;
+    };
+
     // Prepare delivery time string
-    const deliveryTime = orderData.deliveryInfo?.deliveryDate
-      ? `${orderData.deliveryInfo.deliveryDate} ${
-          orderData.deliveryInfo.deliveryTime || ""
-        }`
+    const deliveryTime = orderData.customerInfo?.timeSlot
+      ? `${formateDate()}  - ${orderData.customerInfo.timeSlot || ""}`
       : "Will be confirmed shortly";
 
     // Prepare delivery address string
-    const deliveryAddress = orderData.deliveryInfo?.address
-      ? `${orderData.deliveryInfo.address.street || ""}, ${
-          orderData.deliveryInfo.address.area || ""
-        }, ${orderData.deliveryInfo.address.city || ""}`.replace(
-          /^,\s*|,\s*$/g,
-          ""
-        )
-      : "As provided";    // Prepare item details string with customization info
-    const itemDetails = orderData.items
-      ?.map((item) => {
-        let itemStr = `${item.name}`;
-        if (item.selectedWeight) {
-          itemStr += ` (${item.selectedWeight})`;
-        }
-        if (item.customization?.message) {
-          itemStr += ` - Name on Cake: "${item.customization.message}"`;
-        }
-        itemStr += ` - ₹${item.price} x ${item.quantity}`;
-        return itemStr;
-      })
-      .join(", ") || "Order items";
+    const deliveryAddress = orderData.customerInfo?.fullAddress
+      ? orderData.customerInfo?.fullAddress
+      : "As provided";
 
-    // Get the best available image for the notification (customization image > product image > fallback)
+    const itemDetails =
+      orderData.items
+        ?.map((item) => {
+          let itemStr = `${item.name}`;
+          if (item.selectedWeight) {
+            itemStr += ` (${item.selectedWeight})`;
+          }
+          if (item.customization?.message) {
+            itemStr += ` - Name on Cake: "${item.customization.message}"`;
+          }
+          itemStr += ` - ₹${item.price} x ${item.quantity}`;
+          return itemStr;
+        })
+        .join(", ") || "Order items";
+
+    // add-ons details
+    const addOnsDetails =
+      orderData.addons
+        ?.map((addOn) => {
+          return `${addOn.name} - ₹${addOn.price} x ${addOn.quantity}`;
+        })
+        .join(", ") || "No add-ons";
+
     const getProductImage = () => {
-      if (orderData.items?.[0]?.customization?.imageUrl) {
-        // For photo cakes, use the custom uploaded image
-        return orderData.items[0].customization.imageUrl;
-      } else if (orderData.items?.[0]?.imageUrl) {
-        // Use the product image
+      if (orderData.items?.[0]?.imageUrl) {
         return orderData.items[0].imageUrl;
       } else {
         // Fallback image
         return "/logo.webp";
       }
     };
-    
+
     const productImage = getProductImage();
-      // Calculate total amount including all items and add-ons
-    const calculateTotalAmount = () => {
-      const itemsTotal = orderData.items?.reduce((total, item) => {
-        return total + ((item.discountedPrice || item.price) * item.quantity);
-      }, 0) || 0;
-      
-      const addOnsTotal = orderData.addOns?.reduce((total, addOn) => {
-        return total + (addOn.price * addOn.quantity);
-      }, 0) || 0;
-      
-      return itemsTotal + addOnsTotal + (orderData.deliveryCharge || 0);
-    };
-    
-    const totalAmount = orderData.totalAmount || calculateTotalAmount();
+
     const whatsappData = {
       template_name: "customer_order_alert",
       broadcast_name: broadcastName,
@@ -311,17 +265,20 @@ export async function sendCustomerOrderSuccessMessage(phoneNumber, orderData) {
         {
           name: "customerName",
           value: orderData.customerInfo?.fullName || "Customer",
-        },        {
+        },
+        {
           name: "orderId",
           value: orderData.orderId,
         },
         {
           name: "amount",
-          value: String(totalAmount),
+          value: String(orderData.totalAmount) || "0",
         },
         {
           name: "itemDetails",
-          value: itemDetails,
+          value: `${itemDetails}${
+            addOnsDetails ? `, Add-ons: ${addOnsDetails}` : ""
+          }`,
         },
         {
           name: "deliveryTime",
@@ -354,7 +311,6 @@ export async function sendCustomerOrderSuccessMessage(phoneNumber, orderData) {
     return {
       success: response.ok,
       customerNotification: responseData,
-      // adminNotification: adminNotificationResult,
       phone: formattedNumber,
       orderId: orderData.orderId,
     };

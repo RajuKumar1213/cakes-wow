@@ -15,7 +15,7 @@ export const deliveryTypes = [
     id: "free",
     name: "Standard Delivery",
     price: 0,
-    description: "Free delivery (Next day)",
+    description: "Free delivery ",
     icon: "🚚",
     popular: true,
     timeSlots: [

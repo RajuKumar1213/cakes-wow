@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useCategories } from "@/contexts/CategoriesContext";
@@ -33,6 +34,7 @@ const Header = () => {
   const { totalItems } = useCart();
   const { groupedCategories, loading: categoriesLoading } = useCategories();
   const router = useRouter();
+  const pathname = usePathname();
   const [isDropdownOpen, setIsDropdownOpen] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
@@ -83,12 +85,22 @@ const Header = () => {
   const handleViewAllResults = () => {
     clearSuggestions();
   };
-
   const handlePopularSearchClick = (term: string) => {
     handleQueryChange(term);
     clearSuggestions();
     router.push(`/search?q=${encodeURIComponent(term)}`);
   };
+
+  // Popular search terms
+  const popularSearches = [
+    "Chocolate Cake", "Birthday Cake", "Wedding Cake", "Cup Cakes",
+    "Black Forest", "Red Velvet", "Vanilla Cake", "Photo Cake",
+    "Anniversary Cake", "Kids Cake", "Eggless Cake", "Fresh Cream"
+  ];  // Check if current page is home page, search page, product page, or cart page
+  const isHomePage = pathname === '/';
+  const isSearchPage = pathname === '/search';
+  const isProductPage = pathname.startsWith('/products/');
+  const isCartPage = pathname === '/cart';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -111,8 +123,7 @@ const Header = () => {
         !(event.target as Element).closest(".right-sidebar-trigger")
       ) {
         setIsRightSidebarOpen(false);
-      }
-      if (
+      }      if (
         searchRef.current &&
         !searchRef.current.contains(event.target as Node)
       ) {
@@ -164,8 +175,7 @@ const Header = () => {
 
   return (
     <>
-      <header className="bg-white relative z-50">
-        {/* Mobile Header */}
+      <header className="bg-white relative z-50">        {/* Mobile Header */}
         <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-gradient-to-r from-pink-50 to-amber-50 shadow-md border-b border-pink-100">
           {/* Left side - Hamburger + Logo */}
           <div className="flex items-center space-x-3">
@@ -188,18 +198,16 @@ const Header = () => {
                 className="drop-shadow-lg"
               />
             </div>
-          </div>
-
-          {/* Right side - Icons */}
+          </div>          {/* Right side - Icons */}
           <div className="flex items-center space-x-1">
-            <Link href="/m-search">
-              <button className="p-2.5 hover:bg-gradient-to-r hover:from-pink-200 hover:to-amber-200 rounded-xl transition-all duration-300 transform hover:scale-110 group">
-                <Search className="w-5 h-5 text-pink-600 group-hover:text-pink-700 transition-colors" />
-              </button>
-            </Link>
             <Link href="/wishlist">
               <button className="p-2.5 hover:bg-gradient-to-r hover:from-pink-200 hover:to-amber-200 rounded-xl transition-all duration-300 transform hover:scale-110 group">
                 <Heart className="w-5 h-5 text-pink-600 group-hover:text-pink-700 transition-colors" />
+              </button>
+            </Link>
+            <Link href="/m-search">
+              <button className="p-2.5 hover:bg-gradient-to-r hover:from-pink-200 hover:to-amber-200 rounded-xl transition-all duration-300 transform hover:scale-110 group">
+                <Search className="w-5 h-5 text-pink-600 group-hover:text-pink-700 transition-colors" />
               </button>
             </Link>
             <Link href="/cart">
@@ -219,8 +227,7 @@ const Header = () => {
             >
               <MoreHorizontal className="w-5 h-5 text-pink-600 group-hover:text-pink-700 transition-colors" />
             </button>
-          </div>
-        </div>
+          </div>        </div>
 
         {/* Desktop Header */}
         <div className="hidden lg:block">
@@ -623,8 +630,7 @@ const Header = () => {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>      )}
 
       {/* Right Sidebar Overlay */}
       {isRightSidebarOpen && (
