@@ -144,44 +144,39 @@ function SearchPageContent() {
       } else {
         setLoading(true);
       }
-      setError(null);
-
-      // Build API parameters
-      const apiParams = buildApiParams();
-      const response = await axios.get(`/api/search?${apiParams}`);
-
-      if (response.data.success) {
+      setError(null);      // Build API parameters for suggestions API with pagination
+      const apiParams = new URLSearchParams();
+      apiParams.append('q', query);
+      apiParams.append('page', '1'); // Default to page 1
+      apiParams.append('limit', '12'); // Show 12 items per page instead of 6
+      
+      const response = await axios.get(`/api/search/suggestions?${apiParams}`);      if (response.data.success) {
         setProducts(response.data.data.products || []);
       } else {
         setError("Search failed. Please try again.");
-      }
-    } catch (error: any) {
+      }} catch (error: any) {
       console.error("Error fetching search results:", error);
-      setError("Something went wrong. Please try again.");
+      
+      // More detailed error message for debugging
+      let errorMessage = "Something went wrong. Please try again.";
+      
+      if (error.response?.status === 500) {
+        errorMessage = "Server error occurred. Please try again later.";
+      } else if (error.response?.status === 400) {
+        errorMessage = "Invalid search request. Please check your search query.";
+      } else if (error.code === 'NETWORK_ERROR' || !error.response) {
+        errorMessage = "Network error. Please check your connection and try again.";
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
       setFilterLoading(false);
     }
-  };
-  // Fetch available filter options for search results
+  };  // Simplified: Remove filter options fetching for now to maintain consistency
   const fetchFilterOptions = async () => {
-    try {
-      const response = await axios.get(`/api/search/ranges?q=${encodeURIComponent(query)}`);
-      if (response.data.success) {
-        const { data } = response.data;
-        setAvailableWeights(data.weights || []);
-        setAvailableTags(data.tags || []);
-
-        // Update price range if we get actual min/max from API
-        if (data.priceRange) {
-          const maxPrice = Math.ceil(data.priceRange.max / 100) * 100;
-          setPriceRange([0, maxPrice]);
-          setPriceInputs({ min: 0, max: maxPrice });
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching filter options:", error);
-    }
+    // Disabled for consistency with header search
+    // We'll use the same simple search logic as header
   };
 
   // Initial load

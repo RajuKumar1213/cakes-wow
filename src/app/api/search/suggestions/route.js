@@ -13,33 +13,40 @@ export async function GET(request) {
         success: true,
         data: { products: [] }
       });
-    }
-
-    const conn = await dbConnect();
+    }    const conn = await dbConnect();
     
-    // Skip during build time
-    if (conn.isConnectSkipped) {
+    // Skip during build time or connection issues
+    if (conn.isConnectSkipped || conn.error) {
       return NextResponse.json({
         success: true,
-        data: { products: [] }
+        data: { products: [] },
+        message: conn.isConnectSkipped ? 'Build phase' : 'Database unavailable'
       });
-    }
-
-    // Create search filter for live suggestions
+    }// Create search filter for live suggestions (unified with main search)
     const searchFilter = {
       isAvailable: true,
       $or: [
         { name: { $regex: query, $options: 'i' } },
         { shortDescription: { $regex: query, $options: 'i' } },
+        { description: { $regex: query, $options: 'i' } },
         { tags: { $in: [new RegExp(query, 'i')] } }
       ]
-    };    // Get limited results for suggestions (max 6 items)
+    };    // Get pagination parameters (for search page compatibility)
+    const page = parseInt(searchParams.get('page')) || 1;
+    const limit = Math.min(parseInt(searchParams.get('limit')) || 6, 50);
+    const skip = (page - 1) * limit;
+
+    // Get limited results for suggestions (max 6 for header, more for search page)
     const products = await Product.find(searchFilter)
       .populate('categories', 'name slug')
       .select('name shortDescription imageUrls price discountedPrice slug categories tags weightOptions rating reviewCount')
       .sort({ isBestseller: -1, isFeatured: -1, createdAt: -1 })
-      .limit(6)
-      .lean();    // Format the products for the suggestion dropdown
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    // Get total count for pagination
+    const total = await Product.countDocuments(searchFilter);    // Format the products for the suggestion dropdown
     const formattedProducts = products.map(product => {
       // Get the first image URL or use fallback
       const imageUrl = (product.imageUrls && product.imageUrls.length > 0) 
@@ -72,16 +79,35 @@ export async function GET(request) {
         weightOptions: product.weightOptions || [],
         rating: product.rating || 0,
         reviewCount: product.reviewCount || 0,
-        firstWeightOption: firstWeightOption
+        firstWeightOption: firstWeightOption,
+        // Add fields for search page compatibility
+        imageUrls: product.imageUrls || [imageUrl],
+        discountedPrice: displayPrice !== originalPrice ? displayPrice : undefined,
+        isBestseller: product.isBestseller || false,
+        categories: product.categories || [],
+        tags: product.tags || []
       };
     });
+
+    const totalPages = Math.ceil(total / limit);
 
     return NextResponse.json({
       success: true,
       data: {
         products: formattedProducts,
         query: query,
-        total: formattedProducts.length
+        total: formattedProducts.length,
+        // Add pagination info for search page compatibility
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: totalPages
+        },
+        search: {
+          query,
+          resultsCount: total
+        }
       }
     });
 

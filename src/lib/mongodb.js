@@ -5,13 +5,14 @@ const MONGODB_URI = process.env.MONGODB_URI;
 
 // More robust build detection - Vercel sets different variables in different phases
 const isBuildTime = 
-  // Common Vercel build phase environment flags
-  process.env.VERCEL_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build' || 
+  // Vercel build phase environment flags
+  process.env.VERCEL_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build' ||
+  process.env.NEXT_PHASE === 'phase-production-build' ||
   process.env.NEXT_PHASE === 'build' ||
-  // Build-only indicator
-  process.env.VERCEL_ENV === 'development' && process.env.CI === 'true' ||
-  // Complete absence of API URL is a clear indicator we're in build
-  !process.env.NEXT_PUBLIC_API_URL;
+  // Local development build
+  process.env.NODE_ENV === 'development' && process.env.CI === 'true' ||
+  // If we're in a Vercel environment but no API URL is set, likely build time
+  (process.env.VERCEL && !process.env.NEXT_PUBLIC_API_URL);
 
 // Log environment state without sensitive details
 console.log(`🔑 MongoDB connection context: Build=${isBuildTime}, HasURI=${!!MONGODB_URI}, Environment=${process.env.NODE_ENV || 'unknown'}`);

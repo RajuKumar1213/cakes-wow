@@ -61,7 +61,6 @@ const SearchDropdown: React.FC<SearchDropdownProps> = ({
     onProductClick(slug);
     router.push(`/products/${slug}`);
   };
-
   const handleViewAllResults = () => {
     onViewAllResults();
     router.push(`/search?q=${encodeURIComponent(query)}`);

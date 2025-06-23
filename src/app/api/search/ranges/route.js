@@ -12,15 +12,14 @@ export async function GET(request) {
         { error: 'Search query is required' },
         { status: 400 }
       );
-    }
-
-    const conn = await dbConnect();
+    }    const conn = await dbConnect();
     
-    // Skip during build time
-    if (conn.isConnectSkipped) {
+    // Skip during build time or connection issues
+    if (conn.isConnectSkipped || conn.error) {
       return NextResponse.json({
         success: true,
-        message: "Build phase - operation skipped"
+        data: { weights: [], tags: [], priceRange: { min: 0, max: 5000 } },
+        message: conn.isConnectSkipped ? 'Build phase' : 'Database unavailable'
       });
     }
 
