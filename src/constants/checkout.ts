@@ -45,22 +45,14 @@ export const deliveryTypes = [
   },{
     id: "midnight",
     name: "Midnight Delivery",
-    price: 149,
+    price: 199,
     description: "Perfect for surprises",
     icon: "🌙",
     timeSlots: [
       { time: "11 PM - 12 AM", available: true },
     ],
   },
-  {
-    id: "earlymorning",
-    name: "Early Morning ",
-    price: 200,
-    description: "Guaranteed time delivery",
-    icon: "🌅",
-    premium: true,
-    timeSlots: [{ time: "7 AM - 9 AM", available: true }],
-  },
+  
 ];
 
 // Payment methods

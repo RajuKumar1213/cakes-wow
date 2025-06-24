@@ -5,6 +5,7 @@ import { useToast } from '@/contexts/ToastContext';
 import Image from 'next/image';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import ReviewModal from '@/components/ReviewModal';
 import { 
   Package, 
   Clock, 
@@ -70,12 +71,18 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewData, setReviewData] = useState<{
+    productId: string;
+    productName: string;
+    productImage?: string;
+    orderId: string;
+  } | null>(null);
+  const [reviewedItems, setReviewedItems] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
+  }, []);  const fetchOrders = async () => {
     try {
       const response = await fetch('/api/orders');
       const data = await response.json();
@@ -85,12 +92,62 @@ export default function OrdersPage() {
       }
 
       setOrders(data.orders || []);
+      
+      // Check for reviewed items (simplified for demo - would normally use user authentication)
+      await checkReviewedItems(data.orders || []);
+      
     } catch (error) {
       console.error('Error fetching orders:', error);
       showError('Failed to load orders', 'There was an error retrieving your order history');
     } finally {
       setLoading(false);
     }
+  };
+
+  const checkReviewedItems = async (ordersData: Order[]) => {
+    // In a real app, you'd check with user authentication
+    // For demo purposes, we'll check if reviews exist for products
+    const reviewedSet = new Set<string>();
+    
+    for (const order of ordersData) {
+      if (order.status === 'delivered') {
+        for (const item of order.items) {
+          try {
+            const response = await fetch(`/api/reviews/check?productId=${item.productId}&orderId=${order._id}`);
+            if (response.ok) {
+              const data = await response.json();
+              if (data.success && data.data.hasReviewed) {
+                reviewedSet.add(`${order._id}-${item.productId}`);
+              }
+            }
+          } catch (error) {
+            console.error('Error checking review status:', error);
+          }
+        }
+      }
+    }
+    
+    setReviewedItems(reviewedSet);
+  };
+
+  const isItemReviewed = (orderId: string, productId: string) => {
+    return reviewedItems.has(`${orderId}-${productId}`);
+  };
+
+  const handleWriteReview = (productId: string, productName: string, productImage: string, orderId: string) => {
+    setReviewData({
+      productId,
+      productName,
+      productImage,
+      orderId
+    });
+    setShowReviewModal(true);
+  };
+  const handleReviewSubmitted = () => {
+    setShowReviewModal(false);
+    setReviewData(null);
+    // Refresh reviewed items to update UI
+    checkReviewedItems(orders);
   };
 
   // Filter orders based on search and status
@@ -308,13 +365,35 @@ export default function OrdersPage() {
                                     <div className="absolute -top-1 -right-1 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
                                       <span className="text-xs text-white">📷</span>
                                     </div>
-                                  </div>
-                                )}
-                                <Link href={`/order-confirmation/${order.orderId}`}>
-                                  <button className="p-2 rounded-lg bg-gradient-to-r from-pink-500 to-orange-500 text-white hover:from-pink-600 hover:to-orange-600 transition-all duration-300">
-                                    <ArrowRight className="w-4 h-4" />
-                                  </button>
-                                </Link>
+                                  </div>                                )}
+                                <div className="flex gap-2">
+                                  <Link href={`/order-confirmation/${order.orderId}`}>
+                                    <button className="p-2 rounded-lg bg-gradient-to-r from-pink-500 to-orange-500 text-white hover:from-pink-600 hover:to-orange-600 transition-all duration-300">
+                                      <ArrowRight className="w-4 h-4" />
+                                    </button>
+                                  </Link>
+                                    {/* Review Button - Only show for delivered orders */}
+                                  {order.status === 'delivered' && (
+                                    isItemReviewed(order._id, order.items[0].productId) ? (
+                                      <div className="p-2 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 text-white">
+                                        <Heart className="w-4 h-4" />
+                                      </div>
+                                    ) : (
+                                      <button
+                                        onClick={() => handleWriteReview(
+                                          order.items[0].productId,
+                                          order.items[0].name,
+                                          order.items[0].imageUrl,
+                                          order.orderId
+                                        )}
+                                        className="p-2 rounded-lg bg-gradient-to-r from-yellow-500 to-orange-600 text-white hover:from-yellow-600 hover:to-orange-700 transition-all duration-300"
+                                        title="Write Review"
+                                      >
+                                        <Star className="w-4 h-4" />
+                                      </button>
+                                    )
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -435,13 +514,34 @@ export default function OrdersPage() {
                               </div>
                               <div className="text-xl font-bold text-gray-800">₹{order.totalAmount}</div>
                             </div>
-                            
-                            <Link href={`/order-confirmation/${order.orderId}`}>
+                              <Link href={`/order-confirmation/${order.orderId}`}>
                               <button className="bg-gradient-to-r from-pink-500 to-orange-500 text-white px-6 py-3 rounded-xl hover:from-pink-600 hover:to-orange-600 transition-all duration-300 font-medium flex items-center gap-2">
                                 <Eye className="w-4 h-4" />
                                 View Details
                               </button>
                             </Link>
+                              {/* Review Button - Only show for delivered orders */}
+                            {order.status === 'delivered' && (
+                              isItemReviewed(order._id, order.items[0].productId) ? (
+                                <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2">
+                                  <Heart className="w-4 h-4" />
+                                  Reviewed
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => handleWriteReview(
+                                    order.items[0].productId,
+                                    order.items[0].name,
+                                    order.items[0].imageUrl,
+                                    order.orderId
+                                  )}
+                                  className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-6 py-3 rounded-xl hover:from-yellow-600 hover:to-orange-700 transition-all duration-300 font-medium flex items-center gap-2"
+                                >
+                                  <Star className="w-4 h-4" />
+                                  Write Review
+                                </button>
+                              )
+                            )}
                           </div></div>
                       </div>
                     </div>
@@ -449,9 +549,24 @@ export default function OrdersPage() {
                 );
               })}
             </div>
-          )}
-        </div>
+          )}        </div>
       </div>
+
+      {/* Review Modal */}
+      {reviewData && (
+        <ReviewModal
+          isOpen={showReviewModal}
+          onClose={() => {
+            setShowReviewModal(false);
+            setReviewData(null);
+          }}
+          productId={reviewData.productId}
+          productName={reviewData.productName}
+          productImage={reviewData.productImage}
+          orderId={reviewData.orderId}
+          onReviewSubmitted={handleReviewSubmitted}
+        />
+      )}
     </>
   );
 }
