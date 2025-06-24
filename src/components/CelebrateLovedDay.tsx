@@ -14,12 +14,7 @@ interface CelebrateLoveDayItem {
 }
 
 
-interface Props {
-  fetchData : boolean
-}
-
-
-const CelebrateLovedDay = ({fetchData}:Props) => {
+const CelebrateLovedDay = () => {
   const [celebrateLoveDays, setCelebrateLoveDays] = useState<CelebrateLoveDayItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -65,7 +60,7 @@ const CelebrateLovedDay = ({fetchData}:Props) => {
 
   useEffect(() => {
     fetchCelebrateLoveDays();
-  }, [fetchData]);
+  }, []);
 
   const fetchCelebrateLoveDays = async () => {
     try {

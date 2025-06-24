@@ -193,7 +193,7 @@ export default function AdminCelebrateLoveDaysPage() {
           <div className="mb-8 bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Live Preview</h2>
             <div className="border rounded-lg overflow-hidden">
-              <CelebrateLovedDay fetchData={fetchData}/>
+              <CelebrateLovedDay />
             </div>
           </div>
 
