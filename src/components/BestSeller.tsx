@@ -1,3 +1,7 @@
+
+"use client"
+
+import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
 import useSWR from "swr";
 
@@ -25,16 +29,34 @@ interface Product {
 const fetcher = (...args: [input: RequestInfo, init?: RequestInit]) => fetch(...args).then(res => res.json())
 
 export default function BestSeller() {
-const { data, error, isLoading } = useSWR(
-  '/api/products?isBestseller=true&sortBy=bestsellerOrder&sortOrder=asc',
-  fetcher,
-  {
-    revalidateOnMount: true,       // always fetch on mount
-    revalidateIfStale: true,       // even if cache exists, refetch
-    revalidateOnFocus: true,       // when tab gets focus, refetch
-    refreshInterval: 3000          // (optional) auto-refetch every 5s
-  }
-);
+  const [data , setData ] = useState([])
+  // const { data, error, isLoading } = useSWR(
+  //   '/api/products?isBestseller=true&sortBy=bestsellerOrder&sortOrder=asc',
+  // );
+
+  //  fetch(`/api/products?isBestseller=true&sortBy=bestsellerOrder&sortOrder=asc&_=${Date.now()}`, )
+
+    const fetchBestsellers = async () => {
+    try {
+      const url = `/api/products?isBestseller=true&sortBy=bestsellerOrder&sortOrder=asc&limit=12&_=${Date.now()}`;
+
+      const res = await fetch(url, {
+        cache: 'no-store',
+      });
+      const data = await res.json();
+
+      if (data.success && data.data?.products) {
+        setData(data.data.products);
+      } 
+
+    } catch (error) {
+      console.error("❌ Failed to fetch bestsellers:", error);
+    } 
+  };
+
+  useEffect(()=> {
+    fetchBestsellers()
+  }, [])
 
 
   return (
@@ -45,17 +67,17 @@ const { data, error, isLoading } = useSWR(
         <div className="absolute top-1/4 -right-20 w-96 h-96 bg-rose-300 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-blob animation-delay-2000"></div>
         <div className="absolute bottom-10 left-1/3 w-96 h-96 bg-fuchsia-300 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-blob animation-delay-4000"></div>
       </div>
-      
+
       {/* Pink decorative elements */}
       <div className="absolute inset-0">
         <div className="absolute top-0 right-0 w-32 h-32 bg-pink-200 opacity-20 rounded-full"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-rose-200 opacity-20 rounded-full"></div>
         <svg className="absolute bottom-0 right-0 opacity-20" width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M100 200C155.228 200 200 155.228 200 100C200 44.7715 155.228 0 100 0C44.7715 0 0 44.7715 0 100C0 155.228 44.7715 200 100 200Z" fill="url(#paint0_radial_101_2)" fillOpacity="0.1"/>
+          <path d="M100 200C155.228 200 200 155.228 200 100C200 44.7715 155.228 0 100 0C44.7715 0 0 44.7715 0 100C0 155.228 44.7715 200 100 200Z" fill="url(#paint0_radial_101_2)" fillOpacity="0.1" />
           <defs>
             <radialGradient id="paint0_radial_101_2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(100 100) rotate(90) scale(100)">
-              <stop stopColor="#EC4899"/>
-              <stop offset="1" stopColor="#F472B6" stopOpacity="0.8"/>
+              <stop stopColor="#EC4899" />
+              <stop offset="1" stopColor="#F472B6" stopOpacity="0.8" />
             </radialGradient>
           </defs>
         </svg>
@@ -74,19 +96,19 @@ const { data, error, isLoading } = useSWR(
                 Our <span className="text-pink-600">Best</span> Sellers
               </h2>
               <p className="text-pink-700/80 max-w-lg">Discover the products everyone is loving right now</p>
-              {error && (
+              {/* {error && (
                 <p className="text-sm text-red-600 mt-2">
                   {error} - Showing sample products
                 </p>
-              )}
+              )} */}
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-              {data && data.data.products && data.data.products.map((product: Product) => (
-                <ProductCard 
-                  key={product._id} 
-                  {...product} 
-                  flag="bestseller" 
-                  
+              {data && data.map((product: Product) => (
+                <ProductCard
+                  key={product._id}
+                  {...product}
+                  flag="bestseller"
+
                 />
               ))}
             </div>
