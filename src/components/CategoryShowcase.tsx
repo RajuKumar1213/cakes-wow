@@ -68,7 +68,7 @@ const CategoryShowcase = () => {
     try {
       // Use fetch with Next.js caching - revalidate every 1 hour (3600 seconds)
       const response = await fetch('/api/category-showcases', {
-        // next: { revalidate: 3600 } // Cache for 1 hour
+        cache: "no-cache"
       });
 
       if (response.ok) {

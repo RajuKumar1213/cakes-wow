@@ -22,28 +22,12 @@ export default function AdminSpeciallyTrendingCakesPage() {
   const [speciallyTrendingCakes, setSpeciallyTrendingCakes] = useState<SpeciallyTrendingCakeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [fetchData, setFetchData] = useState(false);
 
   useEffect(() => {
-    checkAuthAndFetchData();
-  }, []);
+  fetchSpeciallyTrendingCakes()
+  }, [fetchData]);
 
-  const checkAuthAndFetchData = async () => {
-    try {
-      // Check authentication
-      const authResponse = await fetch("/api/auth/admin-info");
-      if (!authResponse.ok) {
-        window.location.href = "/admin-login";
-        return;
-      }
-      
-      setIsAuthenticated(true);
-      await fetchSpeciallyTrendingCakes();
-    } catch (error) {
-      console.error("Auth error:", error);
-      window.location.href = "/admin-login";
-    }
-  };
 
   const fetchSpeciallyTrendingCakes = async () => {
     try {
@@ -151,6 +135,8 @@ export default function AdminSpeciallyTrendingCakesPage() {
 
       const data = await response.json();
 
+      setFetchData(!fetchData)
+
       if (!data.success) {
         // Revert on error
         setSpeciallyTrendingCakes(speciallyTrendingCakes);
@@ -164,12 +150,11 @@ export default function AdminSpeciallyTrendingCakesPage() {
     }
   };
 
-  if (!isAuthenticated) {
+  if (!speciallyTrendingCakes) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Checking authentication...</p>
         </div>
       </div>
     );

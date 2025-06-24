@@ -1,27 +1,7 @@
 import { useState, useEffect } from "react";
-import ProductCard from "./ProductCard";
 import CategoryCard from "./CategoryCard";
 
-interface Product {
-  _id: string;
-  name: string;
-  slug: string;
-  imageUrls: string[];
-  price: number;
-  discountedPrice?: number;
-  rating: number;
-  reviewCount: number;
-  isBestseller?: boolean;
-  weightOptions?: Array<{
-    weight: string;
-    price: number;
-    discountedPrice?: number;
-  }>;
-  categories: Array<{
-    name: string;
-    slug: string;
-  }>;
-}
+
 
 interface CelebrateLoveDayItem {
   _id: string;
@@ -33,7 +13,13 @@ interface CelebrateLoveDayItem {
   sortOrder: number;
 }
 
-const CelebrateLovedDay = () => {
+
+interface Props {
+  fetchData : boolean
+}
+
+
+const CelebrateLovedDay = ({fetchData}:Props) => {
   const [celebrateLoveDays, setCelebrateLoveDays] = useState<CelebrateLoveDayItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -79,12 +65,12 @@ const CelebrateLovedDay = () => {
 
   useEffect(() => {
     fetchCelebrateLoveDays();
-  }, []);
+  }, [fetchData]);
 
   const fetchCelebrateLoveDays = async () => {
     try {
       const response = await fetch('/api/celebrate-love-days', {
-        // next: { revalidate: 3600 },
+        cache: "no-cache"
       });
       const data = await response.json();
 

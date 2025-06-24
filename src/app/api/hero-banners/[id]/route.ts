@@ -10,9 +10,9 @@ export async function GET(
 ) {
   try {
     await dbConnect();
-    
+
     const { id } = await params;
-    
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { success: false, message: "Invalid banner ID" },
@@ -21,7 +21,7 @@ export async function GET(
     }
 
     const banner = await HeroBanner.findById(id);
-    
+
     if (!banner) {
       return NextResponse.json(
         { success: false, message: "Hero banner not found" },
@@ -49,10 +49,10 @@ export async function PUT(
 ) {
   try {
     await dbConnect();
-    
+
     const { id } = await params;
     const body = await request.json();
-    
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { success: false, message: "Invalid banner ID" },
@@ -111,9 +111,9 @@ export async function DELETE(
 ) {
   try {
     await dbConnect();
-    
+
     const { id } = await params;
-    
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { success: false, message: "Invalid banner ID" },
@@ -122,7 +122,7 @@ export async function DELETE(
     }
 
     const banner = await HeroBanner.findByIdAndDelete(id);
-    
+
     if (!banner) {
       return NextResponse.json(
         { success: false, message: "Hero banner not found" },

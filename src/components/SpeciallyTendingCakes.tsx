@@ -81,7 +81,7 @@ const SpeciallyTendingCakes = () => {
 
   const fetchSpeciallyTrendingCakes = async () => {
     try {
-      const response = await fetch('/api/specially-trending-cakes');
+      const response = await fetch('/api/specially-trending-cakes', {cache : "no-cache"});
       const data = await response.json();
       
       if (data.success && data.data) {

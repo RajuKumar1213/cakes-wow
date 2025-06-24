@@ -22,34 +22,15 @@ export default function AdminCelebrateLoveDaysPage() {
   const [celebrateLoveDays, setCelebrateLoveDays] = useState<CelebrateLoveDayItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [fetchData, setFetchData] = useState(false)
 
-  useEffect(() => {
-    checkAuthAndFetchData();
-  }, []);
 
-  const checkAuthAndFetchData = async () => {
-    try {
-      // Check authentication
-      const authResponse = await fetch("/api/auth/admin-info");
-      if (!authResponse.ok) {
-        window.location.href = "/admin-login";
-        return;
-      }
-      
-      setIsAuthenticated(true);
-      await fetchCelebrateLoveDays();
-    } catch (error) {
-      console.error("Auth error:", error);
-      window.location.href = "/admin-login";
-    }
-  };
 
   const fetchCelebrateLoveDays = async () => {
     try {
       setLoading(true);
       // Fetch all celebrate love days (including inactive for admin)
-      const response = await fetch("/api/celebrate-love-days");
+      const response = await fetch("/api/celebrate-love-days", { cache: "no-cache" });
       const data = await response.json();
 
       if (data.success) {
@@ -64,6 +45,10 @@ export default function AdminCelebrateLoveDaysPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchCelebrateLoveDays()
+  }, [fetchData])
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this item?")) {
@@ -155,6 +140,7 @@ export default function AdminCelebrateLoveDaysPage() {
         setCelebrateLoveDays(celebrateLoveDays);
         setError(data.message || "Failed to reorder items");
       }
+      setFetchData(!fetchData)
     } catch (error) {
       // Revert on error
       setCelebrateLoveDays(celebrateLoveDays);
@@ -163,12 +149,11 @@ export default function AdminCelebrateLoveDaysPage() {
     }
   };
 
-  if (!isAuthenticated) {
+  if (!celebrateLoveDays) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-red-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Checking authentication...</p>
         </div>
       </div>
     );
@@ -208,7 +193,7 @@ export default function AdminCelebrateLoveDaysPage() {
           <div className="mb-8 bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">Live Preview</h2>
             <div className="border rounded-lg overflow-hidden">
-              <CelebrateLovedDay />
+              <CelebrateLovedDay fetchData={fetchData}/>
             </div>
           </div>
 
@@ -229,86 +214,85 @@ export default function AdminCelebrateLoveDaysPage() {
               <div className="p-8 text-center">
                 <p className="text-gray-500">No items found. Create your first item!</p>
               </div>
-            ) : (              <div className="divide-y divide-gray-200">
-                {celebrateLoveDays
-                  .sort((a, b) => a.sortOrder - b.sortOrder)
-                  .map((item, index) => (
-                    <div key={item._id} className="p-6 flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="relative w-16 h-16 rounded-lg overflow-hidden">
-                          <Image
-                            src={item.image}
-                            alt={item.name}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div>
-                          <h4 className="text-lg font-medium text-gray-900">{item.name}</h4>
-                          <p className="text-sm text-gray-500">/{item.slug}</p>
-                          {item.productCount !== undefined && (
-                            <p className="text-sm text-gray-500">{item.productCount} products</p>
-                          )}
-                          <p className="text-xs text-gray-400">
-                            Order: {item.sortOrder} | {item.isActive ? "Active" : "Inactive"}
-                          </p>
-                        </div>
+            ) : (<div className="divide-y divide-gray-200">
+              {celebrateLoveDays
+                .sort((a, b) => a.sortOrder - b.sortOrder)
+                .map((item, index) => (
+                  <div key={item._id} className="p-6 flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="relative w-16 h-16 rounded-lg overflow-hidden">
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          fill
+                          className="object-cover"
+                        />
                       </div>
-
-                      <div className="flex items-center space-x-2">
-                        {/* Reorder arrows */}
-                        <div className="flex flex-col space-y-1">
-                          <button
-                            onClick={() =>
-                              index > 0 && handleReorder(index, index - 1)
-                            }
-                            disabled={index === 0}
-                            className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
-                            title="Move up"
-                          >
-                            ↑
-                          </button>
-                          <button
-                            onClick={() =>
-                              index < celebrateLoveDays.length - 1 &&
-                              handleReorder(index, index + 1)
-                            }
-                            disabled={index === celebrateLoveDays.length - 1}
-                            className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
-                            title="Move down"
-                          >
-                            ↓
-                          </button>
-                        </div>
-
-                        <button
-                          onClick={() => handleToggleActive(item._id, item.isActive)}
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            item.isActive
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {item.isActive ? "Active" : "Inactive"}
-                        </button>
-
-                        <Link
-                          href={`/admin/celebrate-love-days/${item._id}/edit`}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs"
-                        >
-                          Edit
-                        </Link>
-
-                        <button
-                          onClick={() => handleDelete(item._id)}
-                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs"
-                        >
-                          Delete
-                        </button>
+                      <div>
+                        <h4 className="text-lg font-medium text-gray-900">{item.name}</h4>
+                        <p className="text-sm text-gray-500">/{item.slug}</p>
+                        {item.productCount !== undefined && (
+                          <p className="text-sm text-gray-500">{item.productCount} products</p>
+                        )}
+                        <p className="text-xs text-gray-400">
+                          Order: {item.sortOrder} | {item.isActive ? "Active" : "Inactive"}
+                        </p>
                       </div>
                     </div>
-                  ))}
-              </div>
+
+                    <div className="flex items-center space-x-2">
+                      {/* Reorder arrows */}
+                      <div className="flex flex-col space-y-1">
+                        <button
+                          onClick={() =>
+                            index > 0 && handleReorder(index, index - 1)
+                          }
+                          disabled={index === 0}
+                          className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                          title="Move up"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          onClick={() =>
+                            index < celebrateLoveDays.length - 1 &&
+                            handleReorder(index, index + 1)
+                          }
+                          disabled={index === celebrateLoveDays.length - 1}
+                          className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                          title="Move down"
+                        >
+                          ↓
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={() => handleToggleActive(item._id, item.isActive)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${item.isActive
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                          }`}
+                      >
+                        {item.isActive ? "Active" : "Inactive"}
+                      </button>
+
+                      <Link
+                        href={`/admin/celebrate-love-days/${item._id}/edit`}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs"
+                      >
+                        Edit
+                      </Link>
+
+                      <button
+                        onClick={() => handleDelete(item._id)}
+                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+            </div>
             )}
           </div>
         </div>

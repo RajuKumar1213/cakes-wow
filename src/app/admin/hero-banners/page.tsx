@@ -33,14 +33,16 @@ interface HeroBanner {
 }
 
 const HeroBannersPage = () => {
-  const { user, loading: authLoading } = useAuth();
-  const router = useRouter();  const [banners, setBanners] = useState<HeroBanner[]>([]);
+  const router = useRouter();  
+  const [banners, setBanners] = useState<HeroBanner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [previewKey, setPreviewKey] = useState(0); // To force carousel re-render
+  const [previewKey, setPreviewKey] = useState(0);
+  
+  // To force carousel re-render
   useEffect(() => {
     fetchBanners();
-  }, []);
+  }, [previewKey]);
 
   const fetchBanners = async () => {
     try {
@@ -56,6 +58,7 @@ const HeroBannersPage = () => {
       setLoading(false);
     }
   };
+
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this hero banner?")) {
       return;
@@ -116,8 +119,11 @@ const HeroBannersPage = () => {
     const updatedBanners = newBanners.map((banner, index) => ({
       ...banner,
       sortOrder: index,
-    }));    setBanners(updatedBanners);
+    }));    
+    setBanners(updatedBanners);
     setPreviewKey(prev => prev + 1); // Refresh preview
+
+    console.log("this is banner index.", newIndex, movedBanner);
 
     try {
       // Update the moved banner's sort order in the database
