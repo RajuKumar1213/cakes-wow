@@ -52,32 +52,28 @@ export default function BestsellerManagement() {
   const { user, loading } = useAuth();
   const { showSuccess, showError } = useToast();
   const router = useRouter();
-  
+
   const [bestsellers, setBestsellers] = useState<Product[]>([]);
   const [bestsellerLoading, setBestsellerLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState<string | null>(null);
+
   // Fetch bestsellers
   const fetchBestsellers = async () => {
-    console.log('🔄 Fetching bestsellers...');
     setBestsellerLoading(true);
     try {
-      const url = "/api/products?isBestseller=true&sortBy=bestsellerOrder&sortOrder=asc&limit=100";
-      console.log('📡 API URL:', url);
-      
-      const res = await fetch(url);
+      const url = `/api/products?isBestseller=true&sortBy=bestsellerOrder&sortOrder=asc&limit=100&_=${Date.now()}`;
+
+      const res = await fetch(url, {
+        cache: 'no-store',
+      });
       const data = await res.json();
-      
-      console.log('📦 API Response:', data);
-      console.log('✅ Response success:', data.success);
-      console.log('📊 Products found:', data.data?.products?.length || 0);
-      
+
       if (data.success && data.data?.products) {
         setBestsellers(data.data.products);
-        console.log('⭐ Bestsellers loaded successfully:', data.data.products.length);
       } else {
-        console.warn('⚠️ No products in response or unsuccessful');
         setBestsellers([]);
       }
+
     } catch (error) {
       console.error("❌ Failed to fetch bestsellers:", error);
       showError("Error", "Failed to load bestsellers");
@@ -85,31 +81,32 @@ export default function BestsellerManagement() {
     } finally {
       setBestsellerLoading(false);
     }
-  };  // Load data on mount
+  };
+
+  // Load data on mount
   useEffect(() => {
-    console.log('🔄 Effect triggered - Auth state:', { loading, user: !!user });
-    
+
     // Load bestsellers once auth is resolved (regardless of user state for debugging)
     if (!loading) {
-      console.log('🔄 Loading bestsellers...');
       fetchBestsellers();
     }
   }, [loading, user]);
-  
+
   // Also load on component mount for immediate debugging
   useEffect(() => {
-    console.log('🔄 Component mounted, forcing initial load...');
     fetchBestsellers();
-  }, []);  // Update bestseller order
+  }, []);
+
+  // Update bestseller order
   const updateBestsellerOrder = async (productId: string, direction: 'up' | 'down') => {
     console.log(`🔄 Updating order for product ${productId} - Direction: ${direction}`);
     setUpdateLoading(productId);
     try {
       // Sort current bestsellers by order
-      const sortedBestsellers = [...bestsellers].sort((a, b) => 
+      const sortedBestsellers = [...bestsellers].sort((a, b) =>
         (a.bestsellerOrder || 0) - (b.bestsellerOrder || 0)
       );
-      
+
       const currentIndex = sortedBestsellers.findIndex(p => p._id === productId);
       if (currentIndex === -1) {
         console.error('❌ Product not found in bestsellers list');
@@ -118,7 +115,7 @@ export default function BestsellerManagement() {
 
       // Create new ordering array
       const newOrder = [...sortedBestsellers];
-      
+
       if (direction === 'up' && currentIndex > 0) {
         // Swap with previous item
         [newOrder[currentIndex], newOrder[currentIndex - 1]] = [newOrder[currentIndex - 1], newOrder[currentIndex]];
@@ -135,10 +132,10 @@ export default function BestsellerManagement() {
       for (let i = 0; i < newOrder.length; i++) {
         const product = newOrder[i];
         const orderValue = i + 1; // Start from 1
-        
+
         const formData = new FormData();
         formData.append('bestsellerOrder', orderValue.toString());
-        
+
         const response = await fetch(`/api/products/${product._id}`, {
           method: 'PUT',
           body: formData,
@@ -151,7 +148,6 @@ export default function BestsellerManagement() {
       }
 
       showSuccess("Success", `Product moved ${direction}!`);
-      console.log('✅ Order updated successfully, refreshing list...');
       await fetchBestsellers();
     } catch (error) {
       console.error("❌ Failed to update bestseller order:", error);
@@ -168,21 +164,19 @@ export default function BestsellerManagement() {
     try {
       const formData = new FormData();
       formData.append('bestsellerOrder', newOrder.toString());
-      
+
       const url = `/api/products/${productId}`;
       console.log('📡 PUT URL:', url);
-      
+
       const response = await fetch(url, {
         method: 'PUT',
         body: formData,
       });
 
       const data = await response.json();
-      console.log('📦 PUT Response:', data);
-      
+
       if (data.success || response.ok) {
         showSuccess("Success", "Order updated successfully!");
-        console.log('✅ Order updated successfully, refreshing list...');
         await fetchBestsellers();
       } else {
         console.error('❌ Update failed:', data);
@@ -198,22 +192,21 @@ export default function BestsellerManagement() {
   };
   // Normalize all bestseller orders to ensure sequential numbering
   const normalizeBestsellerOrders = async () => {
-    console.log('🔄 Normalizing bestseller orders...');
     try {
       // Sort current bestsellers by order
-      const sortedBestsellers = [...bestsellers].sort((a, b) => 
+      const sortedBestsellers = [...bestsellers].sort((a, b) =>
         (a.bestsellerOrder || 0) - (b.bestsellerOrder || 0)
       );
-      
+
       // Update each product with sequential order numbers
       for (let i = 0; i < sortedBestsellers.length; i++) {
         const product = sortedBestsellers[i];
         const newOrder = i + 1; // Start from 1
-        
+
         if (product.bestsellerOrder !== newOrder) {
           const formData = new FormData();
           formData.append('bestsellerOrder', newOrder.toString());
-          
+
           const response = await fetch(`/api/products/${product._id}`, {
             method: 'PUT',
             body: formData,
@@ -225,14 +218,14 @@ export default function BestsellerManagement() {
           }
         }
       }
-      
-      console.log('✅ Orders normalized successfully');
+
       await fetchBestsellers();
       showSuccess("Success", "Bestseller orders have been normalized!");
     } catch (error) {
       console.error("❌ Failed to normalize orders:", error);
       showError("Error", "Failed to normalize bestseller orders");
-    }  };
+    }
+  };
 
   // Alternative reordering method with better logic
   const updateBestsellerOrderV2 = async (productId: string, direction: 'up' | 'down') => {
@@ -240,10 +233,10 @@ export default function BestsellerManagement() {
     setUpdateLoading(productId);
     try {
       // Sort current bestsellers by order
-      const sortedBestsellers = [...bestsellers].sort((a, b) => 
+      const sortedBestsellers = [...bestsellers].sort((a, b) =>
         (a.bestsellerOrder || 0) - (b.bestsellerOrder || 0)
       );
-      
+
       const currentIndex = sortedBestsellers.findIndex(p => p._id === productId);
       if (currentIndex === -1) {
         console.error('❌ Product not found in bestsellers list');
@@ -252,7 +245,7 @@ export default function BestsellerManagement() {
 
       // Create new ordering array
       const newOrder = [...sortedBestsellers];
-      
+
       if (direction === 'up' && currentIndex > 0) {
         // Swap with previous item
         [newOrder[currentIndex], newOrder[currentIndex - 1]] = [newOrder[currentIndex - 1], newOrder[currentIndex]];
@@ -270,10 +263,10 @@ export default function BestsellerManagement() {
       for (let i = 0; i < newOrder.length; i++) {
         const product = newOrder[i];
         const orderValue = i + 1; // Start from 1
-        
+
         const formData = new FormData();
         formData.append('bestsellerOrder', orderValue.toString());
-        
+
         const response = await fetch(`/api/products/${product._id}`, {
           method: 'PUT',
           body: formData,
@@ -308,14 +301,14 @@ export default function BestsellerManagement() {
   }
 
   // Sort bestsellers for display
-  const sortedBestsellers = [...bestsellers].sort((a, b) => 
+  const sortedBestsellers = [...bestsellers].sort((a, b) =>
     (a.bestsellerOrder || 0) - (b.bestsellerOrder || 0)
   );
 
   return (
     <div className="min-h-screen bg-gray-50">
       <AdminNavbar />
-      
+
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
@@ -387,7 +380,7 @@ export default function BestsellerManagement() {
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">Bestseller Products Order</h3>
                 <p className="text-gray-600">Products are displayed in the order shown below (top to bottom)</p>
               </div>
-              
+
               <div className="divide-y divide-gray-200">
                 {sortedBestsellers.map((product, index) => (
                   <div key={product._id} className="p-4 hover:bg-gray-50 transition-colors">

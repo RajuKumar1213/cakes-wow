@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Product from "@/models/Product.models";
-import Category from "@/models/Category.models";
 
 // PUT - Update product order within a category
 export async function PUT(request) {

@@ -25,7 +25,17 @@ interface Product {
 const fetcher = (...args: [input: RequestInfo, init?: RequestInit]) => fetch(...args).then(res => res.json())
 
 export default function BestSeller() {
-  const {data, error, isLoading} = useSWR('/api/products?isBestseller=true&sortBy=bestsellerOrder&sortOrder=asc', fetcher);
+const { data, error, isLoading } = useSWR(
+  '/api/products?isBestseller=true&sortBy=bestsellerOrder&sortOrder=asc',
+  fetcher,
+  {
+    revalidateOnMount: true,       // always fetch on mount
+    revalidateIfStale: true,       // even if cache exists, refetch
+    revalidateOnFocus: true,       // when tab gets focus, refetch
+    refreshInterval: 3000          // (optional) auto-refetch every 5s
+  }
+);
+
 
   return (
     <div className="relative overflow-hidden  bg-pink-50">
