@@ -42,11 +42,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
   categories = [],
   onSuccess,
   onCancel,
-}) => {
-  const { showSuccess, showError } = useToast();
+}) => {  const { showSuccess, showError } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [removedImages, setRemovedImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [weightOptions, setWeightOptions] = useState([
     { weight: "", price: 0, discountedPrice: 0 },
@@ -135,13 +136,17 @@ const ProductForm: React.FC<ProductFormProps> = ({
         "isAvailable",
         product.isAvailable !== undefined ? product.isAvailable : true
       );      setValue("isBestseller", product.isBestseller || false);
-      setValue("preparationTime", product.preparationTime || "");
-
-      // Handle existing images (URLs)
+      setValue("preparationTime", product.preparationTime || "");      // Handle existing images (URLs)
       if (product.imageUrls && product.imageUrls.length > 0) {
+        setExistingImages(product.imageUrls);
         setImagePreviews(product.imageUrls);
+        setRemovedImages([]); // Reset removed images when loading new product
         // Note: We can't set actual File objects for existing images,
         // so we'll handle this case differently in form submission
+      } else {
+        setExistingImages([]);
+        setImagePreviews([]);
+        setRemovedImages([]);
       }
     }
   },
@@ -250,7 +255,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
         formData.append("isBestseller", cleanData.isBestseller.toString());
 
         // Add preparationTime
-        formData.append("preparationTime", cleanData.preparationTime);// Handle images - both new uploads and existing URLs
+        formData.append("preparationTime", cleanData.preparationTime);        // Handle images - both new uploads and existing URLs
         if (imageFiles.length > 0) {
           imageFiles.forEach((file, index) => {
             // Ensure we're only appending actual File objects
@@ -260,12 +265,21 @@ const ProductForm: React.FC<ProductFormProps> = ({
           });
         }
 
-        // For existing products, always include existing image URLs
-        if (product && product.imageUrls && Array.isArray(product.imageUrls) && product.imageUrls.length > 0) {
-          product.imageUrls.forEach((url: string) => {
+        // For existing products, send remaining existing images (not removed ones)
+        if (product && existingImages.length > 0) {
+          existingImages.forEach((url: string) => {
             // Ensure we're only appending strings, not objects
             if (typeof url === 'string') {
               formData.append("imageUrls", url);
+            }
+          });
+        }
+
+        // Send removed images so backend can delete them
+        if (removedImages.length > 0) {
+          removedImages.forEach((url: string) => {
+            if (typeof url === 'string') {
+              formData.append("removedImages", url);
             }
           });
         }
@@ -287,10 +301,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
         } else {
           const response = await axios.post("/api/products", formData);
           if (response.data.success) {
-            showSuccess("Success!", "Product created successfully!");
-            // Reset form for new products          reset();
+            showSuccess("Success!", "Product created successfully!");            // Reset form for new products
+            reset();
             setImageFiles([]);
             setImagePreviews([]);
+            setExistingImages([]);
+            setRemovedImages([]);
             setWeightOptions([{ weight: "", price: 0, discountedPrice: 0 }]);
             if (fileInputRef.current) {
               fileInputRef.current.value = "";
@@ -369,27 +385,39 @@ const ProductForm: React.FC<ProductFormProps> = ({
     if (oversizedFiles.length > 0) {
       showError("File Too Large", "Each image must be less than 5MB");
       return;
-    }
-
-    if (imageFiles.length + files.length > 5) {
+    }    if (imagePreviews.length + files.length > 5) {
       showError("Maximum Images", "Maximum 5 images allowed");
       return;
     }
 
     const newFiles = [...imageFiles, ...files];
-    setImageFiles(newFiles);    // Create previews
+    setImageFiles(newFiles);
+
+    // Create previews for new files
     const newPreviews = files.map((file) => URL.createObjectURL(file));
     setImagePreviews((prev) => [...prev, ...newPreviews]);
 
     // Note: We don't set form values for images since we handle them separately
     // This prevents any circular reference issues with File objects
-  }; const removeImage = (index: number) => {
-    const newFiles = imageFiles.filter((_, i) => i !== index);
-    const newPreviews = imagePreviews.filter((_, i) => i !== index);
-
-    setImageFiles(newFiles);
-    setImagePreviews(newPreviews);
-    // Note: We don't set form values for images since we handle them separately
+  };  const removeImage = (index: number) => {
+    const imageToRemove = imagePreviews[index];
+    
+    // Check if this is an existing image (URL) or a new upload (File)
+    if (existingImages.includes(imageToRemove)) {
+      // This is an existing image, add it to removedImages array
+      setRemovedImages(prev => [...prev, imageToRemove]);
+      // Remove from existingImages
+      setExistingImages(prev => prev.filter(img => img !== imageToRemove));
+    } else {
+      // This is a new file upload, remove from imageFiles
+      const fileIndex = imagePreviews.slice(0, index).filter(preview => 
+        !existingImages.includes(preview)
+      ).length;
+      setImageFiles(prev => prev.filter((_, i) => i !== fileIndex));
+    }
+    
+    // Remove from previews in both cases
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const addWeightOption = () => {

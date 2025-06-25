@@ -549,11 +549,12 @@ export async function PATCH(request) {
     const isBestseller = formData.get("isBestseller") === "true";
     const isFeatured = formData.get("isFeatured") === "true";
     const isAvailable = formData.get("isAvailable") !== "false"; // Default to true
-    const bestsellerOrder = formData.get("bestsellerOrder") ? parseInt(formData.get("bestsellerOrder")) : undefined;
-
-    // Get arrays
+    const bestsellerOrder = formData.get("bestsellerOrder") ? parseInt(formData.get("bestsellerOrder")) : undefined;    // Get arrays
     const categories = formData.getAll("categories");
-    const existingImageUrls = formData.getAll("imageUrls");    // Process weight options
+    const existingImageUrls = formData.getAll("imageUrls");
+    const removedImages = formData.getAll("removedImages");
+
+    // Process weight options
     const weightOptions = [];
     let index = 0;
     while (formData.get(`weightOptions[${index}][weight]`)) {
@@ -647,6 +648,20 @@ export async function PATCH(request) {
           );
         }
       }
+    }
+
+    // Log removed images for debugging
+    if (removedImages.length > 0) {
+      console.log("Images to be removed:", removedImages);
+      // Here you could add logic to delete the images from Cloudinary if needed
+      // For example:
+      // for (const removedImageUrl of removedImages) {
+      //   try {
+      //     await deleteFromCloudinary(removedImageUrl);
+      //   } catch (error) {
+      //     console.error("Failed to delete image from Cloudinary:", error);
+      //   }
+      // }
     }
 
     // Validate that we have at least one image

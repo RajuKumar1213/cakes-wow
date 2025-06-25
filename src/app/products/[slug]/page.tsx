@@ -72,7 +72,8 @@ interface Product {
 const ProductPage = () => {
   const params = useParams();
   const router = useRouter();
-  const productSlug = params.slug as string;  const {
+  const productSlug = params.slug as string;
+  const {
     addToCart,
     addToWishlist,
     removeFromWishlist,
@@ -81,9 +82,11 @@ const ProductPage = () => {
     getCartItemByProductId,
   } = useCart();
 
-  const { showSuccess } = useToast(); const [product, setProduct] = useState<Product | null>(null);
+  const { showSuccess } = useToast();
+  const [product, setProduct] = useState<Product | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [selectedWeight, setSelectedWeight] = useState<string>(""); const [selectedFlavor, setSelectedFlavor] = useState<string>("");
+  const [selectedWeight, setSelectedWeight] = useState<string>("");
+  const [selectedFlavor, setSelectedFlavor] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -111,7 +114,7 @@ const ProductPage = () => {
         setSelectedFlavor(data.data.flavors[0]);
       }
     }
-  }, [data]);  // Check if the current product is a photo cake
+  }, [data]); // Check if the current product is a photo cake
   const isPhotoCake = () => {
     if (!product) return false;
     return product.categories.some(
@@ -149,11 +152,11 @@ const ProductPage = () => {
       const timeStr = product.preparationTime.toLowerCase();
       let days = 0;
 
-      if (timeStr.includes('hour')) {
-        const hours = parseInt(timeStr.match(/\d+/)?.[0] || '24');
+      if (timeStr.includes("hour")) {
+        const hours = parseInt(timeStr.match(/\d+/)?.[0] || "24");
         days = Math.ceil(hours / 24);
-      } else if (timeStr.includes('day')) {
-        days = parseInt(timeStr.match(/\d+/)?.[0] || '1');
+      } else if (timeStr.includes("day")) {
+        days = parseInt(timeStr.match(/\d+/)?.[0] || "1");
       } else {
         // Default to 1 day if format is unclear
         days = 1;
@@ -168,14 +171,14 @@ const ProductPage = () => {
       } else if (days === 2) {
         return "Day after tomorrow";
       } else {
-        return deliveryDate.toLocaleDateString('en-US', {
-          weekday: 'long',
-          month: 'short',
-          day: 'numeric'
+        return deliveryDate.toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "short",
+          day: "numeric",
         });
       }
     } catch (error) {
-      console.error('Error calculating delivery date:', error);
+      console.error("Error calculating delivery date:", error);
       return "Tomorrow";
     }
   };
@@ -234,18 +237,19 @@ const ProductPage = () => {
         ...product,
         customization: isPhotoCake()
           ? {
-            type: "photo-cake",
-            image: photoCakeData.image,
-            message: photoCakeData.message,
-            imageUrl: photoCakeData.imageUrl || null,
-          }
+              type: "photo-cake",
+              image: photoCakeData.image,
+              message: photoCakeData.message,
+              imageUrl: photoCakeData.imageUrl || null,
+            }
           : undefined,
       };
 
       addToCart(cartItem, quantity, selectedWeight, []);
       showSuccess(
         "Added to Cart!",
-        `${quantity}x ${product.name} (${selectedWeight}) added to your cart${isPhotoCake() && photoCakeData.image ? " with your custom photo" : ""
+        `${quantity}x ${product.name} (${selectedWeight}) added to your cart${
+          isPhotoCake() && photoCakeData.image ? " with your custom photo" : ""
         }`,
         "cart"
       );
@@ -328,7 +332,9 @@ const ProductPage = () => {
                 <div className="aspect-square bg-gray-300 rounded-lg"></div>
                 <div className="grid grid-cols-4 gap-2">
                   {[...Array(4)].map((_, i) => (
-                    <div key={i} className="aspect-square bg-gray-300 rounded"></div>
+                    <div
+                      key={i}
+                      className="aspect-square bg-gray-300 rounded"></div>
                   ))}
                 </div>
               </div>
@@ -370,7 +376,9 @@ const ProductPage = () => {
   ];
 
   return (
-    <>      <Header />
+    <>
+      {" "}
+      <Header />
       <div className="min-h-screen bg-white">
         <div className="max-w-7xl mx-auto px-1 sm:px-4 lg:px-6 py-6">
           <div className="mb-6 px-1 sm:px-2 lg:px-6">
@@ -387,10 +395,11 @@ const ProductPage = () => {
                       <button
                         key={index}
                         onClick={() => setSelectedImageIndex(index)}
-                        className={`relative w-16 h-16 rounded-lg border-2 overflow-hidden transition-all duration-300 ${selectedImageIndex === index
-                          ? "border-orange-500 shadow-lg"
-                          : "border-gray-200 hover:border-orange-300"
-                          }`}>
+                        className={`relative w-16 h-16 rounded-lg border-2 overflow-hidden transition-all duration-300 ${
+                          selectedImageIndex === index
+                            ? "border-orange-500 shadow-lg"
+                            : "border-gray-200 hover:border-orange-300"
+                        }`}>
                         <Image
                           src={image}
                           alt={`${product.name} ${index + 1}`}
@@ -402,7 +411,8 @@ const ProductPage = () => {
                       </button>
                     ))}
                   </div>
-                )}                {/* Main Image */}
+                )}{" "}
+                {/* Main Image */}
                 <div className="flex-1">
                   <div className="relative aspect-square w-full bg-gray-50 rounded-lg overflow-hidden">
                     <Image
@@ -420,7 +430,9 @@ const ProductPage = () => {
                     {/* Personalized badge for photo cakes */}
                     {isPhotoCake() && (
                       <div className="absolute bottom-0 left-0 bg-yellow-500 text-black px-3 py-1 rounded-tr-2xl text-sm font-bold">
-                        {getPersonalizationData().imageUrl ? 'Personalized' : 'Personalised'}
+                        {getPersonalizationData().imageUrl
+                          ? "Personalized"
+                          : "Personalised"}
                       </div>
                     )}
                   </div>
@@ -432,10 +444,11 @@ const ProductPage = () => {
                         <button
                           key={index}
                           onClick={() => setSelectedImageIndex(index)}
-                          className={`relative aspect-square rounded-lg border-2 overflow-hidden ${selectedImageIndex === index
-                            ? "border-orange-500"
-                            : "border-gray-200"
-                            }`}>
+                          className={`relative aspect-square rounded-lg border-2 overflow-hidden ${
+                            selectedImageIndex === index
+                              ? "border-orange-500"
+                              : "border-gray-200"
+                          }`}>
                           <Image
                             src={image}
                             alt={`${product.name} ${index + 1}`}
@@ -461,13 +474,15 @@ const ProductPage = () => {
 
                   <div className="flex items-center gap-2 mb-2">
                     <div className="flex items-center gap-1 bg-green-100 px-2 py-1 rounded">
-                      <span className="text-green-600 font-bold text-sm">{product.rating}</span>
+                      <span className="text-green-600 font-bold text-sm">
+                        {product.rating}
+                      </span>
                       <Star className="w-4 h-4 fill-green-600 text-green-600" />
-                      <span className="text-sm text-gray-600">({product.reviewCount} Reviews)</span>
+                      <span className="text-sm text-gray-600">
+                        ({product.reviewCount} Reviews)
+                      </span>
                     </div>
                   </div>
-
-
 
                   {/* Price */}
                   <div className="flex items-center gap-3 mb-3">
@@ -484,36 +499,36 @@ const ProductPage = () => {
                         </span>
                       </>
                     )}
-                    <span className="text-sm text-gray-500">(Inclusive of GST)</span>
+                    <span className="text-sm text-gray-500">
+                      (Inclusive of GST)
+                    </span>
                   </div>
-                </div>                {
-                  product.description && (
-                    <div className="space-y-4 mb-3">
-                      <h2 className="text-lg font-semibold text-gray-900 mb-2">
-                        Description
-                      </h2>
-                      <div className="text-gray-700">
-                        {product.description.length > 200 ? (
-                          <>
-                            {showFullDescription
-                              ? product.description
-                              : `${product.description.substring(0, 200)}...`
+                </div>{" "}
+                {product.description && (
+                  <div className="space-y-4 mb-3">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                      Description
+                    </h2>
+                    <div className="text-gray-700">
+                      {product.description.length > 200 ? (
+                        <>
+                          {showFullDescription
+                            ? product.description
+                            : `${product.description.substring(0, 200)}...`}
+                          <button
+                            onClick={() =>
+                              setShowFullDescription(!showFullDescription)
                             }
-                            <button
-                              onClick={() => setShowFullDescription(!showFullDescription)}
-                              className="text-gray-800 hover:text-gray-900 font-medium ml-2 underline"
-                            >
-                              {showFullDescription ? 'Show Less' : 'Show More'}
-                            </button>
-                          </>
-                        ) : (
-                          product.description
-                        )}
-                      </div>
+                            className="text-gray-800 hover:text-gray-900 font-medium ml-2 underline">
+                            {showFullDescription ? "Show Less" : "Show More"}
+                          </button>
+                        </>
+                      ) : (
+                        product.description
+                      )}
                     </div>
-                  )
-                }
-
+                  </div>
+                )}
                 {/* Weight Selection */}
                 {product.weightOptions.length > 0 && (
                   <div>
@@ -528,40 +543,50 @@ const ProductPage = () => {
                         <button
                           key={option.weight}
                           onClick={() => setSelectedWeight(option.weight)}
-                          className={`p-3 text-center border rounded-lg transition-colors ${selectedWeight === option.weight
-                            ? "border-red-500 bg-red-50 text-red-600"
-                            : "border-gray-300 hover:border-gray-400"
-                            }`}>
-                          <div className="font-medium text-sm">{option.weight}</div>
+                          className={`p-3 text-center border rounded-lg transition-colors ${
+                            selectedWeight === option.weight
+                              ? "border-red-500 bg-red-50 text-red-600"
+                              : "border-gray-300 hover:border-gray-400"
+                          }`}>
+                          <div className="font-medium text-sm">
+                            {option.weight}
+                          </div>
                         </button>
-                      ))}                    </div>
+                      ))}{" "}
+                    </div>
                   </div>
-                )}                {/* Quality Assurance Features */}
+                )}{" "}
+                {/* Quality Assurance Features */}
                 <div className="bg-gray-50 rounded-lg p-4">
                   <div className="grid grid-cols-3 gap-4">
                     <div className="flex flex-col items-center gap-2">
                       <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full">
                         <Truck className="w-4 h-4 text-blue-600" />
                       </div>
-                      <span className="text-xs font-medium text-gray-700 text-center">On time delivery</span>
+                      <span className="text-xs font-medium text-gray-700 text-center">
+                        On time delivery
+                      </span>
                     </div>
 
                     <div className="flex flex-col items-center gap-2">
                       <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-full">
                         <Award className="w-4 h-4 text-green-600" />
                       </div>
-                      <span className="text-xs font-medium text-gray-700 text-center">100% fresh & hygienic</span>
+                      <span className="text-xs font-medium text-gray-700 text-center">
+                        100% fresh & hygienic
+                      </span>
                     </div>
 
                     <div className="flex flex-col items-center gap-2">
                       <div className="flex items-center justify-center w-8 h-8 bg-orange-100 rounded-full">
                         <Shield className="w-4 h-4 text-orange-600" />
                       </div>
-                      <span className="text-xs font-medium text-gray-700 text-center">FSSAI approved</span>
+                      <span className="text-xs font-medium text-gray-700 text-center">
+                        FSSAI approved
+                      </span>
                     </div>
                   </div>
                 </div>
-
                 {/* Flavor Selection */}
                 {product.flavors && product.flavors.length > 0 && (
                   <div>
@@ -572,8 +597,7 @@ const ProductPage = () => {
                       <select
                         className="w-full p-3 border border-gray-300 rounded-lg appearance-none bg-white"
                         value={selectedFlavor}
-                        onChange={(e) => setSelectedFlavor(e.target.value)}
-                      >
+                        onChange={(e) => setSelectedFlavor(e.target.value)}>
                         {product.flavors.map((flavor) => (
                           <option key={flavor} value={flavor}>
                             {flavor}
@@ -583,78 +607,91 @@ const ProductPage = () => {
                       <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     </div>
                   </div>
-                )}                
-                {/*  Delivery Info */}
+                )}
+                {/*  Preparation Time Info */}
                 <div className="text-sm text-gray-600 space-y-1">
-
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4" />
-                    <span>Earliest Delivery : {getEarliestDeliveryDate()}</span>
+                    <span>
+                      Preparation Time: {product.preparationTime || "24 hours"}
+                    </span>
                   </div>
-                </div>                {/* Preview Personalised Image Box for Photo Cakes */}
-                {isPhotoCake() && (getPersonalizationData().imageUrl || getPersonalizationData().image) && (
-                  <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                    <div className="flex items-center gap-3">
-                      {(getPersonalizationData().imageUrl || getPersonalizationData().image) && (
-                        <div className="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-gray-300">
-                          <Image
-                            src={
-                              getPersonalizationData().imageUrl || 
-                              (getPersonalizationData().image instanceof File 
-                                ? URL.createObjectURL(getPersonalizationData().image!) 
-                                : '/placeholder-cake.jpg')
-                            }
-                            alt="Personalized preview"
-                            fill
-                            className="object-cover"
-                            sizes="64px"
-                          />
-                        </div>
-                      )}                      
-                      <div className="flex-1">
-                        <button
-                          onClick={() => setShowPhotoCakeModal(true)}
-                          className="text-blue-600 hover:text-blue-800 font-medium text-sm underline"
-                        >
-                          {isInCart(product._id) ? 'View Personalised Cake' : 'Edit Personalisation'}
-                        </button>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {getPersonalizationData().message ? `Message: "${getPersonalizationData().message}"` : "Click to edit your personalization"}
-                        </p>
-                        {!isInCart(product._id) && (
-                          <p className="text-xs text-green-600 mt-1 font-medium">✓ Ready to add to cart</p>
+                </div>{" "}
+                {/* Preview Personalised Image Box for Photo Cakes */}
+                {isPhotoCake() &&
+                  (getPersonalizationData().imageUrl ||
+                    getPersonalizationData().image) && (
+                    <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                      <div className="flex items-center gap-3">
+                        {(getPersonalizationData().imageUrl ||
+                          getPersonalizationData().image) && (
+                          <div className="relative w-16 h-16 rounded-lg overflow-hidden border-2 border-gray-300">
+                            <Image
+                              src={
+                                getPersonalizationData().imageUrl ||
+                                (getPersonalizationData().image instanceof File
+                                  ? URL.createObjectURL(
+                                      getPersonalizationData().image!
+                                    )
+                                  : "/placeholder-cake.jpg")
+                              }
+                              alt="Personalized preview"
+                              fill
+                              className="object-cover"
+                              sizes="64px"
+                            />
+                          </div>
                         )}
+                        <div className="flex-1">
+                          <button
+                            onClick={() => setShowPhotoCakeModal(true)}
+                            className="text-blue-600 hover:text-blue-800 font-medium text-sm underline">
+                            {isInCart(product._id)
+                              ? "View Personalised Cake"
+                              : "Edit Personalisation"}
+                          </button>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {getPersonalizationData().message
+                              ? `Message: "${getPersonalizationData().message}"`
+                              : "Click to edit your personalization"}
+                          </p>
+                          {!isInCart(product._id) && (
+                            <p className="text-xs text-green-600 mt-1 font-medium">
+                              ✓ Ready to add to cart
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}{/* Photo Cake Buttons - Show based on cart status and customization */}
+                  )}
+                {/* Photo Cake Buttons - Show based on cart status and customization */}
                 {isPhotoCake() && (
                   <>
                     {isInCart(product._id) ? (
                       // If photo cake is already in cart, show Go to Cart button
                       <button
                         onClick={goToCart}
-                        className="w-full bg-green-600 text-white py-3 rounded-lg font-medium text-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                      >
+                        className="w-full bg-green-600 text-white py-3 rounded-lg font-medium text-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
                         <ShoppingCart className="w-4 h-4" />
                         Go to Cart
                       </button>
-                    ) : getPersonalizationData().image || getPersonalizationData().imageUrl ? (
+                    ) : getPersonalizationData().image ||
+                      getPersonalizationData().imageUrl ? (
                       // If photo cake is customized but not in cart, show Add to Cart button
                       <div className="flex gap-3">
                         <div className="flex items-center border border-gray-300 rounded-lg">
                           <button
                             onClick={() => handleQuantityChange("decrease")}
                             className="p-2 hover:bg-gray-100"
-                            disabled={quantity <= 1}
-                          >
+                            disabled={quantity <= 1}>
                             <Minus className="w-4 h-4" />
                           </button>
-                          <span className="px-4 py-2 font-medium">{quantity}</span>
+                          <span className="px-4 py-2 font-medium">
+                            {quantity}
+                          </span>
                           <button
                             onClick={() => handleQuantityChange("increase")}
-                            className="p-2 hover:bg-gray-100"
-                          >
+                            className="p-2 hover:bg-gray-100">
                             <Plus className="w-4 h-4" />
                           </button>
                         </div>
@@ -662,30 +699,32 @@ const ProductPage = () => {
                         <button
                           onClick={handleAddToCart}
                           disabled={addingToCart}
-                          className="flex-1 bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors disabled:opacity-50"
-                        >
+                          className="flex-1 bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors disabled:opacity-50">
                           {addingToCart ? "Adding..." : "Add to Cart"}
                         </button>
 
                         <button
                           onClick={handleWishlistToggle}
-                          className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50"
-                        >
-                          <Heart className={`w-5 h-5 ${isInWishlist(product._id) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+                          className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50">
+                          <Heart
+                            className={`w-5 h-5 ${
+                              isInWishlist(product._id)
+                                ? "fill-red-500 text-red-500"
+                                : "text-gray-400"
+                            }`}
+                          />
                         </button>
                       </div>
                     ) : (
                       // If photo cake is not customized yet, show Personalise button
                       <button
                         onClick={() => setShowPhotoCakeModal(true)}
-                        className="w-full bg-red-500 text-white py-3 rounded-lg font-medium text-lg hover:bg-red-600 transition-colors"
-                      >
+                        className="w-full bg-red-500 text-white py-3 rounded-lg font-medium text-lg hover:bg-red-600 transition-colors">
                         Personalise Your Cake
                       </button>
                     )}
                   </>
                 )}
-
                 {/* Regular Add to Cart for non-photo cakes only */}
                 {!isPhotoCake() && (
                   <div className="flex gap-3">
@@ -693,15 +732,13 @@ const ProductPage = () => {
                       <button
                         onClick={() => handleQuantityChange("decrease")}
                         className="p-2 hover:bg-gray-100"
-                        disabled={quantity <= 1}
-                      >
+                        disabled={quantity <= 1}>
                         <Minus className="w-4 h-4" />
                       </button>
                       <span className="px-4 py-2 font-medium">{quantity}</span>
                       <button
                         onClick={() => handleQuantityChange("increase")}
-                        className="p-2 hover:bg-gray-100"
-                      >
+                        className="p-2 hover:bg-gray-100">
                         <Plus className="w-4 h-4" />
                       </button>
                     </div>
@@ -709,8 +746,7 @@ const ProductPage = () => {
                     {isInCart(product._id) ? (
                       <button
                         onClick={goToCart}
-                        className="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                      >
+                        className="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2">
                         <ShoppingCart className="w-4 h-4" />
                         Go to Cart
                       </button>
@@ -718,35 +754,39 @@ const ProductPage = () => {
                       <button
                         onClick={handleAddToCart}
                         disabled={addingToCart}
-                        className="flex-1 bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors disabled:opacity-50"
-                      >
+                        className="flex-1 bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors disabled:opacity-50">
                         {addingToCart ? "Adding..." : "Add to Cart"}
                       </button>
                     )}
 
                     <button
                       onClick={handleWishlistToggle}
-                      className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50"
-                    >
-                      <Heart className={`w-5 h-5 ${isInWishlist(product._id) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+                      className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50">
+                      <Heart
+                        className={`w-5 h-5 ${
+                          isInWishlist(product._id)
+                            ? "fill-red-500 text-red-500"
+                            : "text-gray-400"
+                        }`}
+                      />
                     </button>
                   </div>
                 )}
               </div>
-            </div>          
             </div>
+          </div>
         </div>
 
         {/* Full-Width Reviews Section */}
         <div className="bg-gray-50 py-8 mt-8">
-          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">            <ReviewsDisplay
-            productId={product._id}
-            onWriteReview={() => setShowReviewModal(true)}
-          />
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
+            {" "}
+            <ReviewsDisplay
+              productId={product._id}
+            />
           </div>
         </div>
       </div>
-
       {/* Add-On Modal */}
       <AddOnModal
         isOpen={showAddOnModal}
@@ -754,7 +794,8 @@ const ProductPage = () => {
         onSkip={handleModalSkip}
         onContinue={handleModalContinue}
         productName={product?.name}
-      />      {/* Photo Cake Customization Modal */}
+      />{" "}
+      {/* Photo Cake Customization Modal */}
       <PhotoCakeCustomization
         isOpen={showPhotoCakeModal}
         onClose={() => setShowPhotoCakeModal(false)}
@@ -762,7 +803,6 @@ const ProductPage = () => {
         productName={product?.name || "Photo Cake"}
         initialData={getPersonalizationData()}
       />
-
       {/* Review Modal */}
       <ReviewModal
         isOpen={showReviewModal}
@@ -774,7 +814,6 @@ const ProductPage = () => {
           window.location.reload();
         }}
       />
-
       <Footer />
     </>
   );
