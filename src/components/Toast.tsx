@@ -24,17 +24,16 @@ const Toast = ({ message, onClose }: ToastProps) => {
 
     return () => clearTimeout(timer);
   }, [message.id, onClose]);
-
   const getIcon = () => {
     switch (message.icon) {
       case 'cart':
-        return <ShoppingCart className="w-5 h-5" />;
+        return <ShoppingCart className="w-4 h-4" />;
       case 'heart':
-        return <Heart className="w-5 h-5" />;
+        return <Heart className="w-4 h-4" />;
       case 'check':
-        return <CheckCircle className="w-5 h-5" />;
+        return <CheckCircle className="w-4 h-4" />;
       default:
-        return <CheckCircle className="w-5 h-5" />;
+        return <CheckCircle className="w-4 h-4" />;
     }
   };
 
@@ -50,21 +49,20 @@ const Toast = ({ message, onClose }: ToastProps) => {
         return 'bg-green-500';
     }
   };
-
   return (
-    <div className={`${getBgColor()} text-white p-4 rounded-lg shadow-lg flex items-center space-x-3 min-w-[300px] max-w-md animate-slide-in-right`}>
+    <div className={`${getBgColor()} text-white p-3 rounded-lg shadow-lg flex items-center space-x-2 min-w-[250px] max-w-xs animate-slide-in-right`}>
       <div className="flex-shrink-0">
         {getIcon()}
       </div>
-      <div className="flex-1">
-        <p className="font-medium">{message.title}</p>
-        <p className="text-sm opacity-90">{message.message}</p>
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-sm truncate">{message.title}</p>
+        <p className="text-xs opacity-90 truncate">{message.message}</p>
       </div>
       <button
         onClick={() => onClose(message.id)}
-        className="flex-shrink-0 hover:bg-white/20 rounded p-1 transition-colors"
+        className="flex-shrink-0 hover:bg-white/20 rounded p-0.5 transition-colors"
       >
-        <X className="w-4 h-4" />
+        <X className="w-3 h-3" />
       </button>
     </div>
   );
@@ -77,7 +75,7 @@ interface ToastContainerProps {
 
 export const ToastContainer = ({ messages, onClose }: ToastContainerProps) => {
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div className="fixed top-4 right-4 z-50 space-y-2 max-w-xs">
       {messages.map((message) => (
         <Toast key={message.id} message={message} onClose={onClose} />
       ))}

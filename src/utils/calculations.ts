@@ -83,7 +83,10 @@ export const calculateTotal = (
 /**
  * Format price with currency symbol
  */
-export const formatPrice = (amount: number): string => {
+export const formatPrice = (amount: number | undefined | null): string => {
+  if (amount === undefined || amount === null || isNaN(amount)) {
+    return '₹0.00';
+  }
   return `₹${amount.toFixed(2)}`;
 };
 

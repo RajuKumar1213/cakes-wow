@@ -157,7 +157,7 @@ const ProductCard = ({
             </div>
           </div>
           {discountPercentage > 0 && (
-            <div className="absolute top-2 right-2 bg-red-500 text-white px-2 sm:px-3 py-1 rounded-full text-xs font-bold shadow-lg z-10">
+            <div className="absolute top-0 right-0 bg-red-500 text-white px-2 sm:px-3 py-1 rounded-bl-2xl text-xs font-bold shadow-lg z-10">
               {discountPercentage}% OFF
             </div>
           )}

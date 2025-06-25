@@ -90,10 +90,12 @@ const initialState: CheckoutState = {
 };
 
 const checkoutReducer = (state: CheckoutState, action: CheckoutAction): CheckoutState => {
-  switch (action.type) {
-    case 'SET_STEP':
+  switch (action.type) {    case 'SET_STEP':
       console.log('🔄 CheckoutContext: Step transition from', state.currentStep, 'to', action.payload);
-      return { ...state, currentStep: action.payload };
+      const newState = { ...state, currentStep: action.payload };
+      console.log('🔄 CheckoutContext: New state currentStep:', newState.currentStep);
+      console.log('🔄 CheckoutContext: Full state after step change:', newState);
+      return newState;
     case 'UPDATE_FORM':
       return {
         ...state,
@@ -138,7 +140,22 @@ const CheckoutContext = createContext<CheckoutContextType | null>(null);
 export function CheckoutProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(checkoutReducer, initialState);
   const { user, loading } = useAuth();
-  const { items } = useCart();  // Pre-fill form if user is logged in
+  const { items } = useCart();
+
+  // Check URL for step parameter and set initial step
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const stepParam = urlParams.get('step');
+      if (stepParam) {
+        const stepNumber = parseInt(stepParam, 10);
+        if (stepNumber >= 1 && stepNumber <= 4) {
+          console.log('🔗 Setting step from URL parameter:', stepNumber);
+          dispatch({ type: 'SET_STEP', payload: stepNumber });
+        }
+      }
+    }
+  }, []);// Pre-fill form if user is logged in
   useEffect(() => {
     // Wait for auth loading to complete
     if (loading) {
@@ -216,12 +233,12 @@ export function CheckoutProvider({ children }: { children: React.ReactNode }) {
         if (items.length === 0) {
           return false;
         }
-        break;
-
-      case 2:
-        if (!state.orderForm.fullName.trim()) {
-          newErrors.fullName = 'Full name is required';
-        }
+        break;      
+        case 2:
+        // Remove fullName requirement - customers can proceed with just first name
+        // if (!state.orderForm.fullName.trim()) {
+        //   newErrors.fullName = 'Full name is required';
+        // }
         if (!state.orderForm.mobileNumber.trim()) {
           newErrors.mobileNumber = 'Mobile number is required';
         } else if (!/^[6-9]\d{9}$/.test(state.orderForm.mobileNumber)) {

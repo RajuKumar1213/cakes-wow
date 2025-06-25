@@ -1,43 +1,63 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from 'react';
-import { X, Upload, Camera, MessageSquare, Image as ImageIcon, Sparkles, Heart } from 'lucide-react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { X, Upload, CloudUpload, RotateCcw, Crop } from 'lucide-react';
 import Image from 'next/image';
+import CropModal from './CropModal';
 
 interface PhotoCakeCustomizationProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: { image: File | null; imageUrl?: string; message: string }) => void;
   productName: string;
+  initialData?: {
+    image?: File | null;
+    imageUrl?: string;
+    message?: string;
+  };
 }
 
 const PhotoCakeCustomization: React.FC<PhotoCakeCustomizationProps> = ({
   isOpen,
   onClose,
   onSave,
-  productName
+  productName,
+  initialData
 }) => {
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
-  const [message, setMessage] = useState('');
-  const [isDragging, setIsDragging] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(initialData?.image || null);
+  const [imagePreview, setImagePreview] = useState<string>(initialData?.imageUrl || '');
+  const [croppedImage, setCroppedImage] = useState<string>(initialData?.imageUrl || '');
+  const [message, setMessage] = useState(initialData?.message || '');
   const [isUploading, setIsUploading] = useState(false);
+  const [showCropModal, setShowCropModal] = useState(false);
   const [errors, setErrors] = useState<{ image?: string; message?: string }>({});
-  
+  const [imageScale, setImageScale] = useState(1);
+  const [activeTab, setActiveTab] = useState<'upload' | 'message'>('upload');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Update state when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      setSelectedImage(initialData.image || null);
+      setImagePreview(initialData.imageUrl || '');
+      setCroppedImage(initialData.imageUrl || '');
+      setMessage(initialData.message || '');
+      setActiveTab(initialData.imageUrl ? 'message' : 'upload');
+    }
+  }, [initialData]);
+
   const maxFileSize = 10 * 1024 * 1024; // 10MB
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
   const validateFile = (file: File): string | null => {
     if (!allowedTypes.includes(file.type)) {
-      return 'Please upload a JPG, PNG, or WEBP image file.';
+      return 'Only png & jpg images.';
     }
     if (file.size > maxFileSize) {
-      return 'File size must be less than 10MB.';
+      return 'File size should be 100kb to 10mb.';
     }
     return null;
   };
-
   const handleFileSelect = useCallback((file: File) => {
     const error = validateFile(file);
     if (error) {
@@ -47,35 +67,16 @@ const PhotoCakeCustomization: React.FC<PhotoCakeCustomizationProps> = ({
 
     setSelectedImage(file);
     setErrors(prev => ({ ...prev, image: undefined }));
-    
+    setImageScale(1);
     // Create preview URL
     const reader = new FileReader();
     reader.onload = (e) => {
       setImagePreview(e.target?.result as string);
+      setShowCropModal(true);
     };
+
     reader.readAsDataURL(file);
   }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
-      handleFileSelect(files[0]);
-    }
-  }, [handleFileSelect]);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  }, []);
-
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
@@ -83,29 +84,38 @@ const PhotoCakeCustomization: React.FC<PhotoCakeCustomizationProps> = ({
     }
   };
 
+  const handleReset = () => {
+    setSelectedImage(null);
+    setImagePreview('');
+    setCroppedImage('');
+    setImageScale(1);
+    setShowCropModal(false);
+    setActiveTab('upload');
+  };
   const handleSave = async () => {
     setIsUploading(true);
     const newErrors: { image?: string; message?: string } = {};
 
-    if (!selectedImage) {
-      newErrors.image = 'Please upload an image for your photo cake.';
-    }    if (message.trim().length > 20) {
-      newErrors.message = 'Name must be 20 characters or less.';
+    if (!selectedImage || !croppedImage) {
+      newErrors.image = 'Please upload and crop an image for your photo cake.';
     }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       setIsUploading(false);
       return;
-    }    try {
-      // Don't upload immediately - just save the File object and message
-      // Upload will happen during checkout when user clicks "Pay"
-      console.log('💾 Saving photo cake customization locally (no upload yet)');
-        // Save the data with the File object (not uploaded yet)
-      onSave({ 
-        image: selectedImage, 
-        imageUrl: undefined, // Will be set after upload during checkout
-        message: message.trim() 
+    }
+
+    try {
+      // Convert cropped image data URL to File
+      const response = await fetch(croppedImage);
+      const blob = await response.blob();
+      const croppedFile = new File([blob], selectedImage!.name, { type: selectedImage!.type });
+
+      onSave({
+        image: croppedFile,
+        imageUrl: croppedImage,
+        message: message.trim()
       });
       onClose();
     } catch (error) {
@@ -115,18 +125,6 @@ const PhotoCakeCustomization: React.FC<PhotoCakeCustomizationProps> = ({
       setIsUploading(false);
     }
   };
-
-  const handleReset = () => {
-    setSelectedImage(null);
-    setImagePreview('');
-    setMessage('');
-    setErrors({});
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  if (!isOpen) return null;
   const suggestedMessages = [
     "Happy Birthday",
     "John",
@@ -135,222 +133,285 @@ const PhotoCakeCustomization: React.FC<PhotoCakeCustomizationProps> = ({
     "Mom",
     "Dad"
   ];
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">        {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 rounded-t-2xl z-10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-pink-100 to-orange-100 rounded-xl flex items-center justify-center">
-                <Camera className="w-6 h-6 text-pink-600" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Customize Your Photo Cake</h2>
-                <p className="text-sm text-gray-600 mt-1">{productName}</p>
-              </div>
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
-              disabled={isUploading}
-            >
-              <X className="w-5 h-5 text-gray-500" />
-            </button>
-          </div>
-        </div>
+  // Crop Modal Component  // Crop Modal Component
 
-        {/* Content - Two Column Layout */}
-        <div className="p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left Column - Photo Upload */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <ImageIcon className="w-5 h-5 text-pink-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Upload Your Photo</h3>
-                <span className="text-red-500">*</span>
-              </div>
-              
-              {/* Upload Area */}              <div
-                className={`relative border-2 border-dashed rounded-xl p-8 transition-all duration-300 ${
-                  isDragging
-                    ? 'border-pink-400 bg-pink-50'
-                    : errors.image
-                    ? 'border-red-300 bg-red-50'
-                    : selectedImage
-                    ? 'border-green-300 bg-green-50'
-                    : 'border-gray-300 bg-gray-50 hover:border-pink-300 hover:bg-pink-50'
-                }`}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-              >
-                {selectedImage && imagePreview ? (
-                  <div className="text-center space-y-4">
-                    <div className="relative mx-auto w-64 h-64 rounded-xl overflow-hidden shadow-lg">
-                      <Image
-                        src={imagePreview}
-                        alt="Preview"
-                        fill
-                        className="object-cover"
-                      />
-                    </div>                  
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-green-700">
-                        ✓ Photo selected successfully!
-                      </p>
-                      <p className="text-xs text-gray-600">{selectedImage.name}</p>
-                    
-                      <button
-                        onClick={handleReset}
-                        className="text-sm text-pink-600 hover:text-pink-700 font-medium"
-                        disabled={isUploading}
-                      >
-                        Change Photo
-                      </button>
-                    </div>
+  if (!isOpen) return null;
+
+  return (
+    <>
+      <style jsx>{`
+        .range-slider::-webkit-slider-thumb {
+          appearance: none;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #ec4899;
+          cursor: pointer;
+          border: 3px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .range-slider::-moz-range-thumb {
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #ec4899;
+          cursor: pointer;
+          border: 3px solid white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .range-slider::-webkit-slider-track {
+          height: 8px;
+          border-radius: 4px;
+        }
+        
+        .range-slider::-moz-range-track {
+          height: 8px;
+          border-radius: 4px;
+          background: #e5e7eb;
+        }
+      `}</style>
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-2xl max-w-5xl w-full my-4 sm:my-0 max-h-[calc(100vh-2rem)] sm:max-h-[90vh] flex flex-col overflow-hidden">        {/* Header - Fixed */}
+        <div className="bg-white border-b border-gray-200 p-3 sm:p-4 flex items-center justify-between flex-shrink-0">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-800">Personalise your cake</h2>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-gray-100 rounded transition-colors"
+            disabled={isUploading}
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>{/* Content - Scrollable */}        <div className="p-3 sm:p-4 flex-1 overflow-y-auto scrollbar-thin scrollbar-track-gray-100 scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400 scroll-smooth">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 min-h-0">
+            {/* Left Column - Cake Preview with Photo Frame */}
+            <div className="flex flex-col items-center justify-center min-h-[250px] sm:min-h-[320px]">
+              <div className="relative w-48 h-48 sm:w-64 sm:h-64 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-full border-3 sm:border-4 border-yellow-300 shadow-lg overflow-hidden">
+                {/* Cake decorative border */}
+                <div className="absolute inset-1 sm:inset-2 border-2 sm:border-3 border-dotted border-yellow-400 rounded-full"></div>
+                {/* Photo frame area */}
+                <div className="absolute inset-5 sm:inset-7 bg-white rounded-full border-2 sm:border-3 border-red-400 overflow-hidden flex items-center justify-center">
+                  {croppedImage ? (<div className="relative w-full h-full">
+                    <Image
+                      src={croppedImage}
+                      alt="Cropped photo"
+                      fill
+                      className="object-cover"
+                      style={{
+                        transform: `scale(${imageScale})`,
+                        transformOrigin: 'center'
+                      }}
+                    />
                   </div>
-                ) : (
-                  <div className="text-center space-y-4">
-                    <div className="w-16 h-16 mx-auto bg-gradient-to-br from-pink-100 to-orange-100 rounded-xl flex items-center justify-center">
-                      <Upload className="w-8 h-8 text-pink-600" />
+                  ) : selectedImage && imagePreview ? (                    <div className="text-center text-blue-600">
+                      <Crop className="w-8 h-8 mx-auto mb-1" />
+                      <p className="text-xs">Crop image</p>
                     </div>
-                    <div className="space-y-2">                    
-                      <p className="text-lg font-medium text-gray-900">
-                        Drop your photo here or click to browse
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        JPG, PNG, or WEBP • Max 10MB
-                      </p>
-                      <p className="text-xs text-blue-600">
-                        📋 Photo will be uploaded when you complete checkout
-                      </p>
+                  ) : (                    
+                  <div className="text-center text-gray-400">
+                      <Upload className="w-8 h-8 mx-auto mb-1" />
+                      <p className="text-xs">Upload Image</p>
                     </div>
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-pink-600 to-orange-600 text-white font-medium rounded-xl hover:from-pink-700 hover:to-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                      disabled={isUploading}
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      Choose Photo
-                    </button>
+                  )}
+                </div>                {/* Cake text area */}
+                {message && (
+                  <div className="absolute bottom-2 sm:bottom-3 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                    {message}
                   </div>
                 )}
-                
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/jpg,image/png,image/webp"
-                  onChange={handleFileInputChange}
-                  className="hidden"
-                  disabled={isUploading}
-                />
-              </div>
 
-              {errors.image && (
-                <p className="text-sm text-red-600 flex items-center space-x-1">
-                  <span>⚠️</span>
-                  <span>{errors.image}</span>
-                </p>
-              )}
-            </div>
+                {/* Decorative elements */}
+                <div className="absolute top-1 left-2 w-2 h-2 sm:w-3 sm:h-3 bg-pink-300 rounded-full"></div>
+                <div className="absolute top-3 right-4 w-2 h-2 bg-blue-300 rounded-full"></div>
+                <div className="absolute bottom-4 left-3 w-3 h-3 sm:w-4 sm:h-4 bg-green-300 rounded-full"></div>
+                <div className="absolute bottom-2 right-2 w-2 h-2 bg-purple-300 rounded-full"></div>
 
-            {/* Right Column - Name on Cake */}
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <MessageSquare className="w-5 h-5 text-blue-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Name on Cake</h3>
-                <span className="text-xs text-gray-500">(Optional)</span>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}                    placeholder="Enter the name to be written on the cake... (optional)"
-                    rows={2}
-                    maxLength={20}
-                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 transition-colors resize-none ${
-                      errors.message
-                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                        : 'border-gray-300 focus:ring-pink-500 focus:border-pink-500'
-                    }`}
-                    disabled={isUploading}
-                  />                  <div className="flex justify-between items-center">
-                    <div className="text-xs text-gray-500">
-                      {message.length}/20 characters
+                {/* Birthday text */}
+                <div className="absolute top-6 sm:top-8 left-1/2 transform -translate-x-1/2 text-red-500 text-sm sm:text-base font-bold">
+                  HAPPY
+                </div>
+                <div className="absolute top-4 sm:top-6 left-1/2 transform -translate-x-1/2 text-red-500 text-sm sm:text-lg font-bold">
+                  Birthday
+                </div>
+              </div>              {/* Image controls */}
+              {croppedImage && (
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-center justify-center space-x-3">
+                    <span className="text-xs text-gray-600 min-w-[50px]">Resize</span>
+                    <div className="flex-1 max-w-[200px]">                      <input
+                        type="range"
+                        min="50"
+                        max="200"
+                        value={Math.round(imageScale * 100)}
+                        onChange={(e) => setImageScale(Number(e.target.value) / 100)}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-slider"
+                        style={{
+                          background: `linear-gradient(to right, #ec4899 0%, #ec4899 ${((imageScale - 0.5) / 1.5) * 100}%, #e5e7eb ${((imageScale - 0.5) / 1.5) * 100}%, #e5e7eb 100%)`
+                        }}
+                      />
                     </div>
-                    {errors.message && (
-                      <p className="text-xs text-red-600 flex items-center space-x-1">
-                        <span>⚠️</span>
-                        <span>{errors.message}</span>
-                      </p>
-                    )}
+                    <span className="text-xs text-gray-600 min-w-[35px] text-right">{Math.round(imageScale * 100)}%</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-center space-x-2">
+                    <button
+                      onClick={() => setShowCropModal(true)}
+                      className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors flex items-center gap-1"
+                    >
+                      <Crop className="w-3 h-3" />
+                      Re-crop
+                    </button>
+                    <button
+                      onClick={handleReset}
+                      className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors flex items-center gap-1"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      Reset
+                    </button>
                   </div>
                 </div>
-
-                {/* Suggested Names */}
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700">Popular Names:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {suggestedMessages.map((suggestion, index) => (
+              )}
+            </div>            {/* Right Column - Upload and Message */}
+            <div className="space-y-3 sm:space-y-4">
+              {/* Tab Navigation */}
+              <div className="flex bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setActiveTab('upload')}
+                  className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'upload'
+                      ? 'bg-white text-pink-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                >
+                  Upload Image
+                </button>
+                <button
+                  onClick={() => setActiveTab('message')}
+                  className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-colors ${activeTab === 'message'
+                      ? 'bg-white text-pink-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                >
+                  Cake Message
+                </button>
+              </div>              {/* Upload Tab */}
+              {activeTab === 'upload' && (
+                <div className="space-y-3">
+                  <div className="border-2 border-dashed border-pink-300 rounded-lg p-3 sm:p-4 text-center bg-pink-50">
+                    <div className="space-y-2 sm:space-y-3">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto bg-pink-100 rounded-full flex items-center justify-center">
+                        <CloudUpload className="w-5 h-5 sm:w-6 sm:h-6 text-pink-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm sm:text-base font-medium text-gray-800 mb-1">Upload Image</p>
+                        <p className="text-xs text-gray-600">File size should be 100kb to 10mb. Only png & jpg images.</p>
+                      </div>
                       <button
-                        key={index}
-                        onClick={() => setMessage(suggestion)}
-                        className="px-3 py-1 text-xs bg-pink-100 text-pink-700 rounded-full hover:bg-pink-200 transition-colors"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="inline-flex items-center px-4 py-1.5 bg-pink-500 text-white text-sm font-medium rounded-lg hover:bg-pink-600 transition-colors"
                         disabled={isUploading}
                       >
-                        {suggestion}
+                        Choose File
                       </button>
-                    ))}
+                    </div>
                   </div>
-                </div>
 
-                {/* Tips Section */}
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Sparkles className="w-4 h-4 text-blue-600" />
-                    <h4 className="text-sm font-semibold text-blue-900">Tips for Great Results:</h4>
-                  </div>
-                  <ul className="text-xs text-blue-800 space-y-1 ml-6">
-                    <li>• Use high-quality, clear photos</li>
-                    <li>• Avoid blurry or pixelated images</li>
-                    <li>• Names should be short and sweet</li>
-                    <li>• Consider the cake size for text length</li>
-                  </ul>
+                  {errors.image && (
+                    <p className="text-sm text-red-600">{errors.image}</p>
+                  )}                  {selectedImage && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                          <span className="text-green-600 text-xs">✓</span>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-green-800">Image uploaded successfully</p>
+                          <p className="text-xs text-green-600">{selectedImage.name}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>        {/* Footer */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 rounded-b-2xl z-10">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={onClose}
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
-              disabled={isUploading}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={!selectedImage || isUploading}
-              className="flex-1 px-6 py-3 bg-gradient-to-r from-pink-600 to-orange-600 text-white font-medium rounded-xl hover:from-pink-700 hover:to-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 disabled:hover:scale-100 flex items-center justify-center space-x-2"            >
-              {isUploading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <>
-                  <Heart className="w-4 h-4" />
-                  <span>Save & Add to Cart</span>
-                </>
               )}
-            </button>
-          </div>
-        </div>
+
+              {/* Message Tab */}
+              {activeTab === 'message' && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Name (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Name"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+                      disabled={isUploading}
+                    />
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">Popular Names:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {suggestedMessages.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setMessage(suggestion)}
+                          className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors border"
+                          disabled={isUploading}
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>        </div>        {/* Footer - Fixed */}
+        <div className="bg-gray-50 px-3 sm:px-4 py-2 sm:py-3 flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 border-t border-gray-200 flex-shrink-0">
+          <button
+            onClick={onClose}
+            className="px-4 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors order-2 sm:order-1 text-sm"
+            disabled={isUploading}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={!croppedImage || isUploading}
+            className="px-6 py-1.5 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 order-1 sm:order-2 text-sm"
+          >
+            {isUploading ? (
+              <>
+                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Saving...</span>
+              </>
+            ) : (
+              <span>Save & Continue</span>
+            )}
+          </button>
+        </div><input
+          ref={fileInputRef}          type="file"
+          accept="image/jpeg,image/jpg,image/png"
+          onChange={handleFileInputChange}
+          className="hidden"
+          disabled={isUploading}        />
       </div>
-    </div>
+
+      {/* Crop Modal */}
+      <CropModal
+        isOpen={showCropModal}
+        onClose={() => setShowCropModal(false)}
+        imageSrc={imagePreview}
+        onSave={(croppedImageUrl) => {
+          setCroppedImage(croppedImageUrl);
+          setActiveTab('message');
+        }}
+      />
+      </div>
+    </>
   );
 };
 

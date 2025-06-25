@@ -243,7 +243,7 @@ const Header = () => {
                   src="/logo.webp"
                   alt="cakes wow Logo"
                   width={150}
-                  height={48}
+                  height={50}
                   className="drop-shadow-md"
                 />
               </div>
@@ -381,7 +381,7 @@ const Header = () => {
                         onMouseLeave={handleMouseLeave}
                       >
                         <button
-                          className="flex items-center space-x-1 hover:text-pink-600 font-medium whitespace-nowrap  px-2 py-[6px] rounded-md transition-colors duration-200 group"
+                          className="flex text-sm font-extrabold items-center space-x-1 hover:text-pink-600 whitespace-nowrap px-2 py-[6px] transition-colors duration-200 group"
                           onClick={(e) => {
                             if (groupedCategories[group].length === 1) {
                               handleCategoryClick(
@@ -391,7 +391,7 @@ const Header = () => {
                             }
                           }}
                         >
-                          <span className="font-extrabold text-sm group-hover:text-pink-600 transition-colors">
+                          <span className="  group-hover:text-pink-600 transition-colors">
                             {group}
                           </span>
                         </button>

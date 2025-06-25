@@ -5,6 +5,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useCheckout } from '@/contexts/CheckoutContext';
 import { calculateOrderSummary, formatPrice } from '@/utils/calculations';
 import { deliveryTypes } from '@/constants/checkout';
+import { safeLocalStorageSetItem, cleanupLocalStorage } from '@/utils/localStorage';
 import Image from 'next/image';
 import { Gift, Plus, Minus, Star, ArrowLeft } from 'lucide-react';
 
@@ -12,10 +13,10 @@ const CartReviewStepContent: React.FC = () => {
   const { items: cart, updateQuantity, removeFromCart } = useCart();
   const { state, goToNextStep, goToPreviousStep, dispatch } = useCheckout();
   const [selectedAddOns, setSelectedAddOns] = useState<any[]>([]);
-  const [addOnQuantities, setAddOnQuantities] = useState<{ [key: string]: number }>({});
-  const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
+  const [addOnQuantities, setAddOnQuantities] = useState<{ [key: string]: number }>({});  const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const [uploadProgress, setUploadProgress] = useState('');
-
+  const [orderCreated, setOrderCreated] = useState(false);
+  const [showPaymentLink, setShowPaymentLink] = useState(false);
   // Load add-ons from localStorage
   const loadAddOnsFromStorage = React.useCallback(() => {
     if (typeof window === 'undefined') return;
@@ -47,6 +48,14 @@ const CartReviewStepContent: React.FC = () => {
       // Error loading add-ons - silent fail
     }
   }, []);
+
+  // Handle step transition after order creation
+  useEffect(() => {
+    if (orderCreated && state.currentStep !== 3) {
+      console.log('🔄 Order created, ensuring step transition to payment');
+      dispatch({ type: 'SET_STEP', payload: 3 });
+    }
+  }, [orderCreated, state.currentStep, dispatch]);
 
   // Load add-ons on component mount
   useEffect(() => {
@@ -123,17 +132,7 @@ const CartReviewStepContent: React.FC = () => {
       // Calculate totals
       const addOnsTotal = getAddOnsTotal();
       const deliveryPrice = getDeliveryPrice();
-      const finalTotal = orderSummary.subtotal + addOnsTotal + deliveryPrice;
-
-      // Helper function to convert File to base64
-      const fileToBase64 = (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = error => reject(error);
-        });
-      };      // Process cart items and handle photo cake image uploads
+      const finalTotal = orderSummary.subtotal + addOnsTotal + deliveryPrice;      // File upload is now handled directly via FormData - no base64 conversion needed// Process cart items and handle photo cake image uploads
       console.log('🛒 Processing', cart.length, 'cart items for order creation...');
       setUploadProgress('Processing cart items...');
       
@@ -271,14 +270,39 @@ const CartReviewStepContent: React.FC = () => {
         totalAmount: orderData.totalAmount
       });
 
-      // Create order in database
+      // Safety check: Remove any File objects from orderData before sending
+      const sanitizeOrderData = (data: any): any => {
+        if (data === null || data === undefined) return data;
+        
+        if (data instanceof File) {
+          console.warn('🚨 File object detected in order data - removing to prevent serialization issues');
+          return null;
+        }
+        
+        if (Array.isArray(data)) {
+          return data.map(sanitizeOrderData);
+        }
+        
+        if (typeof data === 'object') {
+          const sanitized: any = {};
+          for (const [key, value] of Object.entries(data)) {
+            sanitized[key] = sanitizeOrderData(value);
+          }
+          return sanitized;
+        }
+        
+        return data;
+      };
+      
+      const sanitizedOrderData = sanitizeOrderData(orderData);
+        // Create order in database
       setUploadProgress('Creating your order...');
       const response = await fetch('/api/orders/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(orderData),
+        body: JSON.stringify(sanitizedOrderData),
       });
 
       if (!response.ok) {
@@ -287,19 +311,51 @@ const CartReviewStepContent: React.FC = () => {
       }      const result = await response.json();
 
       // Store order details in context for payment step
-      console.log('💾 About to store order in localStorage:', result.order);
-      localStorage.setItem('pending-order', JSON.stringify(result.order));
-
-      console.log('✅ Order created successfully, transitioning to payment step');
-      console.log('📝 Order stored in localStorage:', result.order.orderId);
+      console.log('💾 About to store order in localStorage. Order ID:', result.order?.orderId, 'Items count:', result.order?.items?.length);
+      
+      // Create a lightweight version of order data for storage
+      const orderDataToStore = {
+        ...result.order,
+        // Remove large data that causes storage issues
+        items: result.order.items?.map((item: any) => ({
+          ...item,
+          // Remove the actual file objects to save space
+          customization: item.customization ? {
+            ...item.customization,
+            image: null // Remove File object, keep only imageUrl
+          } : item.customization
+        }))
+      };
+      
+      // Use safe localStorage utility that handles quota exceeded errors
+      const stored = safeLocalStorageSetItem('pending-order', JSON.stringify(orderDataToStore));
+      
+      if (stored) {
+        console.log('📝 Order stored in localStorage:', result.order.orderId);
+      } else {
+        console.warn('⚠️ Failed to store order in localStorage, but continuing anyway');
+      }      console.log('✅ Order created successfully, transitioning to payment step');
       console.log('🔄 Current step before transition:', state.currentStep);
 
-      // Proceed to payment step
-      dispatch({ type: 'SET_STEP', payload: 3 });
+      // Set flag to indicate order was created
+      setOrderCreated(true);
       
-      console.log('✅ Step transition dispatched to step 3');
+      // Reset loading states first
       setIsUploadingPhotos(false);
       setUploadProgress('');
+      
+      // Store the order ID in localStorage for payment step
+      localStorage.setItem('current-order-id', result.order.orderId);
+      
+      console.log('🚀 Order created successfully! Forcing navigation to payment...');
+      
+      // IMMEDIATE REDIRECT: Force navigation to payment page
+      // This bypasses React state management entirely
+      setTimeout(() => {
+        window.location.href = '/checkout?step=3';
+      }, 100);
+      
+      console.log('✅ Navigation scheduled to payment step');
         } catch (error) {
       console.error('❌ Order creation failed:', error);
       setIsUploadingPhotos(false);
@@ -588,12 +644,28 @@ const CartReviewStepContent: React.FC = () => {
             <div className="flex items-center justify-center space-x-2">
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               <span>{uploadProgress || 'Processing...'}</span>
-            </div>
-          ) : (
+            </div>          ) : (
             'Proceed to Checkout'
           )}
         </button>
       </div>
+
+      {/* Show manual payment link if step transition fails */}
+      {showPaymentLink && (
+        <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+          <p className="text-green-800 font-medium mb-2">✅ Order Created Successfully!</p>
+          <p className="text-green-700 text-sm mb-3">Your order has been created. Please proceed to payment:</p>
+          <button
+            onClick={() => {
+              console.log('🔗 Manual navigation to payment step');
+              dispatch({ type: 'SET_STEP', payload: 3 });
+            }}
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+          >
+            Continue to Payment →
+          </button>
+        </div>
+      )}
     </div>
   );
 };

@@ -135,28 +135,39 @@ const StepProgress: React.FC = () => {
 const CheckoutContent: React.FC = () => {
     const { state } = useCheckout();
     const { currentStep, loading } = state;
+    
+    // Debug step changes
+    React.useEffect(() => {
+        console.log('🔄 CheckoutPage: Step changed to', currentStep);
+    }, [currentStep]);
+    
     if (loading) {
         return (
             <div className="min-h-[400px] flex items-center justify-center">
                 <LoadingSpinner size="lg" text="Processing..." />
             </div>
         );
-    }
-
-    const renderCurrentStep = () => {
+    }const renderCurrentStep = () => {
+        console.log('🔍 CheckoutPage: Rendering step', currentStep);
+        
         switch (currentStep) {
             case 1:
+                console.log('📋 CheckoutPage: Rendering DeliveryDetailsStepContent');
                 return <DeliveryDetailsStepContent />;
             case 2:
+                console.log('🛒 CheckoutPage: Rendering CartReviewStepContent');
                 return <CartReviewStepContent />;
             case 3:
+                console.log('💳 CheckoutPage: Rendering PaymentStep');
                 return <PaymentStep />;
             case 4:
+                console.log('✅ CheckoutPage: Rendering Confirmation');
                 return <div className="p-6"><h2 className="text-xl font-semibold mb-4">Confirmation</h2><p>Order confirmation step coming soon...</p></div>;
             default:
+                console.log('⚠️ CheckoutPage: Unknown step, defaulting to CartReviewStepContent');
                 return <CartReviewStepContent />;
         }
-    }; return (
+    };return (
         <div className="max-w-5xl mx-auto p-2 md:p-4 lg:p-6">
             {/* Header */}
             <div className="mb-4 md:mb-8 text-center">

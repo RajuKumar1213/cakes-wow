@@ -125,9 +125,8 @@ export async function POST(request) {
         price: addon.price,
         quantity: orderData.addOnQuantities?.[addon._id] || 1,
         image: addon.image || "",
-      }));
-      console.log('🎁 Processing addons:', processedAddons);
-      console.log('🎁 Original addon data:', orderData.selectedAddOns);
+      }));      console.log('🎁 Processing addons:', processedAddons);
+      console.log('🎁 Original addon count:', orderData.selectedAddOns?.length || 0);
     } else {
       console.log('🎁 No addons in order data');
     }    // Create order in database with payment pending status

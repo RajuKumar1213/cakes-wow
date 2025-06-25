@@ -148,10 +148,11 @@ const PaymentStatusBadge = ({ status }: { status: Order['paymentStatus'] }) => {
   );
 };
 
-const OrderCard = ({ order, onStatusChange, onViewDetails, isUpdating }: {
+const OrderCard = ({ order, onStatusChange, onViewDetails, onViewPhoto, isUpdating }: {
   order: Order;
   onStatusChange: (orderId: string, newStatus: Order['status']) => void;
   onViewDetails: (order: Order) => void;
+  onViewPhoto: (imageUrl: string, customerName: string, message?: string) => void;
   isUpdating: boolean;
 }) => {
   const formatPrice = (price: number) => `₹${price.toLocaleString()}`;
@@ -235,11 +236,19 @@ const OrderCard = ({ order, onStatusChange, onViewDetails, isUpdating }: {
             .filter(item => item.customization?.type === 'photo-cake')
             .map((item, index) => (
               <div key={index} className="flex items-center gap-3 mb-2 last:mb-0">
-                {/* Photo Preview */}
-                {item.customization?.imageUrl ? (                  <div 
+                {/* Photo Preview */}                {item.customization?.imageUrl && item.customization.imageUrl !== '' && item.customization.imageUrl !== 'null' ? (                  <div 
                     className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 border-purple-300 cursor-pointer hover:border-purple-500 transition-colors group"
-                    onClick={() => item.customization?.imageUrl && window.open(item.customization.imageUrl, '_blank')}
-                    title="Click to view full image in new tab"
+                    onClick={() => {
+                      const imageUrl = item.customization?.imageUrl;
+                      console.log('🔍 Opening photo modal for image:', imageUrl?.substring(0, 50) + '...');
+                      
+                      if (imageUrl && imageUrl !== null && imageUrl !== '' && imageUrl !== 'null') {
+                        onViewPhoto(imageUrl, order.customerInfo.fullName, item.customization?.message);
+                      } else {
+                        alert('❌ Image URL is invalid or missing. Please check if the image was uploaded correctly.');
+                      }
+                    }}
+                    title="Click to view full image in modal"
                   >
                     <img
                       src={item.customization.imageUrl}
@@ -265,12 +274,20 @@ const OrderCard = ({ order, onStatusChange, onViewDetails, isUpdating }: {
                     <p className="text-purple-700 text-xs italic truncate" title={item.customization.message}>
                       � Name: "{item.customization.message}"
                     </p>
-                  )}
-                  <p className="text-purple-600 text-xs font-medium">
-                    {item.customization?.imageUrl 
-                      ? "🖼️ Image ready - click to view" 
+                  )}                  <p className="text-purple-600 text-xs font-medium">
+                    {(item.customization?.imageUrl && item.customization.imageUrl !== '' && item.customization.imageUrl !== 'null')
+                      ? "🖼️ Image ready - click to view and print" 
                       : "❌ Image missing - contact customer"}
                   </p>
+                  
+                  {/* Debug: Show raw image URL for troubleshooting */}
+                  {item.customization?.imageUrl && (
+                    <p className="text-xs text-gray-500 mt-1 break-all" title="Raw image URL for debugging">
+                      URL: {item.customization.imageUrl.length > 50 
+                        ? `${item.customization.imageUrl.substring(0, 50)}...`
+                        : item.customization.imageUrl}
+                    </p>
+                  )}
                 </div>
               </div>
             ))
@@ -333,10 +350,11 @@ const OrderCard = ({ order, onStatusChange, onViewDetails, isUpdating }: {
   );
 };
 
-const OrderDetailsModal = ({ order, onClose, onStatusUpdate }: {
+const OrderDetailsModal = ({ order, onClose, onStatusUpdate, onViewPhoto }: {
   order: Order;
   onClose: () => void;
   onStatusUpdate: (orderId: string, newStatus: Order['status']) => void;
+  onViewPhoto: (imageUrl: string, customerName: string, message?: string) => void;
 }) => {
   const formatPrice = (price: number) => `₹${price.toLocaleString()}`;
   const formatDateTime = (dateString: string) => new Date(dateString).toLocaleString('en-IN', {
@@ -515,12 +533,19 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }: {
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-purple-800 font-semibold text-xs">📸 PHOTO CAKE</span>
                           <span className="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-medium">Custom Print Required</span>
-                        </div>                        <div className="flex items-start gap-3">
-                          {item.customization.imageUrl ? (
-                            <div 
+                        </div>                        <div className="flex items-start gap-3">                          {item.customization.imageUrl && item.customization.imageUrl !== '' && item.customization.imageUrl !== 'null' ? (                            <div 
                               className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 border-purple-300 cursor-pointer hover:border-purple-500 transition-colors group"
-                              onClick={() => item.customization?.imageUrl && window.open(item.customization.imageUrl, '_blank')}
-                              title="Click to view full image in new tab"
+                              onClick={() => {
+                                const imageUrl = item.customization?.imageUrl;
+                                console.log('🔍 Opening photo modal for image:', imageUrl?.substring(0, 50) + '...');
+                                
+                                if (imageUrl && imageUrl !== null && imageUrl !== '' && imageUrl !== 'null') {
+                                  onViewPhoto(imageUrl, order.customerInfo.fullName, item.customization?.message);
+                                } else {
+                                  alert('❌ Image URL is invalid or missing. Please check if the image was uploaded correctly.');
+                                }
+                              }}
+                              title="Click to view full image in modal"
                             >
                               <img
                                 src={item.customization.imageUrl}
@@ -541,10 +566,9 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }: {
                           )}                          <div className="flex-1">
                             {item.customization.message && (
                               <p className="text-purple-700 text-xs italic mb-1">� Name: "{item.customization.message}"</p>
-                            )}
-                            <p className="text-purple-600 text-xs font-medium">
-                              {item.customization.imageUrl 
-                                ? "🖼️ Click image to view full size - Print this photo on the cake" 
+                            )}                            <p className="text-purple-600 text-xs font-medium">
+                              {(item.customization.imageUrl && item.customization.imageUrl !== '' && item.customization.imageUrl !== 'null')
+                                ? "🖼️ Click image to view full size and print - Print this photo on the cake" 
                                 : "❌ Customer photo failed to upload - please contact customer"}
                             </p>
                           </div>
@@ -651,14 +675,148 @@ const OrderDetailsModal = ({ order, onClose, onStatusUpdate }: {
   );
 };
 
+// Photo View Modal Component
+const PhotoViewModal = ({ imageUrl, customerName, message, onClose }: {
+  imageUrl: string;
+  customerName: string;
+  message?: string;
+  onClose: () => void;
+}) => {
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Photo Cake - ${customerName}</title>
+            <style>
+              body {
+                margin: 0;
+                padding: 20px;
+                font-family: Arial, sans-serif;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 20px;
+              }
+              .image-container {
+                max-width: 100%;
+                text-align: center;
+              }
+              img {
+                max-width: 100%;
+                max-height: 80vh;
+                object-fit: contain;
+              }
+              .message {
+                margin-top: 20px;
+                padding: 10px;
+                background: #f0f0f0;
+                border-radius: 5px;
+                font-style: italic;
+              }
+              @media print {
+                .no-print { display: none; }
+                body { padding: 0; }
+                img { max-height: 90vh; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h2>Photo Cake for ${customerName}</h2>
+              ${message ? `<p class="message">Message: "${message}"</p>` : ''}
+            </div>
+            <div class="image-container">
+              <img src="${imageUrl}" alt="Photo Cake Image" />
+            </div>
+            <div class="no-print" style="margin-top: 20px;">
+              <button onclick="window.print()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">Print Image</button>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl shadow-xl max-w-4xl max-h-[95vh] w-full overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b bg-purple-50">
+          <div>
+            <h3 className="text-lg font-semibold text-purple-900">📸 Photo Cake Image</h3>
+            <p className="text-sm text-purple-700">Customer: {customerName}</p>
+            {message && (
+              <p className="text-sm text-purple-600 italic">Message: "{message}"</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              Print Image
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 text-2xl font-bold w-8 h-8 flex items-center justify-center"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        {/* Image Display */}
+        <div className="p-4 max-h-[80vh] overflow-auto">
+          <div className="text-center">
+            <img
+              src={imageUrl}
+              alt="Photo Cake Image"
+              className="max-w-full max-h-[70vh] object-contain mx-auto rounded-lg shadow-lg"
+              onError={(e) => {
+                console.error('Failed to load image:', imageUrl);
+                e.currentTarget.src = '/placeholder-cake.jpg';
+              }}
+            />
+          </div>
+          
+          {/* Instructions */}
+          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <h4 className="font-medium text-yellow-800 mb-1">📋 Printing Instructions:</h4>
+            <ul className="text-sm text-yellow-700 space-y-1">
+              <li>• Click "Print Image" button to open print preview</li>
+              <li>• Ensure image prints at actual size for best quality</li>
+              <li>• Use photo paper for edible printing if available</li>
+              <li>• Check image orientation before printing</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function AdminOrders() {
   const { showSuccess, showError } = useToast();
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [statusFilter, setStatusFilter] = useState('all');  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<{
+    imageUrl: string;
+    customerName: string;
+    message?: string;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -685,8 +843,21 @@ export default function AdminOrders() {
       setRefreshing(!showLoader);
 
       const response = await fetch(`/api/orders?limit=${itemsPerPage}&page=${page}`);
-      const data = await response.json();     
-       if (data.success) {
+      const data = await response.json();       if (data.success) {        // Debug: Log photo cake items to see their structure
+        data.orders.forEach((order: any) => {
+          const photoCakeItems = order.items.filter((item: any) => item.customization?.type === 'photo-cake');
+          if (photoCakeItems.length > 0) {
+            console.log(`🔍 Order ${order.orderId} has ${photoCakeItems.length} photo cake(s):`, 
+              photoCakeItems.map((item: any) => ({
+                name: item.name,
+                hasImageUrl: !!item.customization?.imageUrl,
+                imageUrl: item.customization?.imageUrl,
+                imageUrlType: typeof item.customization?.imageUrl,
+                message: item.customization?.message
+              }))
+            );
+          }
+        });
         
         setOrders(data.orders);
         setFilteredOrders(data.orders);
@@ -796,9 +967,16 @@ export default function AdminOrders() {
       setUpdating(false);
     }
   };
-
   const handleViewDetails = (order: Order) => {
     setSelectedOrder(order);
+  };
+
+  const handleViewPhoto = (imageUrl: string, customerName: string, message?: string) => {
+    setSelectedPhoto({
+      imageUrl,
+      customerName,
+      message
+    });
   };
 
   // Pagination functions
@@ -939,13 +1117,13 @@ export default function AdminOrders() {
 
         {/* Orders Grid */}
         {filteredOrders.length > 0 ? (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
-            {filteredOrders.map(order => (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">            {filteredOrders.map(order => (
               <OrderCard
                 key={order._id}
                 order={order}
                 onStatusChange={handleStatusChange}
                 onViewDetails={handleViewDetails}
+                onViewPhoto={handleViewPhoto}
                 isUpdating={updating}
               />
             ))}
@@ -1015,14 +1193,23 @@ export default function AdminOrders() {
             </button>
           </div>
         )}
-      </main>
-
-      {/* Order Details Modal */}
+      </main>      {/* Order Details Modal */}
       {selectedOrder && (
         <OrderDetailsModal
           order={selectedOrder}
           onClose={() => setSelectedOrder(null)}
           onStatusUpdate={handleStatusChange}
+          onViewPhoto={handleViewPhoto}
+        />
+      )}
+
+      {/* Photo View Modal */}
+      {selectedPhoto && (
+        <PhotoViewModal
+          imageUrl={selectedPhoto.imageUrl}
+          customerName={selectedPhoto.customerName}
+          message={selectedPhoto.message}
+          onClose={() => setSelectedPhoto(null)}
         />
       )}
     </div>

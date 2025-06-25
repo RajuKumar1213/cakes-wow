@@ -60,9 +60,10 @@ export const validatePersonalDetails = (formData: {
     errors.push({ field: 'firstName', message: 'First name is required' });
   }
 
-  if (!validateRequired(formData.lastName)) {
-    errors.push({ field: 'lastName', message: 'Last name is required' });
-  }
+  // Remove lastName requirement - customers can proceed with just first name
+  // if (!validateRequired(formData.lastName)) {
+  //   errors.push({ field: 'lastName', message: 'Last name is required' });
+  // }
 
   if (!validateRequired(formData.email)) {
     errors.push({ field: 'email', message: 'Email is required' });
