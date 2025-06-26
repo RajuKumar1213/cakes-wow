@@ -11,12 +11,14 @@ import { Search, X } from "lucide-react";
 // Base schema without images for form validation
 const baseProductSchema = z.object({
   name: z.string().min(1, "Product name is required").max(100, "Name too long"),
-  description: z.string().min(10, "Description must be at least 10 characters"),  price: z.number().min(0, "Price must be 0 or greater").optional(),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  price: z.number().min(0, "Price must be 0 or greater").optional(),
   discountedPrice: z.number().min(0).optional(),
   categories: z.array(z.string()).min(1, "Please select at least one category"),
   weightOptions: z
     .array(
-      z.object({        weight: z.string().min(1, "Weight is required"),
+      z.object({
+        weight: z.string().min(1, "Weight is required"),
         price: z.number().min(0.01, "Price must be greater than 0"),
         discountedPrice: z.number().min(0).optional(),
       })
@@ -42,7 +44,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
   categories = [],
   onSuccess,
   onCancel,
-}) => {  const { showSuccess, showError } = useToast();
+}) => {
+  const { showSuccess, showError } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -51,57 +54,66 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [weightOptions, setWeightOptions] = useState([
     { weight: "", price: 0, discountedPrice: 0 },
-  ]); const [categorySearch, setCategorySearch] = useState("");// Determine if editing and has existing images
+  ]);
+  const [categorySearch, setCategorySearch] = useState(""); // Determine if editing and has existing images
   const isEditing = !!product;
-  const hasExistingImages = !!(product?.imageUrls && product.imageUrls.length > 0);
+  const hasExistingImages = !!(
+    product?.imageUrls && product.imageUrls.length > 0
+  );
   // Group and filter categories
   const groupedCategories = useMemo(() => {
     if (!categories || categories.length === 0) return {};
 
     // Filter categories based on search
-    const filteredCategories = categories.filter((cat: any) =>
-      cat.name?.toLowerCase().includes(categorySearch.toLowerCase()) ||
-      cat.group?.toLowerCase().includes(categorySearch.toLowerCase()) ||
-      cat.type?.toLowerCase().includes(categorySearch.toLowerCase())
+    const filteredCategories = categories.filter(
+      (cat: any) =>
+        cat.name?.toLowerCase().includes(categorySearch.toLowerCase()) ||
+        cat.group?.toLowerCase().includes(categorySearch.toLowerCase()) ||
+        cat.type?.toLowerCase().includes(categorySearch.toLowerCase())
     );
 
     // Group by group then by type
-    const grouped = filteredCategories.reduce((acc: Record<string, Record<string, any[]>>, cat: any) => {
-      const group = cat.group || 'Other';
-      const type = cat.type || 'General';
+    const grouped = filteredCategories.reduce(
+      (acc: Record<string, Record<string, any[]>>, cat: any) => {
+        const group = cat.group || "Other";
+        const type = cat.type || "General";
 
-      if (!acc[group]) acc[group] = {};
-      if (!acc[group][type]) acc[group][type] = [];
+        if (!acc[group]) acc[group] = {};
+        if (!acc[group][type]) acc[group][type] = [];
 
-      acc[group][type].push(cat);
-      return acc;
-    }, {} as Record<string, Record<string, any[]>>);
+        acc[group][type].push(cat);
+        return acc;
+      },
+      {} as Record<string, Record<string, any[]>>
+    );
 
     return grouped;
-  }, [categories, categorySearch]); const {
+  }, [categories, categorySearch]);
+  const {
     register,
     handleSubmit,
     control,
-    watch,
     setValue,
     trigger,
     getValues,
-    formState: { errors, isValid }, reset, } = useForm<ProductFormData>({
-      resolver: zodResolver(baseProductSchema),
-      mode: "onChange",
-      defaultValues: {
-        name: "",
-        description: "",
-        price: 0,
-        discountedPrice: 0,        isAvailable: true,
-        isBestseller: false,
-        categories: [],
-        weightOptions: [{ weight: "", price: 0, discountedPrice: 0 }],
-        preparationTime: "",
-        // Remove images from form default values since we handle them separately
-      },
-    });
-
+    formState: { errors, isValid },
+    reset,
+  } = useForm<ProductFormData>({
+    resolver: zodResolver(baseProductSchema),
+    mode: "onChange",
+    defaultValues: {
+      name: "",
+      description: "",
+      price: 0,
+      discountedPrice: 0,
+      isAvailable: true,
+      isBestseller: false,
+      categories: [],
+      weightOptions: [{ weight: "", price: 0, discountedPrice: 0 }],
+      preparationTime: "",
+      // Remove images from form default values since we handle them separately
+    },
+  });
 
   useEffect(() => {
     if (product) {
@@ -118,16 +130,22 @@ const ProductForm: React.FC<ProductFormProps> = ({
       setValue("categories", categoryIds);
 
       // Handle weight options - ensure discountedPrice is properly converted
-      const safeWeightOptions = (product.weightOptions || []).map((option: any) => ({
-        weight: option.weight || "",
-        price: typeof option.price === 'number' ? option.price : 0,
-        discountedPrice: typeof option.discountedPrice === 'number' ? option.discountedPrice : 0
-      }));
+      const safeWeightOptions = (product.weightOptions || []).map(
+        (option: any) => ({
+          weight: option.weight || "",
+          price: typeof option.price === "number" ? option.price : 0,
+          discountedPrice:
+            typeof option.discountedPrice === "number"
+              ? option.discountedPrice
+              : 0,
+        })
+      );
 
       // Ensure we have at least one weight option
-      const finalWeightOptions = safeWeightOptions.length > 0
-        ? safeWeightOptions
-        : [{ weight: "", price: 0, discountedPrice: 0 }];
+      const finalWeightOptions =
+        safeWeightOptions.length > 0
+          ? safeWeightOptions
+          : [{ weight: "", price: 0, discountedPrice: 0 }];
 
       setValue("weightOptions", finalWeightOptions);
       setWeightOptions(finalWeightOptions);
@@ -135,8 +153,9 @@ const ProductForm: React.FC<ProductFormProps> = ({
       setValue(
         "isAvailable",
         product.isAvailable !== undefined ? product.isAvailable : true
-      );      setValue("isBestseller", product.isBestseller || false);
-      setValue("preparationTime", product.preparationTime || "");      // Handle existing images (URLs)
+      );
+      setValue("isBestseller", product.isBestseller || false);
+      setValue("preparationTime", product.preparationTime || ""); // Handle existing images (URLs)
       if (product.imageUrls && product.imageUrls.length > 0) {
         setExistingImages(product.imageUrls);
         setImagePreviews(product.imageUrls);
@@ -149,200 +168,195 @@ const ProductForm: React.FC<ProductFormProps> = ({
         setRemovedImages([]);
       }
     }
-  },
+  }, [product, setValue]);
 
-    [product, setValue]); const onSubmit = async (data: ProductFormData) => {
+  const onSubmit = async (data: ProductFormData) => {
+    try {
+      const safeData = {
+        name: data.name || "",
+        description: data.description || "",
+        price: data.price || 0,
+        discountedPrice: data.discountedPrice || 0,
+        categories: Array.isArray(data.categories) ? [...data.categories] : [],
+        weightOptions: Array.isArray(data.weightOptions)
+          ? data.weightOptions.map((opt) => ({
+              weight: opt.weight || "",
+              price: opt.price || 0,
+              discountedPrice: opt.discountedPrice || 0,
+            }))
+          : [],
+        isAvailable: Boolean(data.isAvailable),
+        isBestseller: Boolean(data.isBestseller),
+        preparationTime: data.preparationTime || "",
+        imageFilesCount: imageFiles.length,
+        imagePreviewsCount: imagePreviews.length,
+      };
+
+      if (errors.weightOptions && Array.isArray(errors.weightOptions)) {
+        errors.weightOptions.forEach((error: any, index: number) => {
+          if (error) {
+            // Weight option validation error
+          }
+        });
+      } // Now safely serialize the cleaned data
+      let cleanData;
       try {
-        console.log("=== ONSUBMIT FUNCTION CALLED ===");      // First, create a safe data object by extracting only the fields we need
-        // This prevents any React Hook Form internal properties from causing circular references
-        const safeData = {
-          name: data.name || "",
-          description: data.description || "",
-          price: data.price || 0,
-          discountedPrice: data.discountedPrice || 0,
-          categories: Array.isArray(data.categories) ? [...data.categories] : [],
-          weightOptions: Array.isArray(data.weightOptions) ? data.weightOptions.map(opt => ({
-            weight: opt.weight || "",
-            price: opt.price || 0,
-            discountedPrice: opt.discountedPrice || 0
-          })) : [],          isAvailable: Boolean(data.isAvailable),
-          isBestseller: Boolean(data.isBestseller),
-          preparationTime: data.preparationTime || "",
-          imageFilesCount: imageFiles.length,
-          imagePreviewsCount: imagePreviews.length
+        cleanData = JSON.parse(JSON.stringify(safeData));
+      } catch (serializationError) {
+        // Fallback: create clean data manually without JSON.parse/stringify
+        cleanData = {
+          name: String(safeData.name),
+          description: String(safeData.description),
+          price: Number(safeData.price),
+          discountedPrice: Number(safeData.discountedPrice),
+          categories: [...safeData.categories],
+          weightOptions: safeData.weightOptions.map((opt) => ({
+            weight: String(opt.weight),
+            price: Number(opt.price),
+            discountedPrice: Number(opt.discountedPrice),
+          })),
+          isAvailable: Boolean(safeData.isAvailable),
+          isBestseller: Boolean(safeData.isBestseller),
+          preparationTime: String(safeData.preparationTime),
+          imageFilesCount: Number(safeData.imageFilesCount),
+          imagePreviewsCount: Number(safeData.imagePreviewsCount),
         };
-        console.log("=== Original data from form ===");
-        console.log("data.name:", data.name, "Type:", typeof data.name);
-        console.log("data.description:", data.description, "Type:", typeof data.description);
-        console.log("data.categories:", data.categories);
-        console.log("data.weightOptions:", data.weightOptions);
-        console.log("Form errors:", errors);
-        console.log("Is form valid:", isValid);        // Add specific weight options validation debugging
-        if (errors.weightOptions && Array.isArray(errors.weightOptions)) {
-          errors.weightOptions.forEach((error: any, index: number) => {
-            if (error) {
-              // Weight option validation error
-            }
-          });
-        }        // Now safely serialize the cleaned data
-        let cleanData;
-        try {
-          cleanData = JSON.parse(JSON.stringify(safeData));
-        } catch (serializationError) {// Fallback: create clean data manually without JSON.parse/stringify
-          cleanData = {
-            name: String(safeData.name),
-            description: String(safeData.description),
-            price: Number(safeData.price),
-            discountedPrice: Number(safeData.discountedPrice),
-            categories: [...safeData.categories],
-            weightOptions: safeData.weightOptions.map(opt => ({
-              weight: String(opt.weight),
-              price: Number(opt.price),
-              discountedPrice: Number(opt.discountedPrice)
-            })),            isAvailable: Boolean(safeData.isAvailable),
-            isBestseller: Boolean(safeData.isBestseller),
-            preparationTime: String(safeData.preparationTime),
-            imageFilesCount: Number(safeData.imageFilesCount),
-            imagePreviewsCount: Number(safeData.imagePreviewsCount)
-          };        }
-
-        // Simple image validationwithout schema to avoid any circular reference issues
-        if (!isEditing || !hasExistingImages) {
-          // For new products or products without existing images, require at least one image
-          if (imageFiles.length === 0) {
-            showError("Images Required", "Please upload at least one image");
-            return;
-          }
-        }
-        console.log("Image validation passed!");
-        setIsSubmitting(true);
-        const formData = new FormData();
-
-        // Add basic fields using cleanData to avoid any circular references
-        console.log("=== Frontend Form Data Debug ===");
-        console.log("cleanData.name:", cleanData.name, "Type:", typeof cleanData.name);
-        console.log("cleanData.description:", cleanData.description, "Type:", typeof cleanData.description);
-        console.log("cleanData.categories:", cleanData.categories);
-        console.log("cleanData.weightOptions:", cleanData.weightOptions);
-
-        formData.append("name", cleanData.name);
-        formData.append("description", cleanData.description);
-        if (cleanData.price) formData.append("price", cleanData.price.toString());
-        if (cleanData.discountedPrice)
-          formData.append("discountedPrice", cleanData.discountedPrice.toString());
-
-        // Add array fields - send each item separately for backend to use getAll()
-        cleanData.categories.forEach((categoryId: string) => {
-          formData.append("categories", categoryId);
-        });      // Send weight options as indexed fields
-        console.log("=== Frontend Weight Options Debug ===");
-        console.log("cleanData.weightOptions:", cleanData.weightOptions);
-        cleanData.weightOptions.forEach((option: any, index: number) => {
-          console.log(`Sending weightOptions[${index}]:`, option);
-          formData.append(`weightOptions[${index}][weight]`, option.weight);
-          formData.append(
-            `weightOptions[${index}][price]`,
-            option.price.toString()
-          );
-          if (option.discountedPrice && option.discountedPrice > 0) {
-            formData.append(
-              `weightOptions[${index}][discountedPrice]`,
-              option.discountedPrice.toString()
-            );
-          }
-        });        // Add boolean fields
-        formData.append("isAvailable", cleanData.isAvailable.toString());
-        formData.append("isBestseller", cleanData.isBestseller.toString());
-
-        // Add preparationTime
-        formData.append("preparationTime", cleanData.preparationTime);        // Handle images - both new uploads and existing URLs
-        if (imageFiles.length > 0) {
-          imageFiles.forEach((file, index) => {
-            // Ensure we're only appending actual File objects
-            if (file instanceof File) {
-              formData.append("images", file);
-            }
-          });
-        }
-
-        // For existing products, send remaining existing images (not removed ones)
-        if (product && existingImages.length > 0) {
-          existingImages.forEach((url: string) => {
-            // Ensure we're only appending strings, not objects
-            if (typeof url === 'string') {
-              formData.append("imageUrls", url);
-            }
-          });
-        }
-
-        // Send removed images so backend can delete them
-        if (removedImages.length > 0) {
-          removedImages.forEach((url: string) => {
-            if (typeof url === 'string') {
-              formData.append("removedImages", url);
-            }
-          });
-        }
-
-        // if product add id
-        if (product) {
-          formData.append("_id", product._id);
-        }
-        if (product) {
-          const response = await axios.patch("/api/products", formData);
-
-          if (response.data.success) {
-            showSuccess("Success!", "Product updated successfully!");
-            // Don't reset form for updates, just close the form
-            if (onSuccess) {
-              onSuccess();
-            }
-          }
-        } else {
-          const response = await axios.post("/api/products", formData);
-          if (response.data.success) {
-            showSuccess("Success!", "Product created successfully!");            // Reset form for new products
-            reset();
-            setImageFiles([]);
-            setImagePreviews([]);
-            setExistingImages([]);
-            setRemovedImages([]);
-            setWeightOptions([{ weight: "", price: 0, discountedPrice: 0 }]);
-            if (fileInputRef.current) {
-              fileInputRef.current.value = "";
-            }
-            if (onSuccess) {
-              onSuccess();
-            }
-          }
-        }
-      } catch (error) {
-        // Enhanced error logging to prevent circular reference issues
-        console.error("Error submitting product - Type:", typeof error);
-
-        if (error instanceof Error) {
-          console.error("Error name:", error.name);
-          console.error("Error message:", error.message);
-          console.error("Error stack (first 500 chars):", error.stack?.substring(0, 500));
-        } else {
-          console.error("Unknown error type:", String(error));
-        }
-
-        if (axios.isAxiosError(error)) {
-          const errorMessage = error.response?.data?.error ||
-            error.response?.data?.message ||
-            error.message ||
-            "Failed to submit form";
-          showError("Error", errorMessage);
-        } else if (error instanceof Error) {
-          showError("Error", error.message);
-        } else {
-          showError("Error", "Failed to submit form");
-        }
-      } finally {
-        setIsSubmitting(false);
       }
-    };
+
+      // Simple image validationwithout schema to avoid any circular reference issues
+      if (!isEditing || !hasExistingImages) {
+        // For new products or products without existing images, require at least one image
+        if (imageFiles.length === 0) {
+          showError("Images Required", "Please upload at least one image");
+          return;
+        }
+      }
+      console.log("Image validation passed!");
+      setIsSubmitting(true);
+      const formData = new FormData();
+
+      formData.append("name", cleanData.name);
+      formData.append("description", cleanData.description);
+      if (cleanData.price) formData.append("price", cleanData.price.toString());
+      if (cleanData.discountedPrice)
+        formData.append(
+          "discountedPrice",
+          cleanData.discountedPrice.toString()
+        );
+
+      // Add array fields - send each item separately for backend to use getAll()
+      cleanData.categories.forEach((categoryId: string) => {
+        formData.append("categories", categoryId);
+      }); // Send weight options as indexed fields
+      cleanData.weightOptions.forEach((option: any, index: number) => {
+        formData.append(`weightOptions[${index}][weight]`, option.weight);
+        formData.append(
+          `weightOptions[${index}][price]`,
+          option.price.toString()
+        );
+        if (option.discountedPrice && option.discountedPrice > 0) {
+          formData.append(
+            `weightOptions[${index}][discountedPrice]`,
+            option.discountedPrice.toString()
+          );
+        }
+      }); // Add boolean fields
+      formData.append("isAvailable", cleanData.isAvailable.toString());
+      formData.append("isBestseller", cleanData.isBestseller.toString());
+
+      // Add preparationTime
+      formData.append("preparationTime", cleanData.preparationTime); // Handle images - both new uploads and existing URLs
+      if (imageFiles.length > 0) {
+        imageFiles.forEach((file, index) => {
+          // Ensure we're only appending actual File objects
+          if (file instanceof File) {
+            formData.append("images", file);
+          }
+        });
+      }
+
+      // For existing products, send remaining existing images (not removed ones)
+      if (product && existingImages.length > 0) {
+        existingImages.forEach((url: string) => {
+          // Ensure we're only appending strings, not objects
+          if (typeof url === "string") {
+            formData.append("imageUrls", url);
+          }
+        });
+      }
+
+      // Send removed images so backend can delete them
+      if (removedImages.length > 0) {
+        removedImages.forEach((url: string) => {
+          if (typeof url === "string") {
+            formData.append("removedImages", url);
+          }
+        });
+      }
+
+      // if product add id
+      if (product) {
+        formData.append("_id", product._id);
+      }
+      if (product) {
+        const response = await axios.patch("/api/products", formData);
+
+        if (response.data.success) {
+          showSuccess("Success!", "Product updated successfully!");
+          // Don't reset form for updates, just close the form
+          if (onSuccess) {
+            onSuccess();
+          }
+        }
+      } else {
+        const response = await axios.post("/api/products", formData);
+        if (response.data.success) {
+          showSuccess("Success!", "Product created successfully!"); // Reset form for new products
+          reset();
+          setImageFiles([]);
+          setImagePreviews([]);
+          setExistingImages([]);
+          setRemovedImages([]);
+          setWeightOptions([{ weight: "", price: 0, discountedPrice: 0 }]);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+          if (onSuccess) {
+            onSuccess();
+          }
+        }
+      }
+    } catch (error) {
+      // Enhanced error logging to prevent circular reference issues
+      console.error("Error submitting product - Type:", typeof error);
+
+      if (error instanceof Error) {
+        console.error("Error name:", error.name);
+        console.error("Error message:", error.message);
+        console.error(
+          "Error stack (first 500 chars):",
+          error.stack?.substring(0, 500)
+        );
+      } else {
+        console.error("Unknown error type:", String(error));
+      }
+
+      if (axios.isAxiosError(error)) {
+        const errorMessage =
+          error.response?.data?.error ||
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to submit form";
+        showError("Error", errorMessage);
+      } else if (error instanceof Error) {
+        showError("Error", error.message);
+      } else {
+        showError("Error", "Failed to submit form");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -385,7 +399,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
     if (oversizedFiles.length > 0) {
       showError("File Too Large", "Each image must be less than 5MB");
       return;
-    }    if (imagePreviews.length + files.length > 5) {
+    }
+    if (imagePreviews.length + files.length > 5) {
       showError("Maximum Images", "Maximum 5 images allowed");
       return;
     }
@@ -399,25 +414,26 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
     // Note: We don't set form values for images since we handle them separately
     // This prevents any circular reference issues with File objects
-  };  const removeImage = (index: number) => {
+  };
+  const removeImage = (index: number) => {
     const imageToRemove = imagePreviews[index];
-    
+
     // Check if this is an existing image (URL) or a new upload (File)
     if (existingImages.includes(imageToRemove)) {
       // This is an existing image, add it to removedImages array
-      setRemovedImages(prev => [...prev, imageToRemove]);
+      setRemovedImages((prev) => [...prev, imageToRemove]);
       // Remove from existingImages
-      setExistingImages(prev => prev.filter(img => img !== imageToRemove));
+      setExistingImages((prev) => prev.filter((img) => img !== imageToRemove));
     } else {
       // This is a new file upload, remove from imageFiles
-      const fileIndex = imagePreviews.slice(0, index).filter(preview => 
-        !existingImages.includes(preview)
-      ).length;
-      setImageFiles(prev => prev.filter((_, i) => i !== fileIndex));
+      const fileIndex = imagePreviews
+        .slice(0, index)
+        .filter((preview) => !existingImages.includes(preview)).length;
+      setImageFiles((prev) => prev.filter((_, i) => i !== fileIndex));
     }
-    
+
     // Remove from previews in both cases
-    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const addWeightOption = () => {
@@ -440,8 +456,13 @@ const ProductForm: React.FC<ProductFormProps> = ({
         let processedValue = value;
 
         // Ensure numeric fields are properly converted
-        if (field === 'price' || field === 'discountedPrice') {
-          processedValue = typeof value === 'string' ? parseFloat(value) || 0 : (typeof value === 'number' ? value : 0);
+        if (field === "price" || field === "discountedPrice") {
+          processedValue =
+            typeof value === "string"
+              ? parseFloat(value) || 0
+              : typeof value === "number"
+              ? value
+              : 0;
         }
 
         return { ...option, [field]: processedValue };
@@ -465,14 +486,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
           <button
             type="button"
             onClick={onCancel}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
+            className="text-gray-400 hover:text-gray-600 transition-colors">
             <svg
               className="w-6 h-6"
               fill="none"
               stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+              viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -481,7 +500,9 @@ const ProductForm: React.FC<ProductFormProps> = ({
               />
             </svg>
           </button>
-        </div>        <div className="flex-1 overflow-y-auto p-6 pb-20">{/* Added bottom padding for fixed buttons */}
+        </div>{" "}
+        <div className="flex-1 overflow-y-auto p-6 pb-20">
+          {/* Added bottom padding for fixed buttons */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -495,8 +516,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                         className="w-5 h-5 text-white"
                         fill="none"
                         stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
+                        viewBox="0 0 24 24">
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -555,8 +575,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                         className="w-5 h-5 text-white"
                         fill="none"
                         stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
+                        viewBox="0 0 24 24">
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -580,7 +599,11 @@ const ProductForm: React.FC<ProductFormProps> = ({
                         <input
                           {...register("price", {
                             setValueAs: (value) => {
-                              if (value === "" || value === null || value === undefined) {
+                              if (
+                                value === "" ||
+                                value === null ||
+                                value === undefined
+                              ) {
                                 return undefined;
                               }
                               const num = Number(value);
@@ -606,7 +629,11 @@ const ProductForm: React.FC<ProductFormProps> = ({
                         <input
                           {...register("discountedPrice", {
                             setValueAs: (value) => {
-                              if (value === "" || value === null || value === undefined) {
+                              if (
+                                value === "" ||
+                                value === null ||
+                                value === undefined
+                              ) {
                                 return undefined;
                               }
                               const num = Number(value);
@@ -637,8 +664,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                         className="w-5 h-5 text-white"
                         fill="none"
                         stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
+                        viewBox="0 0 24 24">
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -651,13 +677,11 @@ const ProductForm: React.FC<ProductFormProps> = ({
                       Weight Options
                     </h2>
                   </div>
-
                   <div className="space-y-4">
                     {weightOptions.map((option, index) => (
                       <div
                         key={index}
-                        className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg"
-                      >
+                        className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
                         <input
                           type="text"
                           value={option.weight}
@@ -700,14 +724,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
                         <button
                           type="button"
                           onClick={() => removeWeightOption(index)}
-                          className="text-red-500 hover:text-red-700 p-2"
-                        >
+                          className="text-red-500 hover:text-red-700 p-2">
                           <svg
                             className="w-4 h-4"
                             fill="none"
                             stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
+                            viewBox="0 0 24 24">
                             <path
                               strokeLinecap="round"
                               strokeLinejoin="round"
@@ -721,12 +743,11 @@ const ProductForm: React.FC<ProductFormProps> = ({
                     <button
                       type="button"
                       onClick={addWeightOption}
-                      className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-orange-500 hover:text-orange-500 transition-colors"
-                    >
+                      className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-orange-500 hover:text-orange-500 transition-colors">
                       + Add Weight Option
                     </button>
-                  </div>                </div>
-
+                  </div>{" "}
+                </div>
               </div>{" "}
               {/* Right Column */}
               <div className="space-y-6">
@@ -738,8 +759,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                         className="w-5 h-5 text-white"
                         fill="none"
                         stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
+                        viewBox="0 0 24 24">
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -766,14 +786,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="w-full border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange-500 transition-colors"
-                      >
+                        className="w-full border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange-500 transition-colors">
                         <svg
                           className="mx-auto h-12 w-12 text-gray-400"
                           stroke="currentColor"
                           fill="none"
-                          viewBox="0 0 48 48"
-                        >
+                          viewBox="0 0 48 48">
                           <path
                             d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
                             strokeWidth={2}
@@ -783,11 +801,13 @@ const ProductForm: React.FC<ProductFormProps> = ({
                         </svg>
                         <p className="mt-2 text-sm text-gray-600">
                           Click to upload images or drag and drop
-                        </p>                        <p className="text-xs text-gray-500">
+                        </p>{" "}
+                        <p className="text-xs text-gray-500">
                           PNG, JPG up to 5 images
                         </p>
                       </button>
-                    </div>                    {imagePreviews.length > 0 && (
+                    </div>{" "}
+                    {imagePreviews.length > 0 && (
                       <div className="grid grid-cols-2 gap-4">
                         {imagePreviews.map((preview, index) => (
                           <div key={index} className="relative aspect-square">
@@ -799,8 +819,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                             <button
                               type="button"
                               onClick={() => removeImage(index)}
-                              className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                            >
+                              className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600">
                               ×
                             </button>
                           </div>
@@ -818,8 +837,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                         className="w-5 h-5 text-white"
                         fill="none"
                         stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
+                        viewBox="0 0 24 24">
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -849,7 +867,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
                           {errors.preparationTime.message}
                         </p>
                       )}
-                    </div>{" "}{/* Boolean toggles */}
+                    </div>{" "}
+                    {/* Boolean toggles */}
                     <div className="space-y-3">
                       <Controller
                         name="isAvailable"
@@ -864,17 +883,16 @@ const ProductForm: React.FC<ProductFormProps> = ({
                                 className="sr-only"
                               />
                               <div
-                                className={`w-6 h-6 rounded-lg border-2 transition-all duration-200 ${field.value
-                                  ? "bg-gradient-to-r from-green-400 to-green-500 border-green-500"
-                                  : "border-gray-300 group-hover:border-green-400"
-                                  }`}
-                              >
+                                className={`w-6 h-6 rounded-lg border-2 transition-all duration-200 ${
+                                  field.value
+                                    ? "bg-gradient-to-r from-green-400 to-green-500 border-green-500"
+                                    : "border-gray-300 group-hover:border-green-400"
+                                }`}>
                                 {field.value && (
                                   <svg
                                     className="w-4 h-4 text-white absolute top-0.5 left-0.5"
                                     fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                  >
+                                    viewBox="0 0 20 20">
                                     <path
                                       fillRule="evenodd"
                                       d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -904,17 +922,16 @@ const ProductForm: React.FC<ProductFormProps> = ({
                                 className="sr-only"
                               />
                               <div
-                                className={`w-6 h-6 rounded-lg border-2 transition-all duration-200 ${field.value
-                                  ? "bg-gradient-to-r from-purple-400 to-pink-500 border-pink-500"
-                                  : "border-gray-300 group-hover:border-pink-400"
-                                  }`}
-                              >
+                                className={`w-6 h-6 rounded-lg border-2 transition-all duration-200 ${
+                                  field.value
+                                    ? "bg-gradient-to-r from-purple-400 to-pink-500 border-pink-500"
+                                    : "border-gray-300 group-hover:border-pink-400"
+                                }`}>
                                 {field.value && (
                                   <svg
                                     className="w-4 h-4 text-white absolute top-0.5 left-0.5"
                                     fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                  >
+                                    viewBox="0 0 20 20">
                                     <path
                                       fillRule="evenodd"
                                       d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -927,23 +944,35 @@ const ProductForm: React.FC<ProductFormProps> = ({
                             <span className="text-sm font-medium text-gray-700 group-hover:text-pink-600 transition-colors">
                               Bestseller
                             </span>
-                          </label>                        )}
+                          </label>
+                        )}
                       />
                     </div>
                   </div>
-                </div></div>
+                </div>
+              </div>
             </div>
 
             {/* Categories Section - Placed at the bottom */}
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
               <div className="flex items-center space-x-3 mb-4">
                 <div className="w-8 h-8 bg-gradient-to-r from-teal-400 to-blue-400 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  <svg
+                    className="w-5 h-5 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                    />
                   </svg>
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900">Product Categories</h2>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Product Categories
+                </h2>
               </div>
 
               <div className="space-y-4">
@@ -963,8 +992,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                     <button
                       type="button"
                       onClick={() => setCategorySearch("")}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3"
-                    >
+                      className="absolute inset-y-0 right-0 flex items-center pr-3">
                       <X className="h-5 w-5 text-gray-400 hover:text-gray-600" />
                     </button>
                   )}
@@ -973,58 +1001,68 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 {/* Categories Selection */}
                 <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-1">
                   <div className="grid grid-cols-1 gap-4">
-                    {Object.entries(groupedCategories).map(([group, typeGroups]) => (
-                      <div key={group} className="mb-4">
-                        <div className="bg-gradient-to-r from-gray-100 to-gray-50 p-2 font-medium text-gray-700 rounded-lg mb-2">
-                          {group}
-                        </div>
-                        <div className="pl-2 space-y-4">
-                          {Object.entries(typeGroups).map(([type, cats]) => (
-                            <div key={`${group}-${type}`} className="mb-2">
-                              <div className="text-sm font-medium text-gray-600 mb-1">{type}</div>
-                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
-                                {cats.map((cat) => (
-                                  <label
-                                    key={cat._id}
-                                    className="flex items-start p-2 rounded-md hover:bg-gray-50 cursor-pointer group"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      value={cat._id}
-                                      {...register("categories")}
-                                      className="mt-0.5 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                    />
-                                    <span className="ml-2 text-sm text-gray-800 group-hover:text-blue-700 line-clamp-2">
-                                      {cat.name}
-                                    </span>
-                                  </label>
-                                ))}
+                    {Object.entries(groupedCategories).map(
+                      ([group, typeGroups]) => (
+                        <div key={group} className="mb-4">
+                          <div className="bg-gradient-to-r from-gray-100 to-gray-50 p-2 font-medium text-gray-700 rounded-lg mb-2">
+                            {group}
+                          </div>
+                          <div className="pl-2 space-y-4">
+                            {Object.entries(typeGroups).map(([type, cats]) => (
+                              <div key={`${group}-${type}`} className="mb-2">
+                                <div className="text-sm font-medium text-gray-600 mb-1">
+                                  {type}
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+                                  {cats.map((cat) => (
+                                    <label
+                                      key={cat._id}
+                                      className="flex items-start p-2 rounded-md hover:bg-gray-50 cursor-pointer group">
+                                      <input
+                                        type="checkbox"
+                                        value={cat._id}
+                                        {...register("categories")}
+                                        className="mt-0.5 h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                      />
+                                      <span className="ml-2 text-sm text-gray-800 group-hover:text-blue-700 line-clamp-2">
+                                        {cat.name}
+                                      </span>
+                                    </label>
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    )}
                   </div>
                 </div>
                 {errors.categories && (
-                  <p className="text-red-500 text-sm">{errors.categories.message}</p>
+                  <p className="text-red-500 text-sm">
+                    {errors.categories.message}
+                  </p>
                 )}
               </div>
             </div>
 
             {/* Debug Section */}
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-              <h3 className="text-sm font-medium text-yellow-800 mb-2">Debug Info</h3>
+              <h3 className="text-sm font-medium text-yellow-800 mb-2">
+                Debug Info
+              </h3>
               <div className="text-xs text-yellow-700 space-y-1">
-                <p>Form Valid: {isValid ? 'Yes' : 'No'}</p>
-                <p>Has Errors: {Object.keys(errors).length > 0 ? 'Yes' : 'No'}</p>
+                <p>Form Valid: {isValid ? "Yes" : "No"}</p>
+                <p>
+                  Has Errors: {Object.keys(errors).length > 0 ? "Yes" : "No"}
+                </p>
                 {/* <p>Errors: {JSON.stringify(errors, null, 2)}</p> */}
-                <p>Is Editing: {isEditing ? 'Yes' : 'No'}</p>
-                <p>Has Existing Images: {hasExistingImages ? 'Yes' : 'No'}</p>
+                <p>Is Editing: {isEditing ? "Yes" : "No"}</p>
+                <p>Has Existing Images: {hasExistingImages ? "Yes" : "No"}</p>
                 <p>Image Files Count: {imageFiles.length}</p>
                 <p>Image Previews Count: {imagePreviews.length}</p>
-              </div>              <button
+              </div>{" "}
+              <button
                 type="button"
                 onClick={() => {
                   console.log("=== MANUAL DEBUG TRIGGER ===");
@@ -1039,11 +1077,19 @@ const ProductForm: React.FC<ProductFormProps> = ({
                     // Safe logging of form values
                     const safeValues = {
                       name: currentValues.name || "",
-                      description: currentValues.description?.substring(0, 50) + "..." || "",
-                      categoriesCount: Array.isArray(currentValues.categories) ? currentValues.categories.length : 0,
-                      weightOptionsCount: Array.isArray(currentValues.weightOptions) ? currentValues.weightOptions.length : 0,
+                      description:
+                        currentValues.description?.substring(0, 50) + "..." ||
+                        "",
+                      categoriesCount: Array.isArray(currentValues.categories)
+                        ? currentValues.categories.length
+                        : 0,
+                      weightOptionsCount: Array.isArray(
+                        currentValues.weightOptions
+                      )
+                        ? currentValues.weightOptions.length
+                        : 0,
                       price: currentValues.price || 0,
-                      isAvailable: currentValues.isAvailable
+                      isAvailable: currentValues.isAvailable,
                     };
                     console.log("Safe form values:", safeValues);
 
@@ -1056,13 +1102,12 @@ const ProductForm: React.FC<ProductFormProps> = ({
                     }
                   }
                 }}
-                className="mt-2 px-4 py-2 bg-yellow-600 text-white rounded text-xs"              >
+                className="mt-2 px-4 py-2 bg-yellow-600 text-white rounded text-xs">
                 Debug Form
               </button>
             </div>
           </form>
         </div>
-
         {/* Fixed Submit Buttons at Bottom */}
         <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 rounded-b-xl flex flex-row gap-3 justify-start">
           <button
@@ -1071,16 +1116,14 @@ const ProductForm: React.FC<ProductFormProps> = ({
               reset();
               setImageFiles([]);
               setImagePreviews([]);
-              setWeightOptions([
-                { weight: "", price: 0, discountedPrice: 0 },
-              ]);
+              setWeightOptions([{ weight: "", price: 0, discountedPrice: 0 }]);
               if (fileInputRef.current) fileInputRef.current.value = "";
               if (onCancel) onCancel();
             }}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
-          >
+            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium">
             Cancel
-          </button>            <button
+          </button>{" "}
+          <button
             type="button"
             disabled={isSubmitting}
             onClick={async () => {
@@ -1100,9 +1143,15 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 console.log("Manual validation result:", isFormValid);
 
                 if (errors && Object.keys(errors).length > 0) {
-                  console.log("Form errors:", errors);                  // Show detailed weight options errors
-                  if (errors.weightOptions && Array.isArray(errors.weightOptions)) {
-                    console.log("Weight options errors details:", errors.weightOptions);
+                  console.log("Form errors:", errors); // Show detailed weight options errors
+                  if (
+                    errors.weightOptions &&
+                    Array.isArray(errors.weightOptions)
+                  ) {
+                    console.log(
+                      "Weight options errors details:",
+                      errors.weightOptions
+                    );
                     errors.weightOptions.forEach((error, index) => {
                       if (error) {
                         console.log(`Weight option ${index} errors:`, error);
@@ -1114,35 +1163,30 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 // Always attempt submission for now (to debug the issue)
                 console.log("Attempting submission...");
                 await onSubmit(formData);
-
               } catch (error) {
                 console.error("Submit button error:", error);
                 showError("Error", "Failed to submit form");
               }
             }}
-            className="px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-md hover:from-orange-600 hover:to-pink-600 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-          >
+            className="px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-md hover:from-orange-600 hover:to-pink-600 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2">
             {isSubmitting ? (
               <>
                 <svg
                   className="animate-spin h-4 w-4 mr-2 text-white"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
-                  viewBox="0 0 24 24"
-                >
+                  viewBox="0 0 24 24">
                   <circle
                     className="opacity-25"
                     cx="12"
                     cy="12"
                     r="10"
                     stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
+                    strokeWidth="4"></circle>
                   <path
                     className="opacity-75"
                     fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8z"
-                  ></path>
+                    d="M4 12a8 8 0 018-8v8z"></path>
                 </svg>
                 Saving...
               </>

@@ -48,7 +48,7 @@ export default function CategoriesManagement({ onLoadingChange }: CategoriesMana
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | undefined>();
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [viewMode, setViewMode] = useState('table');
   const [sortBy, setSortBy] = useState<'name' | 'group' | 'created' | 'displayOrder'>('displayOrder');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [categoriesLoading, setCategoriesLoading] = useState(false);
@@ -436,29 +436,7 @@ export default function CategoriesManagement({ onLoadingChange }: CategoriesMana
               </select>
             )}
 
-            {/* View Mode Toggle */}
-            <div className="flex items-center bg-gray-100 rounded-lg p-1">
-              <button
-                onClick={() => setViewMode('table')}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${viewMode === 'table'
-                  ? 'bg-white text-orange-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                <List className="w-4 h-4" />
-                Table
-              </button>
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${viewMode === 'grid'
-                  ? 'bg-white text-orange-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                <Grid3X3 className="w-4 h-4" />
-                Grid
-              </button>
-            </div>
+           
           </div>
 
           <button
